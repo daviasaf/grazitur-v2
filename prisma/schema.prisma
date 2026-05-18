@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              Int        @id @default(autoincrement())
+  nome            String
+  email           String?
+  cpf             String     @unique
+  rg              String?
+  orgaoExpeditor  String?
+  nascimento      String?
+  celular         String?
+  cidade          String?
+  endereco        String?
+  idade           Int?
+  isGuia          Boolean    @default(false)
+  parentes        User[]     @relation("UserKinship")
+  parentesDe      User[]     @relation("UserKinship")
+  excursoes       Excursao[] @relation("UserExcursao")
+  excursoesGuia   Excursao[] @relation("GuiaExcursao")
+  createdAt       DateTime   @default(now())
+}
+
+model Excursao {
+  id               Int      @id @default(autoincrement())
+  nome             String
+  lugar            String
+  vagas            Int
+  valores          String?  @default("[]")
+  usuarios         User[]   @relation("UserExcursao")
+  guiaId           Int?
+  guia             User?    @relation("GuiaExcursao", fields: [guiaId], references: [id])
+
+  ativarContrato   Boolean  @default(false)
+  aplicarParcelas  Boolean  @default(true)
+  pagamentosJson   String?  @default("{}")
+
+  contratoDetalhes String?  @default("{}")
+  contratoGrupos   String?  @default("{}")
+  liberarContratos Boolean  @default(false)
+  assinaturasJson  String?  @default("{}")
+
+  despesasJson     String?  @default("[]")
+  listaEsperaJson  String?  @default("[]")
+
+  mostrarAberta     Boolean  @default(true)
+
+  finalizada        Boolean  @default(false)
+  finalizadaEm      DateTime?
+
+  createdAt        DateTime @default(now())
+}
+
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  entity    String   @default("sistema")
+  action    String   @default("manual")
+  title     String
+  detail    String?
+
+  @@index([createdAt])
+  @@index([entity])
+  @@index([action])
+}

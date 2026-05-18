@@ -1,0 +1,36 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependências (Geradas pelo pnpm)
+node_modules/
+
+# Nuxt 3 e diretórios de Build
+.nuxt/
+.output/
+dist/
+.nitro/
+.cache/
+
+# Variáveis de Ambiente e Segredos (CRÍTICO!)
+.env
+.env.*
+#.env.local
+#.env.production
+
+# Garante que o arquivo de exemplo SEJA enviado para o Git
+!.env.example
+
+# Configurações de IDEs (VS Code, WebStorm, etc.)
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Prisma (Caso você use SQLite localmente para testes)
+# Se o seu banco de dados local for um arquivo .db, descomente a linha abaixo:
+# *.db
