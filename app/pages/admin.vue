@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <UiToastManager />
     <AuthAdminLogin v-if="!logado" @sucesso="aoLogar" />
@@ -109,8 +109,67 @@
             <div class="page-heading"><div><h2>Base de Passageiros</h2><p>Cadastros, familiares, guias e vínculo com excursões.</p></div><div class="toolbar-actions passenger-toolbar-actions"><input v-model="buscaUser" class="form-control" placeholder="Buscar passageiro..."><button class="gt-btn gt-btn-primary" @click="abrirNovoUser">+ Cadastro</button></div></div>
             <PassageirosTabela :usuarios="usuariosFiltrados" @vincular="abrirVincular" @editar="abrirEdicaoUser" @excluir="u => pedirConfirmacao('user', u.id, 'Excluir passageiro', 'Deseja excluir este passageiro?')" />
           </div>
+          <div v-if="active === 'aniversariantes'">
+            <div class="page-heading">
+              <div>
+                <h2>Aniversariantes</h2>
+                <p>Calendário mensal com aniversários, mensagens do dia e histórico do ano.</p>
+              </div>
+            </div>
 
+            <div class="birthday-layout">
+              <section class="gt-card birthday-calendar-card">
+                <div class="birthday-calendar-toolbar">
+                  <button class="gt-icon-btn" title="Mês anterior" @click="mesAniversario--">&lsaquo;</button>
+                  <div>
+                    <strong>{{ mesAniversarioLabel }}</strong>
+                    <span>{{ totalAniversariosMes }} neste mês</span>
+                  </div>
+                  <button class="gt-icon-btn" title="Próximo mês" @click="mesAniversario++">&rsaquo;</button>
+                </div>
 
+                <div class="birthday-weekdays">
+                  <span v-for="dia in diasSemanaCalendario" :key="dia">{{ dia }}</span>
+                </div>
+
+                <div class="birthday-calendar-grid">
+                  <button v-for="dia in calendarioAniversarios" :key="dia.key" type="button" class="birthday-day-cell" :class="{ 'is-muted': !dia.isCurrentMonth, 'is-today': dia.isToday, 'has-birthday': dia.birthdays.length }" @click="selecionarDiaAniversario(dia)">
+                    <span class="birthday-day-number">{{ dia.day }}</span>
+                    <span v-if="dia.isToday" class="birthday-today-label">Hoje</span>
+                    <span v-if="dia.birthdays.length" class="birthday-day-count">{{ dia.birthdays.length }}</span>
+                    <span v-for="item in dia.birthdays.slice(0, 2)" :key="item.user.id" class="birthday-day-name">{{ primeiroNomePessoa(item.user.nome) }}</span>
+                    <span v-if="dia.birthdays.length > 2" class="birthday-day-more">+{{ dia.birthdays.length - 2 }}</span>
+                  </button>
+                </div>
+              </section>
+
+              <div class="birthday-side-column">
+                <aside class="gt-card birthday-selected-card">
+                  <div class="birthday-selected-header"><span>{{ diaSelecionadoLabel }}</span><strong>{{ pluralAniversariantes(aniversariantesDiaSelecionado.length) }}</strong></div>
+                  <div v-if="aniversariantesDiaSelecionado.length" class="birthday-message-list">
+                    <div v-for="item in aniversariantesDiaSelecionado" :key="item.user.id" class="birthday-message-row">
+                      <div><strong>{{ item.user.nome }}</strong><span>{{ item.user.celular || 'Celular não informado' }}</span></div>
+                      <a v-if="telefoneWhatsApp(item.user)" class="gt-btn gt-btn-success gt-btn-xs" :href="linkAniversarioWhatsApp(item.user)" target="_blank">WhatsApp</a>
+                      <span v-else class="text-muted small">Sem celular</span>
+                    </div>
+                  </div>
+                  <div v-else class="birthday-empty-panel">Nenhum aniversário neste dia.</div>
+                </aside>
+
+                <section class="gt-card birthday-today-card">
+                  <div class="birthday-section-title"><div><strong>Aniversariantes do dia</strong><span>Prontos para mandar mensagem agora.</span></div><span>{{ pluralAniversariantes(aniversariantesHoje.length) }}</span></div>
+                  <div v-if="aniversariantesHoje.length" class="birthday-message-list">
+                    <div v-for="item in aniversariantesHoje" :key="item.user.id" class="birthday-message-row">
+                      <div><strong>{{ item.user.nome }}</strong><span>{{ item.user.celular || 'Celular não informado' }}</span></div>
+                      <a v-if="telefoneWhatsApp(item.user)" class="gt-btn gt-btn-success gt-btn-xs" :href="linkAniversarioWhatsApp(item.user)" target="_blank">Mensagem no WhatsApp</a>
+                      <span v-else class="text-muted small">Sem celular</span>
+                    </div>
+                  </div>
+                  <div v-else class="birthday-empty-panel">Nenhum aniversariante hoje.</div>
+                </section>
+              </div>
+            </div>
+          </div>
           <div v-if="active === 'logs'">
             <div class="page-heading"><div><h2>Logs do sistema</h2><p>Histórico das principais alterações realizadas no painel.</p></div><div class="toolbar-actions"><button class="gt-btn gt-btn-danger-outline" @click="modalApagarLogs = true">Apagar logs</button></div></div>
             <div class="gt-card p-3 p-md-4">
@@ -310,7 +369,7 @@
 </template>
 
 <script setup lang="ts">
-import { brl, moneyToNumber } from '~/utils/formatadores'
+import { brl, moneyToNumber, onlyDigits } from '~/utils/formatadores'
 import { exportarRelatorioGeralPDF, exportarRelatorioExcursaoPDF } from '~/utils/exportacoes'
 
 type Despesa = { id?: string; descricao?: string; valor: number | string; categoria?: string; data?: string }
@@ -596,6 +655,112 @@ const usuariosFiltrados = computed(() => {
   if (!q) return usuarios.value
   return usuarios.value.filter((u) => u.nome.toLowerCase().includes(q) || String(u.cpf || '').includes(q))
 })
+type BirthdayStatus = 'hoje' | 'amanha' | 'ontem' | 'passado'
+type BirthdayItem = { user: any; status: BirthdayStatus; label: string; sort: number }
+type CalendarBirthdayDay = { key: string; date: Date; day: number; isCurrentMonth: boolean; isToday: boolean; birthdays: BirthdayItem[] }
+const pluralAniversariantes = (total: number) => `${total} ${total === 1 ? 'aniversariante' : 'aniversariantes'}`
+const mesAniversario = ref(0)
+const diaSelecionadoKey = ref('')
+const inicioDoDia = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+const dateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const nascimentoDiaMes = (value: any) => {
+  const digits = onlyDigits(String(value || ''))
+  if (digits.length < 4) return null
+  const dia = Number(digits.slice(0, 2))
+  const mes = Number(digits.slice(2, 4))
+  if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null
+  return { dia, mes }
+}
+const diasEntre = (a: Date, b: Date) => Math.round((inicioDoDia(a).getTime() - inicioDoDia(b).getTime()) / 86400000)
+const aniversarioNoAno = (nascimento: any, ano: number) => {
+  const parsed = nascimentoDiaMes(nascimento)
+  if (!parsed) return null
+  const data = new Date(ano, parsed.mes - 1, parsed.dia)
+  if (data.getMonth() !== parsed.mes - 1 || data.getDate() !== parsed.dia) return null
+  return data
+}
+const classificarAniversario = (user: any): BirthdayItem | null => {
+  const hoje = inicioDoDia(new Date())
+  const dataAtual = aniversarioNoAno(user.nascimento, hoje.getFullYear())
+  if (!dataAtual) return null
+  const datas = [
+    aniversarioNoAno(user.nascimento, hoje.getFullYear() - 1),
+    dataAtual,
+    aniversarioNoAno(user.nascimento, hoje.getFullYear() + 1)
+  ].filter(Boolean) as Date[]
+  const diffMaisProximo = datas.map((data) => diasEntre(data, hoje)).sort((a, b) => Math.abs(a) - Math.abs(b))[0]
+  const diff = diffMaisProximo
+  if (diff === 0) return { user, status: 'hoje', label: 'Hoje', sort: 0 }
+  if (diff === 1) return { user, status: 'amanha', label: 'Amanhã', sort: 1 }
+  if (diff === -1) return { user, status: 'ontem', label: 'Ontem', sort: 2 }
+  const diffAtual = diasEntre(dataAtual, hoje)
+  if (diffAtual < -1) return { user, status: 'passado', label: `Já passou (${Math.abs(diffAtual)} dias)`, sort: 3 + Math.abs(diffAtual) / 1000 }
+  return null
+}
+const aniversariantesOrdenados = computed<BirthdayItem[]>(() => usuarios.value.map(classificarAniversario).filter((item): item is BirthdayItem => Boolean(item)).sort((a, b) => a.sort - b.sort || String(a.user.nome || '').localeCompare(String(b.user.nome || ''), 'pt-BR')))
+const aniversariantesHoje = computed(() => aniversariantesOrdenados.value.filter((item) => item.status === 'hoje'))
+const aniversariantesAmanha = computed(() => aniversariantesOrdenados.value.filter((item) => item.status === 'amanha'))
+const aniversariantesOntem = computed(() => aniversariantesOrdenados.value.filter((item) => item.status === 'ontem'))
+const aniversariantesPassados = computed(() => aniversariantesOrdenados.value.filter((item) => item.status === 'passado'))
+const diasSemanaCalendario = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+const mesAniversarioData = computed(() => {
+  const hoje = new Date()
+  return new Date(hoje.getFullYear(), hoje.getMonth() + mesAniversario.value, 1)
+})
+const mesAniversarioLabel = computed(() => mesAniversarioData.value.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }))
+const aniversariosDoMes = computed(() => {
+  const base = mesAniversarioData.value
+  return usuarios.value.map((user) => {
+    const data = aniversarioNoAno(user.nascimento, base.getFullYear())
+    if (!data || data.getMonth() !== base.getMonth()) return null
+    return { user, status: 'hoje' as BirthdayStatus, label: user.nascimento || '', sort: data.getDate(), date: data }
+  }).filter(Boolean) as Array<BirthdayItem & { date: Date }>
+})
+const totalAniversariosMes = computed(() => aniversariosDoMes.value.length)
+const calendarioAniversarios = computed<CalendarBirthdayDay[]>(() => {
+  const base = mesAniversarioData.value
+  const start = new Date(base.getFullYear(), base.getMonth(), 1)
+  start.setDate(start.getDate() - start.getDay())
+  const hojeKey = dateKey(new Date())
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(start)
+    date.setDate(start.getDate() + index)
+    const key = dateKey(date)
+    const birthdays = aniversariosDoMes.value
+      .filter((item) => dateKey(item.date) === key)
+      .sort((a, b) => String(a.user.nome || '').localeCompare(String(b.user.nome || ''), 'pt-BR'))
+    return { key, date, day: date.getDate(), isCurrentMonth: date.getMonth() === base.getMonth(), isToday: key === hojeKey, birthdays }
+  })
+})
+const aniversariantesDiaSelecionado = computed(() => calendarioAniversarios.value.find((dia) => dia.key === diaSelecionadoKey.value)?.birthdays || [])
+const diaSelecionadoLabel = computed(() => {
+  const dia = calendarioAniversarios.value.find((item) => item.key === diaSelecionadoKey.value)
+  return dia ? dia.date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : 'Selecione um dia'
+})
+const selecionarDiaAniversario = (dia: CalendarBirthdayDay) => { diaSelecionadoKey.value = dia.key }
+const primeiroNomePessoa = (nome: string) => String(nome || '').trim().split(/\s+/)[0] || 'Nome'
+watch(mesAniversarioData, (data) => {
+  const hoje = new Date()
+  const noMesAtual = data.getFullYear() === hoje.getFullYear() && data.getMonth() === hoje.getMonth()
+  diaSelecionadoKey.value = dateKey(noMesAtual ? hoje : data)
+}, { immediate: true })
+const telefoneWhatsApp = (user: any) => {
+  const phone = onlyDigits(user?.celular)
+  return phone.length >= 10 ? phone : ''
+}
+const linkAniversarioWhatsApp = (user: any) => {
+  const msg = `Feliz Aniversário!
+
+Hoje é um dia muito especial, e a Grazi Turismo não poderia deixar de passar por aqui para desejar muitas felicidades, saúde, paz e momentos inesquecíveis na sua vida!
+
+Que esse novo ciclo venha cheio de conquistas, alegria, sonhos realizados e muitas viagens incríveis pelo caminho!
+
+Obrigada por fazer parte da nossa história. Esperamos continuar criando memórias especiais com você!
+
+Com carinho,
+Grazi`
+  return `https://wa.me/55${telefoneWhatsApp(user)}?text=${encodeURIComponent(msg)}`
+}
 const gerarSeedJson = async () => {
   try {
     const payload = await $fetch<any>('/api/seed/export')

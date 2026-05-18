@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <aside class="admin-sidebar" :class="{ 'menu-open': mobileOpen }">
     <div class="admin-logo">
       <span class="logo-icon"><UiBusIcon /></span>
@@ -17,7 +17,7 @@
       <button :class="{ 'active-soft': isViagens }" @click.stop="subOpen = !subOpen">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 19V5l6 3 6-3v14l-6-3-6 3Z" /><path d="M12 8v8" /></svg></span>
         <span>Excursões</span>
-        <span class="sidebar-chevron" :class="{ open: subOpen }">›</span>
+        <span class="sidebar-chevron" :class="{ open: subOpen }">&rsaquo;</span>
       </button>
       <Transition name="submenu">
         <div v-if="subOpen" class="nav-sub">
@@ -32,10 +32,23 @@
         </div>
       </Transition>
 
-      <button :class="{ active: active === 'passageiros' }" @click="selecionar('passageiros')">
+      <button :class="{ 'active-soft': isPassageiros }" @click.stop="passageirosOpen = !passageirosOpen">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /><path d="M18 7.5h3" /><path d="M19.5 6v3" /></svg></span>
         <span>Passageiros</span>
+        <span class="sidebar-chevron" :class="{ open: passageirosOpen }">&rsaquo;</span>
       </button>
+      <Transition name="submenu">
+        <div v-if="passageirosOpen" class="nav-sub">
+          <button :class="{ active: active === 'passageiros' }" @click="selecionar('passageiros')">
+            <span class="nav-dot"></span>
+            <span>Base de passageiros</span>
+          </button>
+          <button :class="{ active: active === 'aniversariantes' }" @click="selecionar('aniversariantes')">
+            <span class="nav-dot"></span>
+            <span>Aniversariantes</span>
+          </button>
+        </div>
+      </Transition>
 
       <button :class="{ active: active === 'logs' }" @click="selecionar('logs')">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M8 6h13" /><path d="M8 12h13" /><path d="M8 18h13" /><path d="M3 6h.01" /><path d="M3 12h.01" /><path d="M3 18h.01" /></svg></span>
@@ -59,9 +72,12 @@
 const props = defineProps<{ active: string }>()
 const emit = defineEmits(['update:active', 'logout'])
 const isViagens = computed(() => props.active === 'excursoes-ativas' || props.active === 'excursoes-finalizadas')
+const isPassageiros = computed(() => props.active === 'passageiros' || props.active === 'aniversariantes')
 const subOpen = ref(true)
+const passageirosOpen = ref(false)
 const mobileOpen = ref(false)
 watch(isViagens, (value) => { if (value) subOpen.value = true }, { immediate: true })
+watch(isPassageiros, (value) => { if (value) passageirosOpen.value = true }, { immediate: true })
 const selecionar = (value: string) => {
   emit('update:active', value)
   mobileOpen.value = false

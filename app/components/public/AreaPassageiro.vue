@@ -90,12 +90,13 @@
           </div>
         </div>
 
-        <div v-if="ex.ativarContrato && ex.liberarContratos" class="contract-row-pro">
+        <div class="contract-row-pro" :class="{ 'contract-row-locked': !contratoLiberado(ex) }">
           <div>
             <strong>Contrato digital</strong>
-            <span>{{ verificarAssinatura(ex) ? 'Contrato assinado e disponível para baixar.' : verificarSeEhDependente(ex) ? 'Você está como dependente. O titular assina o contrato.' : 'Leia e assine para liberar o pagamento.' }}</span>
+            <span>{{ textoContrato(ex) }}</span>
           </div>
-          <button v-if="verificarAssinatura(ex) && podeBaixarContrato(ex)" class="gt-btn gt-btn-outline" @click="baixarContrato(ex)">Baixar contrato</button>
+          <button v-if="!contratoLiberado(ex)" class="gt-btn gt-btn-primary contract-locked-button" disabled>Contrato não liberado</button>
+          <button v-else-if="verificarAssinatura(ex) && podeBaixarContrato(ex)" class="gt-btn gt-btn-outline" @click="baixarContrato(ex)">Baixar contrato</button>
           <button v-else-if="!verificarSeEhDependente(ex) && !verificarAssinatura(ex)" class="gt-btn gt-btn-primary" @click="abrirContrato(ex)">Ler e assinar</button>
         </div>
       </article>
@@ -251,6 +252,13 @@ const obterDependentes = (ex: any) => { if (!ex || !usuario.value) return []; co
 const obterLiderEDependentes = (ex: any) => { if (!usuario.value) return []; return [usuario.value, ...obterDependentes(ex)] }
 const verificarSeEhDependente = (ex: any) => { if (!ex || !ex.grupos || !usuario.value) return false; return Object.values(ex.grupos).some((dependentesArray: any) => dependentesArray.map(String).includes(String(usuario.value.id))) }
 const verificarAssinatura = (ex: any) => { if (!ex?.assinaturas || !usuario.value) return false; return !!ex.assinaturas[String(usuario.value.id)] }
+const contratoLiberado = (ex: any) => Boolean(ex.ativarContrato && ex.liberarContratos)
+const textoContrato = (ex: any) => {
+  if (!contratoLiberado(ex)) return 'GraziTur ainda não liberou a assinatura desta viagem.'
+  if (verificarAssinatura(ex)) return 'Contrato assinado e disponível para baixar.'
+  if (verificarSeEhDependente(ex)) return 'Você está como dependente. O titular assina o contrato.'
+  return 'Leia e assine para liberar o pagamento.'
+}
 const podeBaixarContrato = (ex: any) => { const liderId = liderResponsavelId(ex); return Boolean(liderId && ex?.assinaturas?.[String(liderId)] && ex?.assinaturas?.[`admin_${liderId}`]) }
 const baixarContrato = (ex: any) => { const liderId = liderResponsavelId(ex); if (!liderId) return; gerarContratoAssinadoPDF(ex, liderId, showToast) }
 const abrirContrato = (ex: any) => { excursaoContrato.value = ex; aceito.value = false; modalContrato.value = true }

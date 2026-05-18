@@ -1,7 +1,9 @@
-import { zipSync, strToU8 } from 'fflate'
+﻿import { zipSync, strToU8 } from 'fflate'
 import { brl, mascaraCPF, moneyToNumber } from './formatadores'
 
 type ToastFn = (message: string, type?: string) => void
+export type ListaPassageiroColunaId = 'nome' | 'cpf' | 'orgaoExpeditor' | 'idade' | 'rg' | 'nascimento' | 'celular' | 'cidade' | 'endereco' | 'email' | 'pagamento'
+type ListaPassageiroColuna = { id: ListaPassageiroColunaId; label: string; value: (user: any, excursao: any) => string }
 
 type Financeiro = {
   receita: number
@@ -15,6 +17,23 @@ const onlyDigits = (v: any) => String(v || '').replace(/\D/g, '')
 const xmlEscape = (v: any) => String(v ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c] || c))
 const htmlEscape = (v: any) => String(v ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c))
 const brDateTime = (value?: any) => value ? new Date(value).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : ''
+export const LISTA_PASSAGEIROS_COLUNAS: ListaPassageiroColuna[] = [
+  { id: 'nome', label: 'Nome', value: (u) => u.nomeLista || u.nome || '-' },
+  { id: 'cpf', label: 'CPF', value: (u) => mascaraCPF(String(u.cpf || '')) || '-' },
+  { id: 'orgaoExpeditor', label: 'Órgão expeditor', value: (u) => u.orgaoExpeditor || '-' },
+  { id: 'idade', label: 'Idade', value: (u) => u.idade === null || u.idade === undefined || u.idade === '' ? '-' : String(u.idade) },
+  { id: 'rg', label: 'RG', value: (u) => u.rg || '-' },
+  { id: 'nascimento', label: 'Nascimento', value: (u) => u.nascimento || '-' },
+  { id: 'celular', label: 'Celular', value: (u) => u.celular || '-' },
+  { id: 'cidade', label: 'Cidade', value: (u) => u.cidade || '-' },
+  { id: 'endereco', label: 'Endereço', value: (u) => u.endereco || '-' },
+  { id: 'email', label: 'E-mail', value: (u) => u.email || '-' },
+  { id: 'pagamento', label: 'Pagamento', value: (u, ex) => ex.pagamentos?.[String(u.id)] || 'Pendente' }
+]
+const colunasLista = (ids?: ListaPassageiroColunaId[]) => {
+  const selecionadas = (ids?.length ? ids : ['nome', 'cpf', 'orgaoExpeditor']).map(String)
+  return LISTA_PASSAGEIROS_COLUNAS.filter((coluna) => selecionadas.includes(coluna.id))
+}
 
 const moneyNumber = (input: any) => moneyToNumber(input)
 
@@ -76,15 +95,14 @@ function passageirosOrdenados(excursao: any) {
     })
 }
 
-export function exportarListaODT(excursao: any, showToast: ToastFn) {
+export function exportarListaODT(excursao: any, showToast: ToastFn, colunasIds?: ListaPassageiroColunaId[]) {
   try {
     const passageiros = passageirosOrdenados(excursao)
+    const colunas = colunasLista(colunasIds)
     const rows = passageiros.map((u: any, index: number) => `
       <table:table-row>
         <table:table-cell office:value-type="string"><text:p>${index + 1}</text:p></table:table-cell>
-        <table:table-cell office:value-type="string"><text:p>${xmlEscape(u.nomeLista || u.nome || '-')}</text:p></table:table-cell>
-        <table:table-cell office:value-type="string"><text:p>${xmlEscape(mascaraCPF(String(u.cpf || '')) || '-')}</text:p></table:table-cell>
-        <table:table-cell office:value-type="string"><text:p>${xmlEscape(u.orgaoExpeditor || '-')}</text:p></table:table-cell>
+        ${colunas.map((coluna) => `<table:table-cell office:value-type="string"><text:p>${xmlEscape(coluna.value(u, excursao))}</text:p></table:table-cell>`).join('')}
       </table:table-row>`).join('')
 
     const content = `<?xml version="1.0" encoding="UTF-8"?>
@@ -101,10 +119,7 @@ export function exportarListaODT(excursao: any, showToast: ToastFn) {
     <table:table table:name="Passageiros">
       <table:table-row>
         <table:table-cell office:value-type="string"><text:p text:style-name="h2">Nº</text:p></table:table-cell>
-        <table:table-cell office:value-type="string"><text:p text:style-name="h2">NOME</text:p></table:table-cell>
-        <table:table-cell office:value-type="string"><text:p text:style-name="h2">CPF</text:p></table:table-cell>
-        <table:table-cell office:value-type="string"><text:p text:style-name="h2">ÓRGÃO EXPEDITOR</text:p></table:table-cell>
-      </table:table-row>
+        ${colunas.map((coluna) => `<table:table-cell office:value-type="string"><text:p text:style-name="h2">${xmlEscape(coluna.label.toUpperCase())}</text:p></table:table-cell>`).join('')}      </table:table-row>
       ${rows}
     </table:table>
   </office:text></office:body>
@@ -136,17 +151,18 @@ export function exportarListaODT(excursao: any, showToast: ToastFn) {
 }
 
 // Mantidas para compatibilidade com versões antigas dos botões.
-export async function exportarListaPDF(excursao: any, showToast: ToastFn) {
+export async function exportarListaPDF(excursao: any, showToast: ToastFn, colunasIds?: ListaPassageiroColunaId[]) {
   try {
     const { jsPDF, autoTable } = await getPdfTools()
     const doc = new jsPDF()
     const passageiros = passageirosOrdenados(excursao)
+    const colunas = colunasLista(colunasIds)
     doc.setFontSize(16)
     doc.text(`Lista de Passageiros - ${excursao.nome}`, 14, 18)
     autoTable(doc, {
       startY: 28,
-      head: [['Nº', 'Nome', 'CPF', 'Órgão expedidor']],
-      body: passageiros.map((u: any, i: number) => [i + 1, u.nomeLista || u.nome || '-', mascaraCPF(String(u.cpf || '')) || '-', u.orgaoExpeditor || '-']),
+      head: [['Nº', ...colunas.map((coluna) => coluna.label)]],
+      body: passageiros.map((u: any, i: number) => [i + 1, ...colunas.map((coluna) => coluna.value(u, excursao))]),
       styles: { fontSize: 8 }
     })
     doc.save(`Lista_${safeName(excursao.nome)}.pdf`)
