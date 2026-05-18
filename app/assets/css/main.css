@@ -1310,17 +1310,12 @@ body { letter-spacing: -.01em; }
   align-items: start;
 }
 .birthday-calendar-card,
-.birthday-selected-card,
 .birthday-today-card {
   padding: 16px;
 }
 .birthday-calendar-card {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-}
-.birthday-side-column {
-  display: grid;
-  gap: 16px;
 }
 .birthday-calendar-toolbar {
   display: grid;
@@ -1333,7 +1328,6 @@ body { letter-spacing: -.01em; }
   min-width: 0;
   text-align: center;
 }
-.birthday-selected-header,
 .birthday-section-title {
   display: flex;
   align-items: center;
@@ -1346,14 +1340,12 @@ body { letter-spacing: -.01em; }
   min-width: 0;
 }
 .birthday-calendar-toolbar strong,
-.birthday-selected-header strong,
 .birthday-section-title strong {
   display: block;
   font-size: 1rem;
   text-transform: capitalize;
 }
 .birthday-calendar-toolbar span,
-.birthday-selected-header span,
 .birthday-section-title span {
   display: block;
   color: var(--gt-muted);

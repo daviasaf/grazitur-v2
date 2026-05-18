@@ -133,41 +133,27 @@
                 </div>
 
                 <div class="birthday-calendar-grid">
-                  <button v-for="dia in calendarioAniversarios" :key="dia.key" type="button" class="birthday-day-cell" :class="{ 'is-muted': !dia.isCurrentMonth, 'is-today': dia.isToday, 'has-birthday': dia.birthdays.length }" @click="selecionarDiaAniversario(dia)">
+                  <div v-for="dia in calendarioAniversarios" :key="dia.key" class="birthday-day-cell" :class="{ 'is-muted': !dia.isCurrentMonth, 'is-today': dia.isToday, 'has-birthday': dia.birthdays.length }">
                     <span class="birthday-day-number">{{ dia.day }}</span>
                     <span v-if="dia.isToday" class="birthday-today-label">Hoje</span>
                     <span v-if="dia.birthdays.length" class="birthday-day-count">{{ dia.birthdays.length }}</span>
                     <span v-for="item in dia.birthdays.slice(0, 2)" :key="item.user.id" class="birthday-day-name">{{ primeiroNomePessoa(item.user.nome) }}</span>
                     <span v-if="dia.birthdays.length > 2" class="birthday-day-more">+{{ dia.birthdays.length - 2 }}</span>
-                  </button>
+                  </div>
                 </div>
               </section>
 
-              <div class="birthday-side-column">
-                <aside class="gt-card birthday-selected-card">
-                  <div class="birthday-selected-header"><span>{{ diaSelecionadoLabel }}</span><strong>{{ pluralAniversariantes(aniversariantesDiaSelecionado.length) }}</strong></div>
-                  <div v-if="aniversariantesDiaSelecionado.length" class="birthday-message-list">
-                    <div v-for="item in aniversariantesDiaSelecionado" :key="item.user.id" class="birthday-message-row">
-                      <div><strong>{{ item.user.nome }}</strong><span>{{ item.user.celular || 'Celular não informado' }}</span></div>
-                      <a v-if="telefoneWhatsApp(item.user)" class="gt-btn gt-btn-success gt-btn-xs" :href="linkAniversarioWhatsApp(item.user)" target="_blank">WhatsApp</a>
-                      <span v-else class="text-muted small">Sem celular</span>
-                    </div>
+              <section class="gt-card birthday-today-card">
+                <div class="birthday-section-title"><div><strong>Aniversariantes do dia</strong><span>Prontos para mandar mensagem agora.</span></div><span>{{ pluralAniversariantes(aniversariantesHoje.length) }}</span></div>
+                <div v-if="aniversariantesHoje.length" class="birthday-message-list">
+                  <div v-for="item in aniversariantesHoje" :key="item.user.id" class="birthday-message-row">
+                    <div><strong>{{ item.user.nome }}</strong><span>{{ item.user.celular || 'Celular não informado' }}</span></div>
+                    <a v-if="telefoneWhatsApp(item.user)" class="gt-btn gt-btn-success gt-btn-xs" :href="linkAniversarioWhatsApp(item.user)" target="_blank">Mensagem no WhatsApp</a>
+                    <span v-else class="text-muted small">Sem celular</span>
                   </div>
-                  <div v-else class="birthday-empty-panel">Nenhum aniversário neste dia.</div>
-                </aside>
-
-                <section class="gt-card birthday-today-card">
-                  <div class="birthday-section-title"><div><strong>Aniversariantes do dia</strong><span>Prontos para mandar mensagem agora.</span></div><span>{{ pluralAniversariantes(aniversariantesHoje.length) }}</span></div>
-                  <div v-if="aniversariantesHoje.length" class="birthday-message-list">
-                    <div v-for="item in aniversariantesHoje" :key="item.user.id" class="birthday-message-row">
-                      <div><strong>{{ item.user.nome }}</strong><span>{{ item.user.celular || 'Celular não informado' }}</span></div>
-                      <a v-if="telefoneWhatsApp(item.user)" class="gt-btn gt-btn-success gt-btn-xs" :href="linkAniversarioWhatsApp(item.user)" target="_blank">Mensagem no WhatsApp</a>
-                      <span v-else class="text-muted small">Sem celular</span>
-                    </div>
-                  </div>
-                  <div v-else class="birthday-empty-panel">Nenhum aniversariante hoje.</div>
-                </section>
-              </div>
+                </div>
+                <div v-else class="birthday-empty-panel">Nenhum aniversariante hoje.</div>
+              </section>
             </div>
           </div>
           <div v-if="active === 'logs'">
@@ -660,7 +646,6 @@ type BirthdayItem = { user: any; status: BirthdayStatus; label: string; sort: nu
 type CalendarBirthdayDay = { key: string; date: Date; day: number; isCurrentMonth: boolean; isToday: boolean; birthdays: BirthdayItem[] }
 const pluralAniversariantes = (total: number) => `${total} ${total === 1 ? 'aniversariante' : 'aniversariantes'}`
 const mesAniversario = ref(0)
-const diaSelecionadoKey = ref('')
 const inicioDoDia = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
 const dateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 const nascimentoDiaMes = (value: any) => {
@@ -732,18 +717,7 @@ const calendarioAniversarios = computed<CalendarBirthdayDay[]>(() => {
     return { key, date, day: date.getDate(), isCurrentMonth: date.getMonth() === base.getMonth(), isToday: key === hojeKey, birthdays }
   })
 })
-const aniversariantesDiaSelecionado = computed(() => calendarioAniversarios.value.find((dia) => dia.key === diaSelecionadoKey.value)?.birthdays || [])
-const diaSelecionadoLabel = computed(() => {
-  const dia = calendarioAniversarios.value.find((item) => item.key === diaSelecionadoKey.value)
-  return dia ? dia.date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : 'Selecione um dia'
-})
-const selecionarDiaAniversario = (dia: CalendarBirthdayDay) => { diaSelecionadoKey.value = dia.key }
 const primeiroNomePessoa = (nome: string) => String(nome || '').trim().split(/\s+/)[0] || 'Nome'
-watch(mesAniversarioData, (data) => {
-  const hoje = new Date()
-  const noMesAtual = data.getFullYear() === hoje.getFullYear() && data.getMonth() === hoje.getMonth()
-  diaSelecionadoKey.value = dateKey(noMesAtual ? hoje : data)
-}, { immediate: true })
 const telefoneWhatsApp = (user: any) => {
   const phone = onlyDigits(user?.celular)
   return phone.length >= 10 ? phone : ''
