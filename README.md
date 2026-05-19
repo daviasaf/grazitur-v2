@@ -80,3 +80,34 @@ $env:SEED_RESET="true"; $env:SEED_FILE="./prisma/seed-users.json"; npm run seed
 npm run build
 npm run preview
 ```
+
+## Mantendo ativo no Render
+
+No plano gratuito do Render, um Web Service pode dormir depois de alguns minutos sem acessos. O projeto ja tem um endpoint leve para monitoramento:
+
+```text
+https://SEU-SITE.onrender.com/api/ping
+```
+
+Para reduzir o "sleep", crie um monitor externo em um servico como `cron-job.org`, UptimeRobot ou Better Stack:
+
+1. configure uma requisicao `GET`;
+2. use a URL `/api/ping` do seu deploy;
+3. rode a cada 10 ou 14 minutos;
+4. considere resposta HTTP `200` como sucesso.
+
+Para producao com disponibilidade real, use uma instancia paga no Render, porque instancias pagas nao dormem por inatividade.
+
+Tambem existe um ping automatico no servidor, parecido com:
+
+```js
+setInterval(() => {
+  fetch("https://SEU-SITE.onrender.com/api/ping")
+}, 300000)
+```
+
+Para ativar, configure esta variavel de ambiente no Render:
+
+```env
+KEEP_ALIVE_URL="https://SEU-SITE.onrender.com/api/ping"
+```
