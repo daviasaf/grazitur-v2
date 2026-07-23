@@ -1,0 +1,221 @@
+import { createHotContext as __vite__createHotContext } from "/_nuxt/@vite/client";import.meta.hot = __vite__createHotContext("/components/auth/AdminLogin.vue");import { recordPosition as _tracerRecordPosition } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vite-plugin-vue-tracer@1.4._c8e6474912ceed6e1485fad075c614ca/node_modules/vite-plugin-vue-tracer/dist/client/record.mjs?v=41241ef9"
+import { defineComponent as _defineComponent } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+
+import { ref } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+const _sfc_main = /* @__PURE__ */ _defineComponent({
+  __name: "AuthAdminLogin",
+  emits: ["sucesso"],
+  setup(__props, { expose: __expose, emit: __emit }) {
+    __expose();
+    const emit = __emit;
+    const email = ref("");
+    const password = ref("");
+    const erro = ref("");
+    const carregando = ref(false);
+    const mostrarSenha = ref(false);
+    const fazerLogin = async () => {
+      erro.value = "";
+      carregando.value = true;
+      try {
+        await $fetch("/api/auth", { method: "POST", body: { email: email.value, password: password.value } });
+        if (true) localStorage.setItem("graziTurAdmin", "true");
+        emit("sucesso");
+      } catch (e) {
+        erro.value = e.data?.statusMessage || "E-mail ou senha incorretos.";
+      } finally {
+        carregando.value = false;
+      }
+    };
+    const __returned__ = { emit, email, password, erro, carregando, mostrarSenha, fazerLogin };
+    Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+    return __returned__;
+  }
+});
+import { createElementVNode as _createElementVNode, vModelText as _vModelText, withKeys as _withKeys, withDirectives as _withDirectives, vModelDynamic as _vModelDynamic, openBlock as _openBlock, createElementBlock as _createElementBlock, createCommentVNode as _createCommentVNode, toDisplayString as _toDisplayString } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+const _hoisted_1 = { class: "admin-login-shell min-vh-100" };
+const _hoisted_2 = { class: "admin-login-split gt-card" };
+const _hoisted_3 = { class: "login-form-panel" };
+const _hoisted_4 = { class: "password-field" };
+const _hoisted_5 = ["type"];
+const _hoisted_6 = ["title", "aria-label", "aria-pressed"];
+const _hoisted_7 = {
+  key: 0,
+  viewBox: "0 0 24 24",
+  "aria-hidden": "true"
+};
+const _hoisted_8 = {
+  key: 1,
+  viewBox: "0 0 24 24",
+  "aria-hidden": "true"
+};
+const _hoisted_9 = {
+  key: 0,
+  class: "text-danger small fw-bold mt-3 mb-0"
+};
+const _hoisted_10 = ["disabled"];
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  return _openBlock(), _tracer(2,2,_createElementBlock("div", _hoisted_1, [
+    _tracer(3,4,_createElementVNode("div", _hoisted_2, [
+      _cache[8] || (_cache[8] = _tracer(4,6,_createElementVNode(
+        "section",
+        { class: "login-copy-panel" },
+        [
+          _tracer(5,8,_createElementVNode("h1", null, "Gestão profissional das viagens GraziTur.")),
+          _tracer(6,8,_createElementVNode("p", null, "Controle excursões, passageiros, contratos, pagamentos e relatórios em um painel organizado e seguro.")),
+          _tracer(7,8,_createElementVNode("div", { class: "login-feature-grid" }, [
+            _tracer(8,10,_createElementVNode("span", null, "Excursões")),
+            _tracer(9,10,_createElementVNode("span", null, "Contratos")),
+            _tracer(10,10,_createElementVNode("span", null, "Financeiro")),
+            _tracer(11,10,_createElementVNode("span", null, "Passageiros"))
+          ]))
+        ],
+        -1
+        /* CACHED */
+      ))),
+      _tracer(15,6,_createElementVNode("section", _hoisted_3, [
+        _cache[5] || (_cache[5] = _tracer(16,8,_createElementVNode(
+          "div",
+          { class: "mb-4" },
+          [
+            _tracer(17,10,_createElementVNode("h2", null, "Entrar no painel")),
+            _tracer(18,10,_createElementVNode("p", null, "Acesse com as credenciais administrativas."))
+          ],
+          -1
+          /* CACHED */
+        ))),
+        _cache[6] || (_cache[6] = _tracer(21,8,_createElementVNode(
+          "label",
+          { class: "form-label" },
+          "E-mail",
+          -1
+          /* CACHED */
+        ))),
+        _withDirectives(_tracer(22,8,_createElementVNode(
+          "input",
+          {
+            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.email = $event),
+            type: "email",
+            class: "form-control",
+            placeholder: "Digite seu e-mail",
+            autocomplete: "off",
+            onKeyup: _withKeys($setup.fazerLogin, ["enter"])
+          },
+          null,
+          544
+          /* NEED_HYDRATION, NEED_PATCH */
+        )), [
+          [_vModelText, $setup.email]
+        ]),
+        _cache[7] || (_cache[7] = _tracer(24,8,_createElementVNode(
+          "label",
+          { class: "form-label mt-3" },
+          "Senha",
+          -1
+          /* CACHED */
+        ))),
+        _tracer(25,8,_createElementVNode("div", _hoisted_4, [
+          _withDirectives(_tracer(26,10,_createElementVNode("input", {
+            "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.password = $event),
+            type: $setup.mostrarSenha ? "text" : "password",
+            class: "form-control",
+            placeholder: "Digite sua senha",
+            autocomplete: "current-password",
+            onKeyup: _withKeys($setup.fazerLogin, ["enter"])
+          }, null, 40, _hoisted_5)), [
+            [_vModelDynamic, $setup.password]
+          ]),
+          _tracer(27,10,_createElementVNode("button", {
+            type: "button",
+            class: "password-toggle-btn",
+            title: $setup.mostrarSenha ? "Ocultar senha" : "Mostrar senha",
+            "aria-label": $setup.mostrarSenha ? "Ocultar senha" : "Mostrar senha",
+            "aria-pressed": $setup.mostrarSenha,
+            onClick: _cache[2] || (_cache[2] = ($event) => $setup.mostrarSenha = !$setup.mostrarSenha)
+          }, [
+            !$setup.mostrarSenha ? (_openBlock(), _tracer(35,12,_createElementBlock("svg", _hoisted_7, [..._cache[3] || (_cache[3] = [
+              _tracer(36,14,_createElementVNode(
+                "path",
+                { d: "M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" },
+                null,
+                -1
+                /* CACHED */
+              )),
+              _tracer(37,14,_createElementVNode(
+                "circle",
+                {
+                  cx: "12",
+                  cy: "12",
+                  r: "3"
+                },
+                null,
+                -1
+                /* CACHED */
+              ))
+            ])]))) : (_openBlock(), _tracer(39,12,_createElementBlock("svg", _hoisted_8, [..._cache[4] || (_cache[4] = [
+              _tracer(40,14,_createElementVNode(
+                "path",
+                { d: "m3 3 18 18" },
+                null,
+                -1
+                /* CACHED */
+              )),
+              _tracer(41,14,_createElementVNode(
+                "path",
+                { d: "M10.6 10.6a3 3 0 0 0 3.8 3.8" },
+                null,
+                -1
+                /* CACHED */
+              )),
+              _tracer(42,14,_createElementVNode(
+                "path",
+                { d: "M7.1 7.5C4.2 9.2 2.5 12 2.5 12s3.5 6 9.5 6c1.7 0 3.1-.4 4.4-1.1" },
+                null,
+                -1
+                /* CACHED */
+              )),
+              _tracer(43,14,_createElementVNode(
+                "path",
+                { d: "M14.2 6.3C18.8 7.4 21.5 12 21.5 12s-.8 1.4-2.2 2.8" },
+                null,
+                -1
+                /* CACHED */
+              ))
+            ])])))
+          ], 8, _hoisted_6))
+        ])),
+        $setup.erro ? (_openBlock(), _tracer(48,8,_createElementBlock(
+          "p",
+          _hoisted_9,
+          _toDisplayString($setup.erro),
+          1
+          /* TEXT */
+        ))) : _createCommentVNode("v-if", true),
+        _tracer(49,8,_createElementVNode("button", {
+          class: "gt-btn gt-btn-primary w-100 mt-4",
+          onClick: $setup.fazerLogin,
+          disabled: $setup.carregando
+        }, _toDisplayString($setup.carregando ? "Entrando..." : "Entrar no painel"), 9, _hoisted_10))
+      ]))
+    ]))
+  ]));
+}
+_sfc_main.__hmrId = "009ab9ca";
+typeof __VUE_HMR_RUNTIME__ !== "undefined" && __VUE_HMR_RUNTIME__.createRecord(_sfc_main.__hmrId, _sfc_main);
+import.meta.hot.on("file-changed", ({ file }) => {
+  __VUE_HMR_RUNTIME__.CHANGED_FILE = file;
+});
+import.meta.hot.accept((mod) => {
+  if (!mod) return;
+  const { default: updated, _rerender_only } = mod;
+  if (_rerender_only) {
+    __VUE_HMR_RUNTIME__.rerender(updated.__hmrId, updated.render);
+  } else {
+    __VUE_HMR_RUNTIME__.reload(updated.__hmrId, updated);
+  }
+});
+import _export_sfc from "/_nuxt/@id/__x00__plugin-vue:export-helper";
+export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/app/components/auth/AdminLogin.vue"]]);
+
+function _tracer(line, column, vnode) { return _tracerRecordPosition("app/components/auth/AdminLogin.vue", line, column, vnode) }
+
+//# sourceMappingURL=data:application/json;base64,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RTtBQUFBLGtCQUEvRCxHQUFFLDJEQUEwRDtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsNEJBQ2xFO0FBQUEsZ0JBQWdDO0FBQUE7QUFBQSxrQkFBeEIsSUFBRztBQUFBLGtCQUFLLElBQUc7QUFBQSxrQkFBSyxHQUFFO0FBQUE7Ozs7O2tEQUU1QixvQkFLTSxPQUxOLFlBS007QUFBQSw0QkFKSjtBQUFBLGdCQUF1QjtBQUFBLGtCQUFqQixHQUFFLGFBQVk7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBLDRCQUNwQjtBQUFBLGdCQUF5QztBQUFBLGtCQUFuQyxHQUFFLCtCQUE4QjtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsNEJBQ3RDO0FBQUEsZ0JBQTRFO0FBQUEsa0JBQXRFLEdBQUUsa0VBQWlFO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQSw0QkFDekU7QUFBQSxnQkFBK0Q7QUFBQSxrQkFBekQsR0FBRSxxREFBb0Q7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBOzs7UUFLekQsMENBQVQ7QUFBQSxVQUF5RTtBQUFBLFVBQXpFO0FBQUEsVUFBeUUsaUJBQVgsV0FBSTtBQUFBO0FBQUE7QUFBQTtxQkFDbEUsb0JBRVM7QUFBQSxVQUZELE9BQU07QUFBQSxVQUFvQyxTQUFPO0FBQUEsVUFBYSxVQUFVO0FBQUEsNEJBQzNFLG9CQUFVO0FBQUEiLCJuYW1lcyI6W10sImlnbm9yZUxpc3QiOltdLCJzb3VyY2VzIjpbIkFkbWluTG9naW4udnVlIl0sInNvdXJjZXNDb250ZW50IjpbIjx0ZW1wbGF0ZT5cclxuICA8ZGl2IGNsYXNzPVwiYWRtaW4tbG9naW4tc2hlbGwgbWluLXZoLTEwMFwiPlxyXG4gICAgPGRpdiBjbGFzcz1cImFkbWluLWxvZ2luLXNwbGl0IGd0LWNhcmRcIj5cclxuICAgICAgPHNlY3Rpb24gY2xhc3M9XCJsb2dpbi1jb3B5LXBhbmVsXCI+XHJcbiAgICAgICAgPGgxPkdlc3TDo28gcHJvZmlzc2lvbmFsIGRhcyB2aWFnZW5zIEdyYXppVHVyLjwvaDE+XHJcbiAgICAgICAgPHA+Q29udHJvbGUgZXhjdXJzw7VlcywgcGFzc2FnZWlyb3MsIGNvbnRyYXRvcywgcGFnYW1lbnRvcyBlIHJlbGF0w7NyaW9zIGVtIHVtIHBhaW5lbCBvcmdhbml6YWRvIGUgc2VndXJvLjwvcD5cclxuICAgICAgICA8ZGl2IGNsYXNzPVwibG9naW4tZmVhdHVyZS1ncmlkXCI+XHJcbiAgICAgICAgICA8c3Bhbj5FeGN1cnPDtWVzPC9zcGFuPlxyXG4gICAgICAgICAgPHNwYW4+Q29udHJhdG9zPC9zcGFuPlxyXG4gICAgICAgICAgPHNwYW4+RmluYW5jZWlybzwvc3Bhbj5cclxuICAgICAgICAgIDxzcGFuPlBhc3NhZ2Vpcm9zPC9zcGFuPlxyXG4gICAgICAgIDwvZGl2PlxyXG4gICAgICA8L3NlY3Rpb24+XHJcblxyXG4gICAgICA8c2VjdGlvbiBjbGFzcz1cImxvZ2luLWZvcm0tcGFuZWxcIj5cclxuICAgICAgICA8ZGl2IGNsYXNzPVwibWItNFwiPlxyXG4gICAgICAgICAgPGgyPkVudHJhciBubyBwYWluZWw8L2gyPlxyXG4gICAgICAgICAgPHA+QWNlc3NlIGNvbSBhcyBjcmVkZW5jaWFpcyBhZG1pbmlzdHJhdGl2YXMuPC9wPlxyXG4gICAgICAgIDwvZGl2PlxuXG4gICAgICAgIDxsYWJlbCBjbGFzcz1cImZvcm0tbGFiZWxcIj5FLW1haWw8L2xhYmVsPlxuICAgICAgICA8aW5wdXQgdi1tb2RlbD1cImVtYWlsXCIgdHlwZT1cImVtYWlsXCIgY2xhc3M9XCJmb3JtLWNvbnRyb2xcIiBwbGFjZWhvbGRlcj1cIkRpZ2l0ZSBzZXUgZS1tYWlsXCIgYXV0b2NvbXBsZXRlPVwib2ZmXCIgQGtleXVwLmVudGVyPVwiZmF6ZXJMb2dpblwiPlxuXG4gICAgICAgIDxsYWJlbCBjbGFzcz1cImZvcm0tbGFiZWwgbXQtM1wiPlNlbmhhPC9sYWJlbD5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBhc3N3b3JkLWZpZWxkXCI+XG4gICAgICAgICAgPGlucHV0IHYtbW9kZWw9XCJwYXNzd29yZFwiIDp0eXBlPVwibW9zdHJhclNlbmhhID8gJ3RleHQnIDogJ3Bhc3N3b3JkJ1wiIGNsYXNzPVwiZm9ybS1jb250cm9sXCIgcGxhY2Vob2xkZXI9XCJEaWdpdGUgc3VhIHNlbmhhXCIgYXV0b2NvbXBsZXRlPVwiY3VycmVudC1wYXNzd29yZFwiIEBrZXl1cC5lbnRlcj1cImZhemVyTG9naW5cIj5cbiAgICAgICAgICA8YnV0dG9uXG4gICAgICAgICAgICB0eXBlPVwiYnV0dG9uXCJcbiAgICAgICAgICAgIGNsYXNzPVwicGFzc3dvcmQtdG9nZ2xlLWJ0blwiXG4gICAgICAgICAgICA6dGl0bGU9XCJtb3N0cmFyU2VuaGEgPyAnT2N1bHRhciBzZW5oYScgOiAnTW9zdHJhciBzZW5oYSdcIlxuICAgICAgICAgICAgOmFyaWEtbGFiZWw9XCJtb3N0cmFyU2VuaGEgPyAnT2N1bHRhciBzZW5oYScgOiAnTW9zdHJhciBzZW5oYSdcIlxuICAgICAgICAgICAgOmFyaWEtcHJlc3NlZD1cIm1vc3RyYXJTZW5oYVwiXG4gICAgICAgICAgICBAY2xpY2s9XCJtb3N0cmFyU2VuaGEgPSAhbW9zdHJhclNlbmhhXCJcbiAgICAgICAgICA+XG4gICAgICAgICAgICA8c3ZnIHYtaWY9XCIhbW9zdHJhclNlbmhhXCIgdmlld0JveD1cIjAgMCAyNCAyNFwiIGFyaWEtaGlkZGVuPVwidHJ1ZVwiPlxuICAgICAgICAgICAgICA8cGF0aCBkPVwiTTIuNSAxMnMzLjUtNiA5LjUtNiA5LjUgNiA5LjUgNi0zLjUgNi05LjUgNi05LjUtNi05LjUtNlpcIiAvPlxuICAgICAgICAgICAgICA8Y2lyY2xlIGN4PVwiMTJcIiBjeT1cIjEyXCIgcj1cIjNcIiAvPlxuICAgICAgICAgICAgPC9zdmc+XG4gICAgICAgICAgICA8c3ZnIHYtZWxzZSB2aWV3Qm94PVwiMCAwIDI0IDI0XCIgYXJpYS1oaWRkZW49XCJ0cnVlXCI+XG4gICAgICAgICAgICAgIDxwYXRoIGQ9XCJtMyAzIDE4IDE4XCIgLz5cbiAgICAgICAgICAgICAgPHBhdGggZD1cIk0xMC42IDEwLjZhMyAzIDAgMCAwIDMuOCAzLjhcIiAvPlxuICAgICAgICAgICAgICA8cGF0aCBkPVwiTTcuMSA3LjVDNC4yIDkuMiAyLjUgMTIgMi41IDEyczMuNSA2IDkuNSA2YzEuNyAwIDMuMS0uNCA0LjQtMS4xXCIgLz5cbiAgICAgICAgICAgICAgPHBhdGggZD1cIk0xNC4yIDYuM0MxOC44IDcuNCAyMS41IDEyIDIxLjUgMTJzLS44IDEuNC0yLjIgMi44XCIgLz5cbiAgICAgICAgICAgIDwvc3ZnPlxuICAgICAgICAgIDwvYnV0dG9uPlxuICAgICAgICA8L2Rpdj5cblxyXG4gICAgICAgIDxwIHYtaWY9XCJlcnJvXCIgY2xhc3M9XCJ0ZXh0LWRhbmdlciBzbWFsbCBmdy1ib2xkIG10LTMgbWItMFwiPnt7IGVycm8gfX08L3A+XHJcbiAgICAgICAgPGJ1dHRvbiBjbGFzcz1cImd0LWJ0biBndC1idG4tcHJpbWFyeSB3LTEwMCBtdC00XCIgQGNsaWNrPVwiZmF6ZXJMb2dpblwiIDpkaXNhYmxlZD1cImNhcnJlZ2FuZG9cIj5cclxuICAgICAgICAgIHt7IGNhcnJlZ2FuZG8gPyAnRW50cmFuZG8uLi4nIDogJ0VudHJhciBubyBwYWluZWwnIH19XHJcbiAgICAgICAgPC9idXR0b24+XHJcbiAgICAgIDwvc2VjdGlvbj5cclxuICAgIDwvZGl2PlxyXG4gIDwvZGl2PlxyXG48L3RlbXBsYXRlPlxyXG5cclxuPHNjcmlwdCBzZXR1cCBsYW5nPVwidHNcIj5cclxuY29uc3QgZW1pdCA9IGRlZmluZUVtaXRzKFsnc3VjZXNzbyddKVxuY29uc3QgZW1haWwgPSByZWYoJycpXG5jb25zdCBwYXNzd29yZCA9IHJlZignJylcbmNvbnN0IGVycm8gPSByZWYoJycpXG5jb25zdCBjYXJyZWdhbmRvID0gcmVmKGZhbHNlKVxuY29uc3QgbW9zdHJhclNlbmhhID0gcmVmKGZhbHNlKVxuXHJcbmNvbnN0IGZhemVyTG9naW4gPSBhc3luYyAoKSA9PiB7XHJcbiAgZXJyby52YWx1ZSA9ICcnXHJcbiAgY2FycmVnYW5kby52YWx1ZSA9IHRydWVcclxuICB0cnkge1xyXG4gICAgYXdhaXQgJGZldGNoKCcvYXBpL2F1dGgnLCB7IG1ldGhvZDogJ1BPU1QnLCBib2R5OiB7IGVtYWlsOiBlbWFpbC52YWx1ZSwgcGFzc3dvcmQ6IHBhc3N3b3JkLnZhbHVlIH0gfSlcclxuICAgIGlmIChpbXBvcnQubWV0YS5jbGllbnQpIGxvY2FsU3RvcmFnZS5zZXRJdGVtKCdncmF6aVR1ckFkbWluJywgJ3RydWUnKVxyXG4gICAgZW1pdCgnc3VjZXNzbycpXHJcbiAgfSBjYXRjaCAoZTogYW55KSB7XHJcbiAgICBlcnJvLnZhbHVlID0gZS5kYXRhPy5zdGF0dXNNZXNzYWdlIHx8ICdFLW1haWwgb3Ugc2VuaGEgaW5jb3JyZXRvcy4nXHJcbiAgfSBmaW5hbGx5IHtcclxuICAgIGNhcnJlZ2FuZG8udmFsdWUgPSBmYWxzZVxyXG4gIH1cclxufVxyXG48L3NjcmlwdD5cclxuIl0sImZpbGUiOiJDOi9Vc2Vycy9Bc2FmL0Rlc2t0b3AvQ8OzZGlnb3Mvc2l0ZS1lbG90cmlwL2dyYXppdHVyLXYyL2FwcC9jb21wb25lbnRzL2F1dGgvQWRtaW5Mb2dpbi52dWUifQ==

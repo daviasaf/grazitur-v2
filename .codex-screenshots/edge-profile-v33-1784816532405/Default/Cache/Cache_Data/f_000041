@@ -1,0 +1,278 @@
+import { createHotContext as __vite__createHotContext } from "/_nuxt/@vite/client";import.meta.hot = __vite__createHotContext("/components/passageiros/Tabela.vue");import { recordPosition as _tracerRecordPosition } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vite-plugin-vue-tracer@1.4._c8e6474912ceed6e1485fad075c614ca/node_modules/vite-plugin-vue-tracer/dist/client/record.mjs?v=41241ef9"
+import { defineComponent as _defineComponent } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+const _sfc_main = /* @__PURE__ */ _defineComponent({
+  __name: "PassageirosTabela",
+  props: {
+    usuarios: { type: Array, required: true }
+  },
+  emits: ["vincular", "editar", "excluir"],
+  setup(__props, { expose: __expose }) {
+    __expose();
+    const initials = (nome) => String(nome || "GT").trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
+    const pluralFamiliares = (total) => `${total} ${total === 1 ? "familiar" : "familiares"}`;
+    const formatCpf = (cpf) => {
+      const v = String(cpf || "").replace(/\D/g, "");
+      return v.length === 11 ? v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : cpf;
+    };
+    const formatPhone = (fone) => {
+      const v = String(fone || "").replace(/\D/g, "");
+      if (v.length === 11) return v.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+      if (v.length === 10) return v.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+      return fone;
+    };
+    const __returned__ = { initials, pluralFamiliares, formatCpf, formatPhone };
+    Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+    return __returned__;
+  }
+});
+import { createElementVNode as _createElementVNode, renderList as _renderList, Fragment as _Fragment, openBlock as _openBlock, createElementBlock as _createElementBlock, toDisplayString as _toDisplayString, createCommentVNode as _createCommentVNode, withModifiers as _withModifiers, createStaticVNode as _createStaticVNode } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+const _hoisted_1 = { class: "passengers-board d-none d-md-block" };
+const _hoisted_2 = ["onClick"];
+const _hoisted_3 = { class: "passenger-cell-main" };
+const _hoisted_4 = { class: "passenger-avatar-soft" };
+const _hoisted_5 = { class: "passenger-name-wrap" };
+const _hoisted_6 = {
+  key: 0,
+  class: "guide-chip"
+};
+const _hoisted_7 = { key: 1 };
+const _hoisted_8 = { key: 2 };
+const _hoisted_9 = { class: "passenger-cell-muted" };
+const _hoisted_10 = { class: "passenger-cell-muted" };
+const _hoisted_11 = ["onClick"];
+const _hoisted_12 = ["onClick"];
+const _hoisted_13 = {
+  key: 0,
+  class: "passenger-empty-state"
+};
+const _hoisted_14 = { class: "d-md-none passenger-mobile-list" };
+const _hoisted_15 = ["onClick"];
+const _hoisted_16 = { class: "passenger-avatar-soft" };
+const _hoisted_17 = { class: "mobile-passenger-info" };
+const _hoisted_18 = { class: "mobile-tags" };
+const _hoisted_19 = {
+  key: 0,
+  class: "guide-chip"
+};
+const _hoisted_20 = {
+  key: 1,
+  class: "family-chip"
+};
+const _hoisted_21 = ["onClick"];
+const _hoisted_22 = ["onClick"];
+const _hoisted_23 = {
+  key: 0,
+  class: "passenger-empty-state"
+};
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  return _openBlock(), _tracer(2,2,_createElementBlock("div", null, [
+    _tracer(3,4,_createElementVNode("div", _hoisted_1, [
+      _cache[4] || (_cache[4] = _tracer(4,6,_createElementVNode(
+        "div",
+        { class: "passenger-table-head" },
+        [
+          _tracer(5,8,_createElementVNode("span", null, "Passageiro")),
+          _tracer(6,8,_createElementVNode("span", null, "Documento")),
+          _tracer(7,8,_createElementVNode("span", null, "Celular")),
+          _tracer(8,8,_createElementVNode("span", null, "Ações"))
+        ],
+        -1
+        /* CACHED */
+      ))),
+      (_openBlock(true), _tracer(11,6,_createElementBlock(
+        _Fragment,
+        null,
+        _renderList($props.usuarios, (u) => {
+          return _openBlock(), _tracer(11,6,_createElementBlock("button", {
+            key: u.id,
+            class: "passenger-table-row",
+            type: "button",
+            onClick: ($event) => _ctx.$emit("vincular", u)
+          }, [
+            _tracer(12,8,_createElementVNode("span", _hoisted_3, [
+              _tracer(13,10,_createElementVNode(
+                "span",
+                _hoisted_4,
+                _toDisplayString($setup.initials(u.nome)),
+                1
+                /* TEXT */
+              )),
+              _tracer(14,10,_createElementVNode("span", _hoisted_5, [
+                _tracer(15,12,_createElementVNode(
+                  "strong",
+                  null,
+                  _toDisplayString(u.nome),
+                  1
+                  /* TEXT */
+                )),
+                _tracer(16,12,_createElementVNode("small", null, [
+                  u.isGuia ? (_openBlock(), _tracer(17,14,_createElementBlock("span", _hoisted_6, "Guia"))) : _createCommentVNode("v-if", true),
+                  u.parentes?.length ? (_openBlock(), _tracer(18,14,_createElementBlock(
+                    "span",
+                    _hoisted_7,
+                    _toDisplayString($setup.pluralFamiliares(u.parentes.length)),
+                    1
+                    /* TEXT */
+                  ))) : (_openBlock(), _tracer(19,14,_createElementBlock("span", _hoisted_8, "Cadastro individual")))
+                ]))
+              ]))
+            ])),
+            _tracer(23,8,_createElementVNode(
+              "span",
+              _hoisted_9,
+              _toDisplayString($setup.formatCpf(u.cpf) || "-"),
+              1
+              /* TEXT */
+            )),
+            _tracer(24,8,_createElementVNode(
+              "span",
+              _hoisted_10,
+              _toDisplayString($setup.formatPhone(u.celular) || "-"),
+              1
+              /* TEXT */
+            )),
+            _tracer(25,8,_createElementVNode("span", {
+              class: "passenger-actions",
+              onClick: _cache[0] || (_cache[0] = _withModifiers(() => {
+              }, ["stop"]))
+            }, [
+              _tracer(26,10,_createElementVNode("button", {
+                class: "gt-icon-btn text-brand",
+                title: "Editar",
+                onClick: ($event) => _ctx.$emit("editar", u)
+              }, [..._cache[2] || (_cache[2] = [
+                _tracer(26,92,_createElementVNode(
+                  "svg",
+                  { viewBox: "0 0 24 24" },
+                  [
+                    _tracer(26,117,_createElementVNode("path", { d: "M12 20h9" })),
+                    _tracer(26,137,_createElementVNode("path", { d: "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" }))
+                  ],
+                  -1
+                  /* CACHED */
+                ))
+              ])], 8, _hoisted_11)),
+              _tracer(27,10,_createElementVNode("button", {
+                class: "gt-icon-btn text-danger",
+                title: "Excluir",
+                onClick: ($event) => _ctx.$emit("excluir", u)
+              }, [..._cache[3] || (_cache[3] = [
+                _createStaticVNode('<svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M6 7l1 14h10l1-14"></path><path d="M9 7V4h6v3"></path></svg>', 1)
+              ])], 8, _hoisted_12))
+            ]))
+          ], 8, _hoisted_2));
+        }),
+        128
+        /* KEYED_FRAGMENT */
+      ))),
+      $props.usuarios.length === 0 ? (_openBlock(), _tracer(31,6,_createElementBlock("div", _hoisted_13, "Nenhum passageiro encontrado."))) : _createCommentVNode("v-if", true)
+    ])),
+    _tracer(34,4,_createElementVNode("div", _hoisted_14, [
+      (_openBlock(true), _tracer(35,6,_createElementBlock(
+        _Fragment,
+        null,
+        _renderList($props.usuarios, (u) => {
+          return _openBlock(), _tracer(35,6,_createElementBlock("button", {
+            key: u.id,
+            class: "passenger-mobile-card",
+            type: "button",
+            onClick: ($event) => _ctx.$emit("vincular", u)
+          }, [
+            _tracer(36,8,_createElementVNode(
+              "span",
+              _hoisted_16,
+              _toDisplayString($setup.initials(u.nome)),
+              1
+              /* TEXT */
+            )),
+            _tracer(37,8,_createElementVNode("span", _hoisted_17, [
+              _tracer(38,10,_createElementVNode(
+                "strong",
+                null,
+                _toDisplayString(u.nome),
+                1
+                /* TEXT */
+              )),
+              _tracer(39,10,_createElementVNode(
+                "small",
+                null,
+                "CPF: " + _toDisplayString($setup.formatCpf(u.cpf) || "-"),
+                1
+                /* TEXT */
+              )),
+              _tracer(40,10,_createElementVNode(
+                "small",
+                null,
+                "Celular: " + _toDisplayString($setup.formatPhone(u.celular) || "-"),
+                1
+                /* TEXT */
+              )),
+              _tracer(41,10,_createElementVNode("span", _hoisted_18, [
+                u.isGuia ? (_openBlock(), _tracer(42,12,_createElementBlock("span", _hoisted_19, "Guia"))) : _createCommentVNode("v-if", true),
+                u.parentes?.length ? (_openBlock(), _tracer(43,12,_createElementBlock(
+                  "span",
+                  _hoisted_20,
+                  _toDisplayString($setup.pluralFamiliares(u.parentes.length)),
+                  1
+                  /* TEXT */
+                ))) : _createCommentVNode("v-if", true)
+              ]))
+            ])),
+            _tracer(46,8,_createElementVNode("span", {
+              class: "passenger-actions",
+              onClick: _cache[1] || (_cache[1] = _withModifiers(() => {
+              }, ["stop"]))
+            }, [
+              _tracer(47,10,_createElementVNode("button", {
+                class: "gt-icon-btn text-brand",
+                title: "Editar",
+                onClick: ($event) => _ctx.$emit("editar", u)
+              }, [..._cache[5] || (_cache[5] = [
+                _tracer(47,92,_createElementVNode(
+                  "svg",
+                  { viewBox: "0 0 24 24" },
+                  [
+                    _tracer(47,117,_createElementVNode("path", { d: "M12 20h9" })),
+                    _tracer(47,137,_createElementVNode("path", { d: "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" }))
+                  ],
+                  -1
+                  /* CACHED */
+                ))
+              ])], 8, _hoisted_21)),
+              _tracer(48,10,_createElementVNode("button", {
+                class: "gt-icon-btn text-danger",
+                title: "Excluir",
+                onClick: ($event) => _ctx.$emit("excluir", u)
+              }, [..._cache[6] || (_cache[6] = [
+                _createStaticVNode('<svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M6 7l1 14h10l1-14"></path><path d="M9 7V4h6v3"></path></svg>', 1)
+              ])], 8, _hoisted_22))
+            ]))
+          ], 8, _hoisted_15));
+        }),
+        128
+        /* KEYED_FRAGMENT */
+      ))),
+      $props.usuarios.length === 0 ? (_openBlock(), _tracer(51,6,_createElementBlock("div", _hoisted_23, "Nenhum passageiro encontrado."))) : _createCommentVNode("v-if", true)
+    ]))
+  ]));
+}
+_sfc_main.__hmrId = "bf1a0140";
+typeof __VUE_HMR_RUNTIME__ !== "undefined" && __VUE_HMR_RUNTIME__.createRecord(_sfc_main.__hmrId, _sfc_main);
+import.meta.hot.on("file-changed", ({ file }) => {
+  __VUE_HMR_RUNTIME__.CHANGED_FILE = file;
+});
+import.meta.hot.accept((mod) => {
+  if (!mod) return;
+  const { default: updated, _rerender_only } = mod;
+  if (_rerender_only) {
+    __VUE_HMR_RUNTIME__.rerender(updated.__hmrId, updated.render);
+  } else {
+    __VUE_HMR_RUNTIME__.reload(updated.__hmrId, updated);
+  }
+});
+import _export_sfc from "/_nuxt/@id/__x00__plugin-vue:export-helper";
+export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/app/components/passageiros/Tabela.vue"]]);
+
+function _tracer(line, column, vnode) { return _tracerRecordPosition("app/components/passageiros/Tabela.vue", line, column, vnode) }
+
+//# sourceMappingURL=data:application/json;base64,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QUFHLG1CQUFZLEVBQUUsT0FBTztBQUFBO0FBQUE7QUFBQTtBQUFBLDRCQUN4QyxvQkFHTyxRQUhQLGFBR087QUFBQSxnQkFGTyxFQUFFLHNDQUFkLG9CQUFvRCxRQUFwRCxhQUF5QyxNQUFJO2dCQUNqQyxFQUFFLFVBQVUsc0NBQXhCO0FBQUEsa0JBQW9HO0FBQUEsa0JBQXBHO0FBQUEsa0JBQW9HLGlCQUE3Qyx3QkFBaUIsRUFBRSxTQUFTLE1BQU07QUFBQTtBQUFBO0FBQUE7Ozt5QkFHN0Ysb0JBR087QUFBQSxjQUhELE9BQU07QUFBQSxjQUFxQixTQUFLLHlDQUFOO0FBQUEsaUJBQVc7QUFBQTs0QkFDekMsb0JBQW9NO0FBQUEsZ0JBQTVMLE9BQU07QUFBQSxnQkFBeUIsT0FBTTtBQUFBLGdCQUFVLFNBQUssWUFBRSxXQUFLLFVBQVcsQ0FBQztBQUFBOzhCQUFHO0FBQUEsa0JBQXlHO0FBQUEsb0JBQXBHLFNBQVEsWUFBVztBQUFBO0FBQUEsbUNBQUMsb0JBQW9CLFVBQWQsR0FBRSxXQUFVO0FBQUEsbUNBQUUsb0JBQXNELFVBQWhELEdBQUUsNkNBQTRDO0FBQUE7Ozs7OzRCQUNuTCxvQkFBMk87QUFBQSxnQkFBbk8sT0FBTTtBQUFBLGdCQUEwQixPQUFNO0FBQUEsZ0JBQVcsU0FBSyxZQUFFLFdBQUssV0FBWSxDQUFDO0FBQUE7Ozs7Ozs7OztNQUczRSxnQkFBUyxXQUFNLGdDQUExQixvQkFBbUcsT0FBbkcsYUFBZ0UsK0JBQTZCIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJUYWJlbGEudnVlIl0sInNvdXJjZXNDb250ZW50IjpbIjx0ZW1wbGF0ZT5cclxuICA8ZGl2PlxyXG4gICAgPGRpdiBjbGFzcz1cInBhc3NlbmdlcnMtYm9hcmQgZC1ub25lIGQtbWQtYmxvY2tcIj5cclxuICAgICAgPGRpdiBjbGFzcz1cInBhc3Nlbmdlci10YWJsZS1oZWFkXCI+XHJcbiAgICAgICAgPHNwYW4+UGFzc2FnZWlybzwvc3Bhbj5cclxuICAgICAgICA8c3Bhbj5Eb2N1bWVudG88L3NwYW4+XHJcbiAgICAgICAgPHNwYW4+Q2VsdWxhcjwvc3Bhbj5cclxuICAgICAgICA8c3Bhbj5Bw6fDtWVzPC9zcGFuPlxyXG4gICAgICA8L2Rpdj5cclxuXHJcbiAgICAgIDxidXR0b24gdi1mb3I9XCJ1IGluIHVzdWFyaW9zXCIgOmtleT1cInUuaWRcIiBjbGFzcz1cInBhc3Nlbmdlci10YWJsZS1yb3dcIiB0eXBlPVwiYnV0dG9uXCIgQGNsaWNrPVwiJGVtaXQoJ3ZpbmN1bGFyJywgdSlcIj5cclxuICAgICAgICA8c3BhbiBjbGFzcz1cInBhc3Nlbmdlci1jZWxsLW1haW5cIj5cclxuICAgICAgICAgIDxzcGFuIGNsYXNzPVwicGFzc2VuZ2VyLWF2YXRhci1zb2Z0XCI+e3sgaW5pdGlhbHModS5ub21lKSB9fTwvc3Bhbj5cclxuICAgICAgICAgIDxzcGFuIGNsYXNzPVwicGFzc2VuZ2VyLW5hbWUtd3JhcFwiPlxyXG4gICAgICAgICAgICA8c3Ryb25nPnt7IHUubm9tZSB9fTwvc3Ryb25nPlxyXG4gICAgICAgICAgICA8c21hbGw+XHJcbiAgICAgICAgICAgICAgPHNwYW4gdi1pZj1cInUuaXNHdWlhXCIgY2xhc3M9XCJndWlkZS1jaGlwXCI+R3VpYTwvc3Bhbj5cclxuICAgICAgICAgICAgICA8c3BhbiB2LWlmPVwidS5wYXJlbnRlcz8ubGVuZ3RoXCI+e3sgcGx1cmFsRmFtaWxpYXJlcyh1LnBhcmVudGVzLmxlbmd0aCkgfX08L3NwYW4+XHJcbiAgICAgICAgICAgICAgPHNwYW4gdi1lbHNlPkNhZGFzdHJvIGluZGl2aWR1YWw8L3NwYW4+XHJcbiAgICAgICAgICAgIDwvc21hbGw+XHJcbiAgICAgICAgICA8L3NwYW4+XHJcbiAgICAgICAgPC9zcGFuPlxyXG4gICAgICAgIDxzcGFuIGNsYXNzPVwicGFzc2VuZ2VyLWNlbGwtbXV0ZWRcIj57eyBmb3JtYXRDcGYodS5jcGYpIHx8ICctJyB9fTwvc3Bhbj5cclxuICAgICAgICA8c3BhbiBjbGFzcz1cInBhc3Nlbmdlci1jZWxsLW11dGVkXCI+e3sgZm9ybWF0UGhvbmUodS5jZWx1bGFyKSB8fCAnLScgfX08L3NwYW4+XHJcbiAgICAgICAgPHNwYW4gY2xhc3M9XCJwYXNzZW5nZXItYWN0aW9uc1wiIEBjbGljay5zdG9wPlxyXG4gICAgICAgICAgPGJ1dHRvbiBjbGFzcz1cImd0LWljb24tYnRuIHRleHQtYnJhbmRcIiB0aXRsZT1cIkVkaXRhclwiIEBjbGljaz1cIiRlbWl0KCdlZGl0YXInLCB1KVwiPjxzdmcgdmlld0JveD1cIjAgMCAyNCAyNFwiPjxwYXRoIGQ9XCJNMTIgMjBoOVwiLz48cGF0aCBkPVwiTTE2LjUgMy41YTIuMSAyLjEgMCAwIDEgMyAzTDcgMTlsLTQgMSAxLTRaXCIvPjwvc3ZnPjwvYnV0dG9uPlxyXG4gICAgICAgICAgPGJ1dHRvbiBjbGFzcz1cImd0LWljb24tYnRuIHRleHQtZGFuZ2VyXCIgdGl0bGU9XCJFeGNsdWlyXCIgQGNsaWNrPVwiJGVtaXQoJ2V4Y2x1aXInLCB1KVwiPjxzdmcgdmlld0JveD1cIjAgMCAyNCAyNFwiPjxwYXRoIGQ9XCJNNCA3aDE2XCIvPjxwYXRoIGQ9XCJNMTAgMTF2NlwiLz48cGF0aCBkPVwiTTE0IDExdjZcIi8+PHBhdGggZD1cIk02IDdsMSAxNGgxMGwxLTE0XCIvPjxwYXRoIGQ9XCJNOSA3VjRoNnYzXCIvPjwvc3ZnPjwvYnV0dG9uPlxyXG4gICAgICAgIDwvc3Bhbj5cclxuICAgICAgPC9idXR0b24+XHJcblxyXG4gICAgICA8ZGl2IHYtaWY9XCJ1c3Vhcmlvcy5sZW5ndGggPT09IDBcIiBjbGFzcz1cInBhc3Nlbmdlci1lbXB0eS1zdGF0ZVwiPk5lbmh1bSBwYXNzYWdlaXJvIGVuY29udHJhZG8uPC9kaXY+XHJcbiAgICA8L2Rpdj5cclxuXHJcbiAgICA8ZGl2IGNsYXNzPVwiZC1tZC1ub25lIHBhc3Nlbmdlci1tb2JpbGUtbGlzdFwiPlxyXG4gICAgICA8YnV0dG9uIHYtZm9yPVwidSBpbiB1c3Vhcmlvc1wiIDprZXk9XCJ1LmlkXCIgY2xhc3M9XCJwYXNzZW5nZXItbW9iaWxlLWNhcmRcIiB0eXBlPVwiYnV0dG9uXCIgQGNsaWNrPVwiJGVtaXQoJ3ZpbmN1bGFyJywgdSlcIj5cclxuICAgICAgICA8c3BhbiBjbGFzcz1cInBhc3Nlbmdlci1hdmF0YXItc29mdFwiPnt7IGluaXRpYWxzKHUubm9tZSkgfX08L3NwYW4+XHJcbiAgICAgICAgPHNwYW4gY2xhc3M9XCJtb2JpbGUtcGFzc2VuZ2VyLWluZm9cIj5cclxuICAgICAgICAgIDxzdHJvbmc+e3sgdS5ub21lIH19PC9zdHJvbmc+XHJcbiAgICAgICAgICA8c21hbGw+Q1BGOiB7eyBmb3JtYXRDcGYodS5jcGYpIHx8ICctJyB9fTwvc21hbGw+XHJcbiAgICAgICAgICA8c21hbGw+Q2VsdWxhcjoge3sgZm9ybWF0UGhvbmUodS5jZWx1bGFyKSB8fCAnLScgfX08L3NtYWxsPlxyXG4gICAgICAgICAgPHNwYW4gY2xhc3M9XCJtb2JpbGUtdGFnc1wiPlxyXG4gICAgICAgICAgICA8c3BhbiB2LWlmPVwidS5pc0d1aWFcIiBjbGFzcz1cImd1aWRlLWNoaXBcIj5HdWlhPC9zcGFuPlxyXG4gICAgICAgICAgICA8c3BhbiB2LWlmPVwidS5wYXJlbnRlcz8ubGVuZ3RoXCIgY2xhc3M9XCJmYW1pbHktY2hpcFwiPnt7IHBsdXJhbEZhbWlsaWFyZXModS5wYXJlbnRlcy5sZW5ndGgpIH19PC9zcGFuPlxyXG4gICAgICAgICAgPC9zcGFuPlxyXG4gICAgICAgIDwvc3Bhbj5cclxuICAgICAgICA8c3BhbiBjbGFzcz1cInBhc3Nlbmdlci1hY3Rpb25zXCIgQGNsaWNrLnN0b3A+XHJcbiAgICAgICAgICA8YnV0dG9uIGNsYXNzPVwiZ3QtaWNvbi1idG4gdGV4dC1icmFuZFwiIHRpdGxlPVwiRWRpdGFyXCIgQGNsaWNrPVwiJGVtaXQoJ2VkaXRhcicsIHUpXCI+PHN2ZyB2aWV3Qm94PVwiMCAwIDI0IDI0XCI+PHBhdGggZD1cIk0xMiAyMGg5XCIvPjxwYXRoIGQ9XCJNMTYuNSAzLjVhMi4xIDIuMSAwIDAgMSAzIDNMNyAxOWwtNCAxIDEtNFpcIi8+PC9zdmc+PC9idXR0b24+XHJcbiAgICAgICAgICA8YnV0dG9uIGNsYXNzPVwiZ3QtaWNvbi1idG4gdGV4dC1kYW5nZXJcIiB0aXRsZT1cIkV4Y2x1aXJcIiBAY2xpY2s9XCIkZW1pdCgnZXhjbHVpcicsIHUpXCI+PHN2ZyB2aWV3Qm94PVwiMCAwIDI0IDI0XCI+PHBhdGggZD1cIk00IDdoMTZcIi8+PHBhdGggZD1cIk0xMCAxMXY2XCIvPjxwYXRoIGQ9XCJNMTQgMTF2NlwiLz48cGF0aCBkPVwiTTYgN2wxIDE0aDEwbDEtMTRcIi8+PHBhdGggZD1cIk05IDdWNGg2djNcIi8+PC9zdmc+PC9idXR0b24+XHJcbiAgICAgICAgPC9zcGFuPlxyXG4gICAgICA8L2J1dHRvbj5cclxuICAgICAgPGRpdiB2LWlmPVwidXN1YXJpb3MubGVuZ3RoID09PSAwXCIgY2xhc3M9XCJwYXNzZW5nZXItZW1wdHktc3RhdGVcIj5OZW5odW0gcGFzc2FnZWlybyBlbmNvbnRyYWRvLjwvZGl2PlxyXG4gICAgPC9kaXY+XHJcbiAgPC9kaXY+XHJcbjwvdGVtcGxhdGU+XHJcblxyXG48c2NyaXB0IHNldHVwIGxhbmc9XCJ0c1wiPlxyXG5kZWZpbmVQcm9wczx7IHVzdWFyaW9zOiBhbnlbXSB9PigpXHJcbmRlZmluZUVtaXRzKFsndmluY3VsYXInLCAnZWRpdGFyJywgJ2V4Y2x1aXInXSlcclxuXHJcbmNvbnN0IGluaXRpYWxzID0gKG5vbWU/OiBzdHJpbmcpID0+IFN0cmluZyhub21lIHx8ICdHVCcpLnRyaW0oKS5zcGxpdCgvXFxzKy8pLnNsaWNlKDAsIDIpLm1hcChwID0+IHBbMF0pLmpvaW4oJycpLnRvVXBwZXJDYXNlKClcclxuY29uc3QgcGx1cmFsRmFtaWxpYXJlcyA9ICh0b3RhbDogbnVtYmVyKSA9PiBgJHt0b3RhbH0gJHt0b3RhbCA9PT0gMSA/ICdmYW1pbGlhcicgOiAnZmFtaWxpYXJlcyd9YFxyXG5jb25zdCBmb3JtYXRDcGYgPSAoY3BmPzogc3RyaW5nKSA9PiB7XHJcbiAgY29uc3QgdiA9IFN0cmluZyhjcGYgfHwgJycpLnJlcGxhY2UoL1xcRC9nLCAnJylcclxuICByZXR1cm4gdi5sZW5ndGggPT09IDExID8gdi5yZXBsYWNlKC8oXFxkezN9KShcXGR7M30pKFxcZHszfSkoXFxkezJ9KS8sICckMS4kMi4kMy0kNCcpIDogY3BmXHJcbn1cclxuY29uc3QgZm9ybWF0UGhvbmUgPSAoZm9uZT86IHN0cmluZykgPT4ge1xyXG4gIGNvbnN0IHYgPSBTdHJpbmcoZm9uZSB8fCAnJykucmVwbGFjZSgvXFxEL2csICcnKVxyXG4gIGlmICh2Lmxlbmd0aCA9PT0gMTEpIHJldHVybiB2LnJlcGxhY2UoLyhcXGR7Mn0pKFxcZHs1fSkoXFxkezR9KS8sICcoJDEpICQyLSQzJylcclxuICBpZiAodi5sZW5ndGggPT09IDEwKSByZXR1cm4gdi5yZXBsYWNlKC8oXFxkezJ9KShcXGR7NH0pKFxcZHs0fSkvLCAnKCQxKSAkMi0kMycpXHJcbiAgcmV0dXJuIGZvbmVcclxufVxyXG48L3NjcmlwdD5cclxuIl0sImZpbGUiOiJDOi9Vc2Vycy9Bc2FmL0Rlc2t0b3AvQ8OzZGlnb3Mvc2l0ZS1lbG90cmlwL2dyYXppdHVyLXYyL2FwcC9jb21wb25lbnRzL3Bhc3NhZ2Vpcm9zL1RhYmVsYS52dWUifQ==

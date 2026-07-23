@@ -72,6 +72,11 @@
           {{ carregando ? 'Salvando...' : (form.id ? 'Salvar alterações' : 'Realizar cadastro') }}
         </button>
       </div>
+      <div v-if="mostrarAtalhoLogin" class="col-12 pt-0">
+        <button class="gt-btn gt-btn-outline public-form-login-shortcut w-100" @click="$emit('acessarViagem')">
+          Já tem cadastro? Acessar minha viagem
+        </button>
+      </div>
     </div>
 
     <div v-if="modalOutroOrgao" class="modal fade show d-block gt-modal-backdrop" style="z-index: 1080;">
@@ -96,7 +101,7 @@ import * as z from 'zod'
 import { mascaraCPF, mascaraData, mascaraCelular, validarCPF } from '~/utils/formatadores'
 
 const props = defineProps<{ cpfFamiliar?: string; usuarioEditando?: any }>()
-const emit = defineEmits(['sucesso'])
+const emit = defineEmits(['sucesso', 'acessarViagem'])
 const erro = ref('')
 const carregando = ref(false)
 const form = ref({
@@ -124,6 +129,7 @@ const estadoSelecionado = ref('')
 const cidadeSelecionada = ref('')
 const carregandoEstados = ref(false)
 const carregandoCidades = ref(false)
+const mostrarAtalhoLogin = computed(() => !form.value.id && !props.cpfFamiliar)
 
 const schema = z.object({
   nome: z.string().trim().min(2, 'Nome completo é obrigatório.'),

@@ -4,14 +4,12 @@
       <div class="modal-content border-0 shadow-large trip-manager-modal">
         <div class="modal-header gt-modal-header align-items-start">
           <div class="trip-modal-title-wrap">
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-              <h4 class="fw-bold mb-0">{{ excursaoSelecionada.nome }}</h4>
-              <span class="badge-gt" :class="excursaoSelecionada.finalizada ? 'badge-finalizada' : 'badge-active-clean'">
-                {{ excursaoSelecionada.finalizada ? 'Finalizada' : 'Ativa' }}
-              </span>
-            </div>
+            <h4 class="fw-bold mb-0">{{ excursaoSelecionada.nome }}</h4>
             <p class="text-muted mb-0">{{ excursaoSelecionada.lugar }}</p>
           </div>
+          <span class="badge-gt trip-modal-status-badge" :class="excursaoSelecionada.finalizada ? 'badge-finalizada' : 'badge-active-clean'">
+            {{ excursaoSelecionada.finalizada ? 'Finalizada' : 'Ativa' }}
+          </span>
           <button class="btn-close" @click="$emit('close')"></button>
         </div>
 
@@ -35,6 +33,7 @@
             <div class="trip-action-panel trip-action-panel-v16 trip-action-panel-v17">
               <button class="gt-btn gt-btn-outline" @click="modalDownload = true">Baixar lista</button>
               <button class="gt-btn gt-btn-outline" @click="filaEspera.length ? (modalListaEspera = true) : showToast('Não há passageiros na lista de espera.', 'warning')">Lista de espera</button>
+              <button class="gt-btn gt-btn-outline" @click="modalPagamentos = true">Pagamentos</button>
               <button class="gt-btn gt-btn-outline" :disabled="excursaoSelecionada.finalizada" @click="modalGrupos = true">Gerenciar grupos</button>
               <button class="gt-btn gt-btn-primary" @click="solicitarEdicao">{{ excursaoSelecionada.finalizada ? 'Editar finalizada' : 'Editar viagem' }}</button>
             </div>
@@ -184,6 +183,119 @@
       </div>
     </div>
 
+    <div v-if="modalPagamentos" class="modal fade show d-block gt-modal-backdrop" style="z-index: 1074; overflow-y:auto">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable px-3">
+        <div class="modal-content border-0 shadow-large monthly-payments-modal">
+          <div class="modal-header gt-modal-header">
+            <div>
+              <h5 class="fw-bold mb-0">Pagamentos</h5>
+              <p class="text-muted small mb-0">Controle os pagamentos efetivados por mês nesta excursão.</p>
+            </div>
+            <button class="btn-close" :disabled="salvandoPagamentosMensais" @click="fecharModalPagamentos"></button>
+          </div>
+          <div class="modal-body p-3 p-md-4">
+            <div class="monthly-payments-layout-v27">
+              <section class="monthly-payments-sidebar-v27">
+                <div class="group-section-title">Meses</div>
+                <label class="form-label small fw-bold">Mês</label>
+                <div class="monthly-create-row-v27">
+                  <select v-model="nomeNovoMes" class="form-select">
+                    <option v-for="mes in mesesDoAno" :key="mes" :value="mes">{{ mes }}</option>
+                  </select>
+                  <button class="gt-btn gt-btn-primary" :disabled="salvandoPagamentosMensais" @click="criarMesPagamentos">
+                    {{ salvandoPagamentosMensais ? 'Salvando...' : 'Criar mês' }}
+                  </button>
+                </div>
+
+                <div v-if="pagamentosMensais.length" class="monthly-tabs-v27">
+                  <button
+                    v-for="mes in pagamentosMensais"
+                    :key="mes.id"
+                    type="button"
+                    :class="{ active: mesSelecionado?.id === mes.id }"
+                    @click="mesSelecionadoId = mes.id"
+                  >
+                    <span>{{ mes.nome }}</span>
+                    <small>{{ totalPagosMes(mes) }}/{{ usersLista.length }} pagos</small>
+                  </button>
+                </div>
+                <div v-else class="empty-group-state">Nenhum mês criado ainda.</div>
+              </section>
+
+              <section class="monthly-payments-panel-v27">
+                <div v-if="!mesSelecionado" class="monthly-empty-v27">
+                  Crie um mês para começar a marcar os passageiros pagos.
+                </div>
+                <template v-else>
+                  <div class="monthly-payments-header-v27">
+                    <div>
+                      <span>Mês selecionado</span>
+                      <strong>{{ mesSelecionado.nome }}</strong>
+                      <small>{{ resumoMesSelecionado }}</small>
+                      <em v-if="pagamentosMensaisAlterados">Alterações pendentes</em>
+                    </div>
+                    <div class="monthly-payments-actions-v27">
+                      <button class="gt-btn gt-btn-outline" :disabled="usersLista.length === 0 || salvandoPagamentosMensais" @click="selecionarTodosPagamentos">
+                        {{ salvandoPagamentosMensais ? 'Salvando...' : 'Selecionar todos' }}
+                      </button>
+                      <button class="gt-btn gt-btn-outline" :disabled="usersLista.length === 0 || salvandoPagamentosMensais" @click="deselecionarTodosPagamentos">
+                        {{ salvandoPagamentosMensais ? 'Salvando...' : 'Deselecionar todos' }}
+                      </button>
+                      <button class="gt-btn gt-btn-outline" :disabled="usersLista.length === 0 || salvandoPagamentosMensais" @click="abrirCompartilharPagamentos">Compartilhar no WhatsApp</button>
+                      <button class="gt-btn gt-btn-danger-outline" :disabled="salvandoPagamentosMensais" @click="pedirApagarMes">Apagar mês</button>
+                    </div>
+                  </div>
+
+                  <div v-if="usersLista.length === 0" class="monthly-empty-v27">Nenhum passageiro vinculado a esta excursão.</div>
+                  <div v-else class="monthly-payment-checkgrid-v27">
+                    <label
+                      v-for="u in usersPagamentosOrdenados"
+                      :key="u.id"
+                      class="monthly-payment-option-v27"
+                      :class="{ checked: pagamentoMesMarcado(u.id) }"
+                    >
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        :checked="pagamentoMesMarcado(u.id)"
+                        :disabled="salvandoPagamentosMensais"
+                        @change="alternarPagamentoMesLocal(u.id, $event)"
+                      >
+                      <span>
+                        <strong>{{ u.nome }}</strong>
+                        <small>CPF: {{ maskCpf(u.cpf) }}</small>
+                      </span>
+                    </label>
+                  </div>
+                </template>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="modalCompartilharPagamentos && mesSelecionado" class="modal fade show d-block gt-modal-backdrop" style="z-index: 1086;">
+      <div class="modal-dialog modal-dialog-centered px-3" style="max-width: 560px">
+        <div class="modal-content border-0 shadow-large">
+          <div class="modal-header gt-modal-header">
+            <div>
+              <h5 class="fw-bold mb-0">Compartilhar pagamentos</h5>
+              <p class="text-muted small mb-0">Confira o texto antes de abrir o WhatsApp.</p>
+            </div>
+            <button class="btn-close" @click="modalCompartilharPagamentos = false"></button>
+          </div>
+          <div class="modal-body p-3 p-md-4">
+            <pre class="monthly-share-preview-v27">{{ textoCompartilharPagamentos }}</pre>
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+              <button class="gt-btn gt-btn-outline flex-fill" @click="modalCompartilharPagamentos = false">Cancelar</button>
+              <button class="gt-btn gt-btn-primary flex-fill" @click="compartilharPagamentosWhatsApp">Abrir WhatsApp</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="modalGrupos" class="modal fade show d-block gt-modal-backdrop" style="z-index: 1075; overflow-y:auto">
       <div class="modal-dialog modal-lg modal-dialog-centered px-3">
         <div class="modal-content border-0 shadow-large">
@@ -197,19 +309,21 @@
           <div class="modal-body p-3 p-md-4 group-manager-body-v16">
             <section class="group-list-panel-v16">
               <div class="group-section-title">Grupos criados</div>
-              <div v-if="gruposFormatados.length === 0" class="empty-group-state">Nenhum grupo criado ainda.</div>
-              <div v-for="g in gruposFormatados" :key="g.lider.id" class="group-block-v16">
-                <div class="group-leader-v16">
-                  <div>
-                    <span>Titular</span>
-                    <strong>{{ g.lider.nome }}</strong>
-                    <small>{{ maskCpf(g.lider.cpf) }}</small>
+              <div class="group-list-scroll-v27">
+                <div v-if="gruposFormatados.length === 0" class="empty-group-state">Nenhum grupo criado ainda.</div>
+                <div v-for="g in gruposFormatados" :key="g.lider.id" class="group-block-v16">
+                  <div class="group-leader-v16">
+                    <div>
+                      <span>Titular</span>
+                      <strong>{{ g.lider.nome }}</strong>
+                      <small>{{ maskCpf(g.lider.cpf) }}</small>
+                    </div>
+                    <button class="gt-btn gt-btn-danger-outline gt-btn-xs" @click="apagarGrupo(g.lider.id)">Apagar</button>
                   </div>
-                  <button class="gt-btn gt-btn-danger-outline gt-btn-xs" @click="apagarGrupo(g.lider.id)">Apagar</button>
-                </div>
-                <div class="group-dependents-v16">
-                  <span v-for="d in g.dependentes" :key="d.id">{{ d.nome }}</span>
-                  <em v-if="g.dependentes.length === 0">Sem dependentes</em>
+                  <div class="group-dependents-v16">
+                    <span v-for="d in g.dependentes" :key="d.id">{{ d.nome }}</span>
+                    <em v-if="g.dependentes.length === 0">Sem dependentes</em>
+                  </div>
                 </div>
               </div>
             </section>
@@ -249,6 +363,14 @@
       text="Tem certeza que deseja apagar este grupo? O titular e os dependentes continuarão na viagem, mas o vínculo de contrato será removido."
       @cancel="grupoParaApagar = null"
       @confirm="confirmarApagarGrupo"
+    />
+
+    <UiModalConfirm
+      v-if="mesParaApagar"
+      title="Apagar mês"
+      text="Tem certeza que deseja apagar este mês de pagamentos? As marcações dele serão removidas."
+      @cancel="mesParaApagar = null"
+      @confirm="confirmarApagarMes"
     />
 
     <UiModalConfirm
@@ -314,7 +436,7 @@
       </div>
     </div>
 
-    <div v-if="parenteFilaSelecionado" class="modal fade show d-block" style="background: rgba(15,23,42,.55); z-index: 1090">
+    <div v-if="parenteFilaSelecionado" class="modal fade show d-block gt-modal-backdrop" style="z-index: 1090">
       <div class="modal-dialog modal-dialog-centered px-3" style="max-width: 430px">
         <div class="modal-content border-0 rounded-gt shadow-soft">
           <div class="modal-header border-0"><h5 class="fw-bold mb-0">Pagamento do dependente</h5><button class="btn-close" @click="parenteFilaSelecionado = null"></button></div>
@@ -339,16 +461,22 @@ import { LISTA_PASSAGEIROS_COLUNAS, exportarListaODT, exportarListaPDF, gerarCon
 const props = defineProps<{ excursaoSelecionada: any }>()
 const emit = defineEmits(['close', 'editar', 'editarFinalizada', 'desvincular', 'refresh'])
 const { showToast } = useToasts()
+const PAGAMENTOS_MENSAIS_KEY = '__pagamentosMensais'
+type MesPagamentos = { id: string; nome: string; pagos: Record<string, boolean>; criadoEm?: string }
+const mesesDoAno = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
 const showModalPagamento = ref(false)
 const usuarioPagamento = ref<any>(null)
 const modalListaEspera = ref(false)
 const modalGrupos = ref(false)
+const modalPagamentos = ref(false)
+const modalCompartilharPagamentos = ref(false)
 const modalDownload = ref(false)
 const opcoesColunasLista = LISTA_PASSAGEIROS_COLUNAS
 const colunasListaSelecionadas = ref<ListaPassageiroColunaId[]>(['nome', 'cpf', 'orgaoExpeditor'])
 const buscaDependenteGrupo = ref('')
 const grupoParaApagar = ref<number | null>(null)
+const mesParaApagar = ref<string | null>(null)
 const filaParaRemover = ref<any>(null)
 const filaParaAdicionar = ref<any>(null)
 const modalAdicionarFila = ref(false)
@@ -360,8 +488,13 @@ const parentesFilaAdicionados = ref<number[]>([])
 const parenteFilaSelecionado = ref<any>(null)
 const pagamentoParenteFila = ref('')
 const salvandoFila = ref(false)
+const salvandoPagamentosMensais = ref(false)
+const pagamentosMensaisAlterados = ref(false)
+const pagamentosMensaisDraft = ref<MesPagamentos[]>([])
 const menuFilaId = ref<number | string | null>(null)
 const novoGrupo = ref<{ liderId: string; dependentesIds: string[] }>({ liderId: '', dependentesIds: [] })
+const nomeNovoMes = ref(mesesDoAno[new Date().getMonth()])
+const mesSelecionadoId = ref('')
 
 const obterPagamento = (id: number) => props.excursaoSelecionada.pagamentos?.[String(id)] || 'Pendente'
 const pluralPassageiros = (total: number) => `${total} ${total === 1 ? 'passageiro' : 'passageiros'}`
@@ -435,6 +568,56 @@ const familiaresFilaFiltrados = computed(() => {
   if (!termo) return familiaresFila.value
   return familiaresFila.value.filter((p: any) => String(p.nome || '').toLowerCase().includes(termo) || String(p.cpf || '').replace(/\D/g, '').includes(digits))
 })
+const normalizarMesesPagamentos = (raw: any): MesPagamentos[] => {
+  const meses = Array.isArray(raw?.meses) ? raw.meses : []
+  return meses
+    .map((mes: any) => ({
+      id: String(mes?.id || ''),
+      nome: String(mes?.nome || 'Mês sem nome'),
+      pagos: Object.fromEntries(Object.entries(mes?.pagos || {}).map(([id, value]) => [String(id), Boolean(value)])),
+      criadoEm: mes?.criadoEm ? String(mes.criadoEm) : undefined
+    }))
+    .filter((mes: MesPagamentos) => mes.id)
+}
+const hidratarRascunhoPagamentos = () => {
+  pagamentosMensaisDraft.value = normalizarMesesPagamentos(props.excursaoSelecionada.pagamentos?.[PAGAMENTOS_MENSAIS_KEY])
+  pagamentosMensaisAlterados.value = false
+}
+const pagamentosMensais = computed<MesPagamentos[]>(() => pagamentosMensaisDraft.value)
+const mesSelecionado = computed(() => pagamentosMensais.value.find((mes) => mes.id === mesSelecionadoId.value) || pagamentosMensais.value[0] || null)
+const totalPagosMes = (mes: MesPagamentos) => usersLista.value.filter((u: any) => Boolean(mes.pagos?.[String(u.id)])).length
+const resumoMesSelecionado = computed(() => mesSelecionado.value ? `${totalPagosMes(mesSelecionado.value)} de ${usersLista.value.length} passageiros pagos` : '')
+const usersPagamentosOrdenados = computed(() => {
+  const mes = mesSelecionado.value
+  return [...usersLista.value].sort((a: any, b: any) => {
+    const aPago = Boolean(mes?.pagos?.[String(a.id)])
+    const bPago = Boolean(mes?.pagos?.[String(b.id)])
+    if (aPago !== bPago) return aPago ? -1 : 1
+    return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR')
+  })
+})
+const textoCompartilharPagamentos = computed(() => {
+  const mes = mesSelecionado.value
+  if (!mes) return ''
+  const linhas = usersPagamentosOrdenados.value.map((u: any) => `${mes.pagos?.[String(u.id)] ? '✓' : 'X'} ${u.nome}`)
+  return [`Lista de pagamentos efetivas do mês ${mes.nome}`, '', ...linhas].join('\n')
+})
+
+watch(() => modalPagamentos.value, (aberto) => {
+  if (aberto) hidratarRascunhoPagamentos()
+})
+
+watch(() => props.excursaoSelecionada.pagamentos?.[PAGAMENTOS_MENSAIS_KEY], () => {
+  if (!modalPagamentos.value || !pagamentosMensaisAlterados.value) hidratarRascunhoPagamentos()
+})
+
+watch(pagamentosMensais, (meses) => {
+  if (!meses.length) {
+    mesSelecionadoId.value = ''
+    return
+  }
+  if (!meses.some((mes) => mes.id === mesSelecionadoId.value)) mesSelecionadoId.value = meses[0].id
+}, { immediate: true })
 
 const badgePagamentoClasse = (valor: string) => {
   if (/isento/i.test(valor)) return 'payment-badge-neutral'
@@ -549,15 +732,134 @@ const concluirAdicionarFila = () => {
   fecharAdicionarFila()
   emit('refresh')
 }
-const payloadBase = (grupos: Record<string, string[]>) => ({
+const payloadBase = (
+  grupos: Record<string, string[]> = props.excursaoSelecionada.grupos || {},
+  pagamentos: Record<string, any> = props.excursaoSelecionada.pagamentos || {}
+) => ({
   ...props.excursaoSelecionada,
   valores: JSON.stringify(props.excursaoSelecionada.valores || []),
-  pagamentosJson: JSON.stringify(props.excursaoSelecionada.pagamentos || {}),
+  pagamentosJson: JSON.stringify(pagamentos),
   contratoDetalhes: JSON.stringify(props.excursaoSelecionada.detalhes || {}),
   contratoGrupos: JSON.stringify(grupos),
   despesasJson: JSON.stringify(props.excursaoSelecionada.despesas || []),
+  listaEsperaJson: JSON.stringify(props.excursaoSelecionada.listaEspera || []),
   mostrarAberta: props.excursaoSelecionada.mostrarAberta ?? true
 })
+const nomeMesAtual = () => new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+const criarIdMes = () => `mes_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+const pagamentosComMeses = (meses: MesPagamentos[]) => {
+  const pagamentos = { ...(props.excursaoSelecionada.pagamentos || {}) }
+  if (meses.length) pagamentos[PAGAMENTOS_MENSAIS_KEY] = { meses }
+  else delete pagamentos[PAGAMENTOS_MENSAIS_KEY]
+  return pagamentos
+}
+const atualizarMesesPagamentosLocal = (meses: MesPagamentos[]) => {
+  pagamentosMensaisDraft.value = meses
+  pagamentosMensaisAlterados.value = true
+}
+const salvarPagamentosMensais = async (
+  meses = pagamentosMensais.value,
+  selecionarId = mesSelecionadoId.value,
+  mensagem = '',
+  mostrarToast = false,
+  force = false
+) => {
+  if (salvandoPagamentosMensais.value) return false
+  if (!force && !pagamentosMensaisAlterados.value) return true
+  salvandoPagamentosMensais.value = true
+  try {
+    await $fetch(`/api/excursoes/${props.excursaoSelecionada.id}`, {
+      method: 'PUT',
+      body: payloadBase(undefined, pagamentosComMeses(meses))
+    })
+    pagamentosMensaisDraft.value = meses
+    pagamentosMensaisAlterados.value = false
+    mesSelecionadoId.value = selecionarId
+    if (mostrarToast && mensagem) showToast(mensagem, 'success')
+    emit('refresh')
+    return true
+  } catch (e: any) {
+    showToast(e.data?.statusMessage || 'Não foi possível salvar os pagamentos do mês.', 'danger')
+    return false
+  } finally {
+    salvandoPagamentosMensais.value = false
+  }
+}
+const criarMesPagamentos = async () => {
+  const nome = String(nomeNovoMes.value || '').trim() || nomeMesAtual()
+  const existente = pagamentosMensais.value.find((mes) => mes.nome.toLowerCase() === nome.toLowerCase())
+  if (existente) {
+    mesSelecionadoId.value = existente.id
+    showToast('Esse mês já existe. Ele foi selecionado para edição.', 'warning')
+    return
+  }
+  const novoMes: MesPagamentos = { id: criarIdMes(), nome, pagos: {}, criadoEm: new Date().toISOString() }
+  const meses = [...pagamentosMensais.value, novoMes]
+  atualizarMesesPagamentosLocal(meses)
+  await salvarPagamentosMensais(meses, novoMes.id, 'Mês criado.', true, true)
+}
+const pagamentoMesMarcado = (userId: number) => Boolean(mesSelecionado.value?.pagos?.[String(userId)])
+const alternarPagamentoMesLocal = (userId: number, event: Event) => {
+  const mes = mesSelecionado.value
+  if (!mes) return
+  const checked = Boolean((event.target as HTMLInputElement)?.checked)
+  const meses = pagamentosMensais.value.map((item) => {
+    if (item.id !== mes.id) return item
+    const pagos = { ...(item.pagos || {}) }
+    if (checked) pagos[String(userId)] = true
+    else delete pagos[String(userId)]
+    return { ...item, pagos }
+  })
+  atualizarMesesPagamentosLocal(meses)
+}
+const selecionarTodosPagamentos = async () => {
+  const mes = mesSelecionado.value
+  if (!mes) return
+  const pagos = Object.fromEntries(usersLista.value.map((u: any) => [String(u.id), true]))
+  const meses = pagamentosMensais.value.map((item) => item.id === mes.id ? { ...item, pagos } : item)
+  atualizarMesesPagamentosLocal(meses)
+  await salvarPagamentosMensais(meses, mes.id, 'Todos os pagamentos foram marcados.', true, true)
+}
+const deselecionarTodosPagamentos = async () => {
+  const mes = mesSelecionado.value
+  if (!mes) return
+  const meses = pagamentosMensais.value.map((item) => item.id === mes.id ? { ...item, pagos: {} } : item)
+  atualizarMesesPagamentosLocal(meses)
+  await salvarPagamentosMensais(meses, mes.id, 'Todos os pagamentos foram desmarcados.', true, true)
+}
+const fecharModalPagamentos = async () => {
+  const ok = await salvarPagamentosMensais(pagamentosMensais.value, mesSelecionadoId.value, '', false)
+  if (ok) modalPagamentos.value = false
+}
+const pedirApagarMes = () => {
+  if (!mesSelecionado.value) {
+    showToast('Selecione um mês para apagar.', 'warning')
+    return
+  }
+  mesParaApagar.value = mesSelecionado.value.id
+}
+const confirmarApagarMes = async () => {
+  if (!mesParaApagar.value) return
+  const meses = pagamentosMensais.value.filter((mes) => mes.id !== mesParaApagar.value)
+  const selecionarId = meses[0]?.id || ''
+  mesParaApagar.value = null
+  atualizarMesesPagamentosLocal(meses)
+  await salvarPagamentosMensais(meses, selecionarId, 'Mês apagado.', true, true)
+}
+const abrirCompartilharPagamentos = async () => {
+  if (!mesSelecionado.value) {
+    showToast('Selecione um mês para compartilhar.', 'warning')
+    return
+  }
+  const ok = await salvarPagamentosMensais(pagamentosMensais.value, mesSelecionadoId.value, '', false)
+  if (!ok) return
+  modalCompartilharPagamentos.value = true
+}
+const compartilharPagamentosWhatsApp = () => {
+  if (!textoCompartilharPagamentos.value || !import.meta.client) return
+  window.open(`https://wa.me/?text=${encodeURIComponent(textoCompartilharPagamentos.value)}`, '_blank', 'noopener,noreferrer')
+  modalCompartilharPagamentos.value = false
+}
 const salvarGrupo = async () => {
   if (!novoGrupo.value.liderId || novoGrupo.value.dependentesIds.length === 0) {
     showToast('Selecione um titular e pelo menos um dependente.', 'warning')

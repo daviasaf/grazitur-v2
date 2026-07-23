@@ -1,0 +1,380 @@
+import { createHotContext as __vite__createHotContext } from "/_nuxt/@vite/client";import.meta.hot = __vite__createHotContext("/components/admin/Sidebar.vue");import { default as __nuxt_component_0 } from "/_nuxt/components/ui/BusIcon.vue";
+import { recordPosition as _tracerRecordPosition } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vite-plugin-vue-tracer@1.4._c8e6474912ceed6e1485fad075c614ca/node_modules/vite-plugin-vue-tracer/dist/client/record.mjs?v=41241ef9"
+import { defineComponent as _defineComponent } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+
+import { computed, ref, watch } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+const _sfc_main = /* @__PURE__ */ _defineComponent({
+  __name: "AdminSidebar",
+  props: {
+    active: { type: String, required: true }
+  },
+  emits: ["update:active", "logout"],
+  setup(__props, { expose: __expose, emit: __emit }) {
+    __expose();
+    const props = __props;
+    const emit = __emit;
+    const isViagens = computed(() => props.active === "excursoes-ativas" || props.active === "excursoes-finalizadas");
+    const isPassageiros = computed(() => props.active === "passageiros" || props.active === "aniversariantes");
+    const subOpen = ref(true);
+    const passageirosOpen = ref(false);
+    const mobileOpen = ref(false);
+    watch(isViagens, (value) => {
+      if (value) subOpen.value = true;
+    }, { immediate: true });
+    watch(isPassageiros, (value) => {
+      if (value) passageirosOpen.value = true;
+    }, { immediate: true });
+    const selecionar = (value) => {
+      emit("update:active", value);
+      mobileOpen.value = false;
+    };
+    const fecharMobile = () => {
+      if (true && window.innerWidth <= 900) mobileOpen.value = false;
+    };
+    const __returned__ = { props, emit, isViagens, isPassageiros, subOpen, passageirosOpen, mobileOpen, selecionar, fecharMobile };
+    Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+    return __returned__;
+  }
+});
+import { resolveComponent as _resolveComponent, createVNode as _createVNode, createElementVNode as _createElementVNode, openBlock as _openBlock, createElementBlock as _createElementBlock, normalizeClass as _normalizeClass, withModifiers as _withModifiers, createCommentVNode as _createCommentVNode, Transition as _Transition, withCtx as _withCtx, createStaticVNode as _createStaticVNode } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+const _hoisted_1 = { class: "admin-logo" };
+const _hoisted_2 = { class: "logo-icon" };
+const _hoisted_3 = {
+  key: 0,
+  class: "nav-sub"
+};
+const _hoisted_4 = {
+  key: 0,
+  class: "nav-sub"
+};
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  const _component_UiBusIcon = __nuxt_component_0;
+  return _openBlock(), _tracer(2,2,_createElementBlock(
+    "aside",
+    {
+      class: _normalizeClass(["admin-sidebar", { "menu-open": $setup.mobileOpen }])
+    },
+    [
+      _tracer(3,4,_createElementVNode("div", _hoisted_1, [
+        _tracer(4,6,_createElementVNode("span", _hoisted_2, [
+          _tracer(4,30,_createVNode(_component_UiBusIcon))
+        ])),
+        _cache[12] || (_cache[12] = _tracer(5,6,_createElementVNode(
+          "span",
+          { class: "brand-word" },
+          "GraziTur",
+          -1
+          /* CACHED */
+        ))),
+        _tracer(6,6,_createElementVNode("button", {
+          class: "mobile-menu-btn",
+          type: "button",
+          "aria-label": "Abrir menu",
+          onClick: _cache[0] || (_cache[0] = ($event) => $setup.mobileOpen = !$setup.mobileOpen)
+        }, [..._cache[11] || (_cache[11] = [
+          _tracer(7,8,_createElementVNode(
+            "span",
+            null,
+            null,
+            -1
+            /* CACHED */
+          )),
+          _tracer(7,21,_createElementVNode(
+            "span",
+            null,
+            null,
+            -1
+            /* CACHED */
+          )),
+          _tracer(7,34,_createElementVNode(
+            "span",
+            null,
+            null,
+            -1
+            /* CACHED */
+          ))
+        ])]))
+      ])),
+      _tracer(11,4,_createElementVNode("nav", {
+        class: "admin-nav",
+        onClick: $setup.fecharMobile
+      }, [
+        _tracer(12,6,_createElementVNode(
+          "button",
+          {
+            class: _normalizeClass({ active: $props.active === "dashboard" }),
+            onClick: _cache[1] || (_cache[1] = ($event) => $setup.selecionar("dashboard"))
+          },
+          [..._cache[13] || (_cache[13] = [
+            _tracer(13,8,_createElementVNode(
+              "span",
+              { class: "nav-icon" },
+              [
+                _tracer(13,31,_createElementVNode("svg", { viewBox: "0 0 24 24" }, [
+                  _tracer(13,56,_createElementVNode("path", { d: "M4 13h6v7H4zM14 4h6v16h-6zM4 4h6v5H4z" }))
+                ]))
+              ],
+              -1
+              /* CACHED */
+            )),
+            _tracer(14,8,_createElementVNode(
+              "span",
+              null,
+              "Dashboard",
+              -1
+              /* CACHED */
+            ))
+          ])],
+          2
+          /* CLASS */
+        )),
+        _tracer(17,6,_createElementVNode(
+          "button",
+          {
+            class: _normalizeClass({ "active-soft": $setup.isViagens }),
+            onClick: _cache[2] || (_cache[2] = _withModifiers(($event) => $setup.subOpen = !$setup.subOpen, ["stop"]))
+          },
+          [
+            _cache[14] || (_cache[14] = _tracer(18,8,_createElementVNode(
+              "span",
+              { class: "nav-icon" },
+              [
+                _tracer(18,31,_createElementVNode("svg", { viewBox: "0 0 24 24" }, [
+                  _tracer(18,56,_createElementVNode("path", { d: "M6 19V5l6 3 6-3v14l-6-3-6 3Z" })),
+                  _tracer(18,97,_createElementVNode("path", { d: "M12 8v8" }))
+                ]))
+              ],
+              -1
+              /* CACHED */
+            ))),
+            _cache[15] || (_cache[15] = _tracer(19,8,_createElementVNode(
+              "span",
+              null,
+              "Excursões",
+              -1
+              /* CACHED */
+            ))),
+            _tracer(20,8,_createElementVNode(
+              "span",
+              {
+                class: _normalizeClass(["sidebar-chevron", { open: $setup.subOpen }])
+              },
+              "›",
+              2
+              /* CLASS */
+            ))
+          ],
+          2
+          /* CLASS */
+        )),
+        _tracer(22,6,_createVNode(_Transition, { name: "submenu" }, {
+          default: _withCtx(() => [
+            $setup.subOpen ? (_openBlock(), _tracer(23,8,_createElementBlock("div", _hoisted_3, [
+              _tracer(24,10,_createElementVNode(
+                "button",
+                {
+                  class: _normalizeClass({ active: $props.active === "excursoes-ativas" }),
+                  onClick: _cache[3] || (_cache[3] = ($event) => $setup.selecionar("excursoes-ativas"))
+                },
+                [..._cache[16] || (_cache[16] = [
+                  _tracer(25,12,_createElementVNode(
+                    "span",
+                    { class: "nav-dot" },
+                    null,
+                    -1
+                    /* CACHED */
+                  )),
+                  _tracer(26,12,_createElementVNode(
+                    "span",
+                    null,
+                    "Ativas",
+                    -1
+                    /* CACHED */
+                  ))
+                ])],
+                2
+                /* CLASS */
+              )),
+              _tracer(28,10,_createElementVNode(
+                "button",
+                {
+                  class: _normalizeClass({ active: $props.active === "excursoes-finalizadas" }),
+                  onClick: _cache[4] || (_cache[4] = ($event) => $setup.selecionar("excursoes-finalizadas"))
+                },
+                [..._cache[17] || (_cache[17] = [
+                  _tracer(29,12,_createElementVNode(
+                    "span",
+                    { class: "nav-dot" },
+                    null,
+                    -1
+                    /* CACHED */
+                  )),
+                  _tracer(30,12,_createElementVNode(
+                    "span",
+                    null,
+                    "Finalizadas",
+                    -1
+                    /* CACHED */
+                  ))
+                ])],
+                2
+                /* CLASS */
+              ))
+            ]))) : _createCommentVNode("v-if", true)
+          ]),
+          _: 1
+          /* STABLE */
+        })),
+        _tracer(35,6,_createElementVNode(
+          "button",
+          {
+            class: _normalizeClass({ "active-soft": $setup.isPassageiros }),
+            onClick: _cache[5] || (_cache[5] = _withModifiers(($event) => $setup.passageirosOpen = !$setup.passageirosOpen, ["stop"]))
+          },
+          [
+            _cache[18] || (_cache[18] = _createStaticVNode('<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0"></path><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path><path d="M18 7.5h3"></path><path d="M19.5 6v3"></path></svg></span><span>Passageiros</span>', 2)),
+            _tracer(38,8,_createElementVNode(
+              "span",
+              {
+                class: _normalizeClass(["sidebar-chevron", { open: $setup.passageirosOpen }])
+              },
+              "›",
+              2
+              /* CLASS */
+            ))
+          ],
+          2
+          /* CLASS */
+        )),
+        _tracer(40,6,_createVNode(_Transition, { name: "submenu" }, {
+          default: _withCtx(() => [
+            $setup.passageirosOpen ? (_openBlock(), _tracer(41,8,_createElementBlock("div", _hoisted_4, [
+              _tracer(42,10,_createElementVNode(
+                "button",
+                {
+                  class: _normalizeClass({ active: $props.active === "passageiros" }),
+                  onClick: _cache[6] || (_cache[6] = ($event) => $setup.selecionar("passageiros"))
+                },
+                [..._cache[19] || (_cache[19] = [
+                  _tracer(43,12,_createElementVNode(
+                    "span",
+                    { class: "nav-dot" },
+                    null,
+                    -1
+                    /* CACHED */
+                  )),
+                  _tracer(44,12,_createElementVNode(
+                    "span",
+                    null,
+                    "Base de passageiros",
+                    -1
+                    /* CACHED */
+                  ))
+                ])],
+                2
+                /* CLASS */
+              )),
+              _tracer(46,10,_createElementVNode(
+                "button",
+                {
+                  class: _normalizeClass({ active: $props.active === "aniversariantes" }),
+                  onClick: _cache[7] || (_cache[7] = ($event) => $setup.selecionar("aniversariantes"))
+                },
+                [..._cache[20] || (_cache[20] = [
+                  _tracer(47,12,_createElementVNode(
+                    "span",
+                    { class: "nav-dot" },
+                    null,
+                    -1
+                    /* CACHED */
+                  )),
+                  _tracer(48,12,_createElementVNode(
+                    "span",
+                    null,
+                    "Aniversariantes",
+                    -1
+                    /* CACHED */
+                  ))
+                ])],
+                2
+                /* CLASS */
+              ))
+            ]))) : _createCommentVNode("v-if", true)
+          ]),
+          _: 1
+          /* STABLE */
+        })),
+        _tracer(53,6,_createElementVNode(
+          "button",
+          {
+            class: _normalizeClass({ active: $props.active === "logs" }),
+            onClick: _cache[8] || (_cache[8] = ($event) => $setup.selecionar("logs"))
+          },
+          [..._cache[21] || (_cache[21] = [
+            _createStaticVNode('<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg></span><span>Logs</span>', 2)
+          ])],
+          2
+          /* CLASS */
+        )),
+        _tracer(58,6,_createElementVNode(
+          "button",
+          {
+            class: _normalizeClass({ active: $props.active === "configuracoes" }),
+            onClick: _cache[9] || (_cache[9] = ($event) => $setup.selecionar("configuracoes"))
+          },
+          [..._cache[22] || (_cache[22] = [
+            _tracer(59,8,_createElementVNode(
+              "span",
+              { class: "nav-icon" },
+              [
+                _tracer(59,31,_createElementVNode("svg", { viewBox: "0 0 24 24" }, [
+                  _tracer(59,56,_createElementVNode("path", { d: "M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4Z" })),
+                  _tracer(59,119,_createElementVNode("path", { d: "M19.4 15a1.8 1.8 0 0 0 .36 1.98l.05.05a2.1 2.1 0 0 1-2.98 2.98l-.05-.05A1.8 1.8 0 0 0 14.8 19.6a1.8 1.8 0 0 0-1.1 1.65V21.4a2.1 2.1 0 0 1-4.2 0v-.08A1.8 1.8 0 0 0 8.4 19.6a1.8 1.8 0 0 0-1.98.36l-.05.05a2.1 2.1 0 0 1-2.98-2.98l.05-.05A1.8 1.8 0 0 0 3.8 15a1.8 1.8 0 0 0-1.65-1.1H2a2.1 2.1 0 0 1 0-4.2h.08A1.8 1.8 0 0 0 3.8 8.6a1.8 1.8 0 0 0-.36-1.98l-.05-.05a2.1 2.1 0 0 1 2.98-2.98l.05.05A1.8 1.8 0 0 0 8.4 4a1.8 1.8 0 0 0 1.1-1.65V2.2a2.1 2.1 0 0 1 4.2 0v.08A1.8 1.8 0 0 0 14.8 4a1.8 1.8 0 0 0 1.98-.36l.05-.05a2.1 2.1 0 0 1 2.98 2.98l-.05.05A1.8 1.8 0 0 0 19.4 8.6a1.8 1.8 0 0 0 1.65 1.1H21.2a2.1 2.1 0 0 1 0 4.2h-.08A1.8 1.8 0 0 0 19.4 15Z" }))
+                ]))
+              ],
+              -1
+              /* CACHED */
+            )),
+            _tracer(60,8,_createElementVNode(
+              "span",
+              null,
+              "Configuração",
+              -1
+              /* CACHED */
+            ))
+          ])],
+          2
+          /* CLASS */
+        )),
+        _tracer(63,6,_createElementVNode("button", {
+          class: "nav-logout",
+          onClick: _cache[10] || (_cache[10] = ($event) => _ctx.$emit("logout"))
+        }, [..._cache[23] || (_cache[23] = [
+          _createStaticVNode('<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M10 6H6.5A2.5 2.5 0 0 0 4 8.5v7A2.5 2.5 0 0 0 6.5 18H10"></path><path d="M14 8l4 4-4 4"></path><path d="M18 12H9"></path></svg></span><span>Sair</span>', 2)
+        ])]))
+      ]))
+    ],
+    2
+    /* CLASS */
+  ));
+}
+_sfc_main.__hmrId = "2557ff0f";
+typeof __VUE_HMR_RUNTIME__ !== "undefined" && __VUE_HMR_RUNTIME__.createRecord(_sfc_main.__hmrId, _sfc_main);
+import.meta.hot.on("file-changed", ({ file }) => {
+  __VUE_HMR_RUNTIME__.CHANGED_FILE = file;
+});
+import.meta.hot.accept((mod) => {
+  if (!mod) return;
+  const { default: updated, _rerender_only } = mod;
+  if (_rerender_only) {
+    __VUE_HMR_RUNTIME__.rerender(updated.__hmrId, updated.render);
+  } else {
+    __VUE_HMR_RUNTIME__.reload(updated.__hmrId, updated);
+  }
+});
+import _export_sfc from "/_nuxt/@id/__x00__plugin-vue:export-helper";
+export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/app/components/admin/Sidebar.vue"]]);
+
+function _tracer(line, column, vnode) { return _tracerRecordPosition("app/components/admin/Sidebar.vue", line, column, vnode) }
+
+//# sourceMappingURL=data:application/json;base64,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b250ZW50IjpbIu+7vzx0ZW1wbGF0ZT5cclxuICA8YXNpZGUgY2xhc3M9XCJhZG1pbi1zaWRlYmFyXCIgOmNsYXNzPVwieyAnbWVudS1vcGVuJzogbW9iaWxlT3BlbiB9XCI+XHJcbiAgICA8ZGl2IGNsYXNzPVwiYWRtaW4tbG9nb1wiPlxyXG4gICAgICA8c3BhbiBjbGFzcz1cImxvZ28taWNvblwiPjxVaUJ1c0ljb24gLz48L3NwYW4+XHJcbiAgICAgIDxzcGFuIGNsYXNzPVwiYnJhbmQtd29yZFwiPkdyYXppVHVyPC9zcGFuPlxyXG4gICAgICA8YnV0dG9uIGNsYXNzPVwibW9iaWxlLW1lbnUtYnRuXCIgdHlwZT1cImJ1dHRvblwiIGFyaWEtbGFiZWw9XCJBYnJpciBtZW51XCIgQGNsaWNrPVwibW9iaWxlT3BlbiA9ICFtb2JpbGVPcGVuXCI+XHJcbiAgICAgICAgPHNwYW4+PC9zcGFuPjxzcGFuPjwvc3Bhbj48c3Bhbj48L3NwYW4+XHJcbiAgICAgIDwvYnV0dG9uPlxyXG4gICAgPC9kaXY+XHJcblxyXG4gICAgPG5hdiBjbGFzcz1cImFkbWluLW5hdlwiIEBjbGljaz1cImZlY2hhck1vYmlsZVwiPlxyXG4gICAgICA8YnV0dG9uIDpjbGFzcz1cInsgYWN0aXZlOiBhY3RpdmUgPT09ICdkYXNoYm9hcmQnIH1cIiBAY2xpY2s9XCJzZWxlY2lvbmFyKCdkYXNoYm9hcmQnKVwiPlxyXG4gICAgICAgIDxzcGFuIGNsYXNzPVwibmF2LWljb25cIj48c3ZnIHZpZXdCb3g9XCIwIDAgMjQgMjRcIj48cGF0aCBkPVwiTTQgMTNoNnY3SDR6TTE0IDRoNnYxNmgtNnpNNCA0aDZ2NUg0elwiIC8+PC9zdmc+PC9zcGFuPlxyXG4gICAgICAgIDxzcGFuPkRhc2hib2FyZDwvc3Bhbj5cclxuICAgICAgPC9idXR0b24+XHJcblxyXG4gICAgICA8YnV0dG9uIDpjbGFzcz1cInsgJ2FjdGl2ZS1zb2Z0JzogaXNWaWFnZW5zIH1cIiBAY2xpY2suc3RvcD1cInN1Yk9wZW4gPSAhc3ViT3BlblwiPlxyXG4gICAgICAgIDxzcGFuIGNsYXNzPVwibmF2LWljb25cIj48c3ZnIHZpZXdCb3g9XCIwIDAgMjQgMjRcIj48cGF0aCBkPVwiTTYgMTlWNWw2IDMgNi0zdjE0bC02LTMtNiAzWlwiIC8+PHBhdGggZD1cIk0xMiA4djhcIiAvPjwvc3ZnPjwvc3Bhbj5cclxuICAgICAgICA8c3Bhbj5FeGN1cnPDtWVzPC9zcGFuPlxyXG4gICAgICAgIDxzcGFuIGNsYXNzPVwic2lkZWJhci1jaGV2cm9uXCIgOmNsYXNzPVwieyBvcGVuOiBzdWJPcGVuIH1cIj4mcnNhcXVvOzwvc3Bhbj5cclxuICAgICAgPC9idXR0b24+XHJcbiAgICAgIDxUcmFuc2l0aW9uIG5hbWU9XCJzdWJtZW51XCI+XHJcbiAgICAgICAgPGRpdiB2LWlmPVwic3ViT3BlblwiIGNsYXNzPVwibmF2LXN1YlwiPlxyXG4gICAgICAgICAgPGJ1dHRvbiA6Y2xhc3M9XCJ7IGFjdGl2ZTogYWN0aXZlID09PSAnZXhjdXJzb2VzLWF0aXZhcycgfVwiIEBjbGljaz1cInNlbGVjaW9uYXIoJ2V4Y3Vyc29lcy1hdGl2YXMnKVwiPlxyXG4gICAgICAgICAgICA8c3BhbiBjbGFzcz1cIm5hdi1kb3RcIj48L3NwYW4+XHJcbiAgICAgICAgICAgIDxzcGFuPkF0aXZhczwvc3Bhbj5cclxuICAgICAgICAgIDwvYnV0dG9uPlxyXG4gICAgICAgICAgPGJ1dHRvbiA6Y2xhc3M9XCJ7IGFjdGl2ZTogYWN0aXZlID09PSAnZXhjdXJzb2VzLWZpbmFsaXphZGFzJyB9XCIgQGNsaWNrPVwic2VsZWNpb25hcignZXhjdXJzb2VzLWZpbmFsaXphZGFzJylcIj5cclxuICAgICAgICAgICAgPHNwYW4gY2xhc3M9XCJuYXYtZG90XCI+PC9zcGFuPlxyXG4gICAgICAgICAgICA8c3Bhbj5GaW5hbGl6YWRhczwvc3Bhbj5cclxuICAgICAgICAgIDwvYnV0dG9uPlxyXG4gICAgICAgIDwvZGl2PlxyXG4gICAgICA8L1RyYW5zaXRpb24+XHJcblxyXG4gICAgICA8YnV0dG9uIDpjbGFzcz1cInsgJ2FjdGl2ZS1zb2Z0JzogaXNQYXNzYWdlaXJvcyB9XCIgQGNsaWNrLnN0b3A9XCJwYXNzYWdlaXJvc09wZW4gPSAhcGFzc2FnZWlyb3NPcGVuXCI+XHJcbiAgICAgICAgPHNwYW4gY2xhc3M9XCJuYXYtaWNvblwiPjxzdmcgdmlld0JveD1cIjAgMCAyNCAyNFwiPjxwYXRoIGQ9XCJNMTYgMTFhNCA0IDAgMSAwLTggMFwiIC8+PHBhdGggZD1cIk00LjUgMjBhNy41IDcuNSAwIDAgMSAxNSAwXCIgLz48cGF0aCBkPVwiTTE4IDcuNWgzXCIgLz48cGF0aCBkPVwiTTE5LjUgNnYzXCIgLz48L3N2Zz48L3NwYW4+XHJcbiAgICAgICAgPHNwYW4+UGFzc2FnZWlyb3M8L3NwYW4+XHJcbiAgICAgICAgPHNwYW4gY2xhc3M9XCJzaWRlYmFyLWNoZXZyb25cIiA6Y2xhc3M9XCJ7IG9wZW46IHBhc3NhZ2Vpcm9zT3BlbiB9XCI+JnJzYXF1bzs8L3NwYW4+XHJcbiAgICAgIDwvYnV0dG9uPlxyXG4gICAgICA8VHJhbnNpdGlvbiBuYW1lPVwic3VibWVudVwiPlxyXG4gICAgICAgIDxkaXYgdi1pZj1cInBhc3NhZ2Vpcm9zT3BlblwiIGNsYXNzPVwibmF2LXN1YlwiPlxyXG4gICAgICAgICAgPGJ1dHRvbiA6Y2xhc3M9XCJ7IGFjdGl2ZTogYWN0aXZlID09PSAncGFzc2FnZWlyb3MnIH1cIiBAY2xpY2s9XCJzZWxlY2lvbmFyKCdwYXNzYWdlaXJvcycpXCI+XHJcbiAgICAgICAgICAgIDxzcGFuIGNsYXNzPVwibmF2LWRvdFwiPjwvc3Bhbj5cclxuICAgICAgICAgICAgPHNwYW4+QmFzZSBkZSBwYXNzYWdlaXJvczwvc3Bhbj5cclxuICAgICAgICAgIDwvYnV0dG9uPlxyXG4gICAgICAgICAgPGJ1dHRvbiA6Y2xhc3M9XCJ7IGFjdGl2ZTogYWN0aXZlID09PSAnYW5pdmVyc2FyaWFudGVzJyB9XCIgQGNsaWNrPVwic2VsZWNpb25hcignYW5pdmVyc2FyaWFudGVzJylcIj5cclxuICAgICAgICAgICAgPHNwYW4gY2xhc3M9XCJuYXYtZG90XCI+PC9zcGFuPlxyXG4gICAgICAgICAgICA8c3Bhbj5Bbml2ZXJzYXJpYW50ZXM8L3NwYW4+XHJcbiAgICAgICAgICA8L2J1dHRvbj5cclxuICAgICAgICA8L2Rpdj5cclxuICAgICAgPC9UcmFuc2l0aW9uPlxyXG5cclxuICAgICAgPGJ1dHRvbiA6Y2xhc3M9XCJ7IGFjdGl2ZTogYWN0aXZlID09PSAnbG9ncycgfVwiIEBjbGljaz1cInNlbGVjaW9uYXIoJ2xvZ3MnKVwiPlxyXG4gICAgICAgIDxzcGFuIGNsYXNzPVwibmF2LWljb25cIj48c3ZnIHZpZXdCb3g9XCIwIDAgMjQgMjRcIj48cGF0aCBkPVwiTTggNmgxM1wiIC8+PHBhdGggZD1cIk04IDEyaDEzXCIgLz48cGF0aCBkPVwiTTggMThoMTNcIiAvPjxwYXRoIGQ9XCJNMyA2aC4wMVwiIC8+PHBhdGggZD1cIk0zIDEyaC4wMVwiIC8+PHBhdGggZD1cIk0zIDE4aC4wMVwiIC8+PC9zdmc+PC9zcGFuPlxyXG4gICAgICAgIDxzcGFuPkxvZ3M8L3NwYW4+XHJcbiAgICAgIDwvYnV0dG9uPlxyXG5cclxuICAgICAgPGJ1dHRvbiA6Y2xhc3M9XCJ7IGFjdGl2ZTogYWN0aXZlID09PSAnY29uZmlndXJhY29lcycgfVwiIEBjbGljaz1cInNlbGVjaW9uYXIoJ2NvbmZpZ3VyYWNvZXMnKVwiPlxyXG4gICAgICAgIDxzcGFuIGNsYXNzPVwibmF2LWljb25cIj48c3ZnIHZpZXdCb3g9XCIwIDAgMjQgMjRcIj48cGF0aCBkPVwiTTEyIDE1LjJBMy4yIDMuMiAwIDEgMCAxMiA4LjhhMy4yIDMuMiAwIDAgMCAwIDYuNFpcIiAvPjxwYXRoIGQ9XCJNMTkuNCAxNWExLjggMS44IDAgMCAwIC4zNiAxLjk4bC4wNS4wNWEyLjEgMi4xIDAgMCAxLTIuOTggMi45OGwtLjA1LS4wNUExLjggMS44IDAgMCAwIDE0LjggMTkuNmExLjggMS44IDAgMCAwLTEuMSAxLjY1VjIxLjRhMi4xIDIuMSAwIDAgMS00LjIgMHYtLjA4QTEuOCAxLjggMCAwIDAgOC40IDE5LjZhMS44IDEuOCAwIDAgMC0xLjk4LjM2bC0uMDUuMDVhMi4xIDIuMSAwIDAgMS0yLjk4LTIuOThsLjA1LS4wNUExLjggMS44IDAgMCAwIDMuOCAxNWExLjggMS44IDAgMCAwLTEuNjUtMS4xSDJhMi4xIDIuMSAwIDAgMSAwLTQuMmguMDhBMS44IDEuOCAwIDAgMCAzLjggOC42YTEuOCAxLjggMCAwIDAtLjM2LTEuOThsLS4wNS0uMDVhMi4xIDIuMSAwIDAgMSAyLjk4LTIuOThsLjA1LjA1QTEuOCAxLjggMCAwIDAgOC40IDRhMS44IDEuOCAwIDAgMCAxLjEtMS42NVYyLjJhMi4xIDIuMSAwIDAgMSA0LjIgMHYuMDhBMS44IDEuOCAwIDAgMCAxNC44IDRhMS44IDEuOCAwIDAgMCAxLjk4LS4zNmwuMDUtLjA1YTIuMSAyLjEgMCAwIDEgMi45OCAyLjk4bC0uMDUuMDVBMS44IDEuOCAwIDAgMCAxOS40IDguNmExLjggMS44IDAgMCAwIDEuNjUgMS4xSDIxLjJhMi4xIDIuMSAwIDAgMSAwIDQuMmgtLjA4QTEuOCAxLjggMCAwIDAgMTkuNCAxNVpcIiAvPjwvc3ZnPjwvc3Bhbj5cclxuICAgICAgICA8c3Bhbj5Db25maWd1cmHDp8Ojbzwvc3Bhbj5cclxuICAgICAgPC9idXR0b24+XHJcblxyXG4gICAgICA8YnV0dG9uIGNsYXNzPVwibmF2LWxvZ291dFwiIEBjbGljaz1cIiRlbWl0KCdsb2dvdXQnKVwiPlxyXG4gICAgICAgIDxzcGFuIGNsYXNzPVwibmF2LWljb25cIj48c3ZnIHZpZXdCb3g9XCIwIDAgMjQgMjRcIj48cGF0aCBkPVwiTTEwIDZINi41QTIuNSAyLjUgMCAwIDAgNCA4LjV2N0EyLjUgMi41IDAgMCAwIDYuNSAxOEgxMFwiIC8+PHBhdGggZD1cIk0xNCA4bDQgNC00IDRcIiAvPjxwYXRoIGQ9XCJNMTggMTJIOVwiIC8+PC9zdmc+PC9zcGFuPlxyXG4gICAgICAgIDxzcGFuPlNhaXI8L3NwYW4+XHJcbiAgICAgIDwvYnV0dG9uPlxyXG4gICAgPC9uYXY+XHJcbiAgPC9hc2lkZT5cclxuPC90ZW1wbGF0ZT5cclxuXHJcbjxzY3JpcHQgc2V0dXAgbGFuZz1cInRzXCI+XHJcbmNvbnN0IHByb3BzID0gZGVmaW5lUHJvcHM8eyBhY3RpdmU6IHN0cmluZyB9PigpXHJcbmNvbnN0IGVtaXQgPSBkZWZpbmVFbWl0cyhbJ3VwZGF0ZTphY3RpdmUnLCAnbG9nb3V0J10pXHJcbmNvbnN0IGlzVmlhZ2VucyA9IGNvbXB1dGVkKCgpID0+IHByb3BzLmFjdGl2ZSA9PT0gJ2V4Y3Vyc29lcy1hdGl2YXMnIHx8IHByb3BzLmFjdGl2ZSA9PT0gJ2V4Y3Vyc29lcy1maW5hbGl6YWRhcycpXHJcbmNvbnN0IGlzUGFzc2FnZWlyb3MgPSBjb21wdXRlZCgoKSA9PiBwcm9wcy5hY3RpdmUgPT09ICdwYXNzYWdlaXJvcycgfHwgcHJvcHMuYWN0aXZlID09PSAnYW5pdmVyc2FyaWFudGVzJylcclxuY29uc3Qgc3ViT3BlbiA9IHJlZih0cnVlKVxyXG5jb25zdCBwYXNzYWdlaXJvc09wZW4gPSByZWYoZmFsc2UpXHJcbmNvbnN0IG1vYmlsZU9wZW4gPSByZWYoZmFsc2UpXHJcbndhdGNoKGlzVmlhZ2VucywgKHZhbHVlKSA9PiB7IGlmICh2YWx1ZSkgc3ViT3Blbi52YWx1ZSA9IHRydWUgfSwgeyBpbW1lZGlhdGU6IHRydWUgfSlcclxud2F0Y2goaXNQYXNzYWdlaXJvcywgKHZhbHVlKSA9PiB7IGlmICh2YWx1ZSkgcGFzc2FnZWlyb3NPcGVuLnZhbHVlID0gdHJ1ZSB9LCB7IGltbWVkaWF0ZTogdHJ1ZSB9KVxyXG5jb25zdCBzZWxlY2lvbmFyID0gKHZhbHVlOiBzdHJpbmcpID0+IHtcclxuICBlbWl0KCd1cGRhdGU6YWN0aXZlJywgdmFsdWUpXHJcbiAgbW9iaWxlT3Blbi52YWx1ZSA9IGZhbHNlXHJcbn1cclxuY29uc3QgZmVjaGFyTW9iaWxlID0gKCkgPT4ge1xyXG4gIGlmIChpbXBvcnQubWV0YS5jbGllbnQgJiYgd2luZG93LmlubmVyV2lkdGggPD0gOTAwKSBtb2JpbGVPcGVuLnZhbHVlID0gZmFsc2VcclxufVxyXG48L3NjcmlwdD5cclxuIl0sImZpbGUiOiJDOi9Vc2Vycy9Bc2FmL0Rlc2t0b3AvQ8OzZGlnb3Mvc2l0ZS1lbG90cmlwL2dyYXppdHVyLXYyL2FwcC9jb21wb25lbnRzL2FkbWluL1NpZGViYXIudnVlIn0=

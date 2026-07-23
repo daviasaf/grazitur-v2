@@ -1,7 +1,7 @@
 <template>
-  <div class="modal fade show d-block" style="background: rgba(15,23,42,.58); z-index: 1060; overflow-y:auto">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable px-3">
-      <div class="modal-content border-0 shadow-large">
+  <div class="modal fade show d-block gt-modal-backdrop" style="z-index: 1060;">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable px-3">
+      <div class="modal-content border-0 shadow-large modal-excursion-editor">
         <div class="modal-header bg-white">
           <div>
             <h5 class="fw-bold mb-1">{{ tituloModal }}</h5>
@@ -11,21 +11,21 @@
         </div>
 
         <div class="modal-body bg-white p-4">
-          <div class="row g-3">
-            <div class="col-12">
+          <div class="row g-3 excursion-editor-grid">
+            <div class="col-12 col-xl-5">
               <label class="form-label small fw-bold">Nome da viagem *</label>
               <input v-model="form.nome" class="form-control" placeholder="Ex: Beto Carrero">
             </div>
-            <div class="col-md-8">
+            <div class="col-md-8 col-xl-5">
               <label class="form-label small fw-bold">Destino *</label>
               <input v-model="form.lugar" class="form-control" placeholder="Ex: Balneário Camboriú">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 col-xl-2">
               <label class="form-label small fw-bold">Vagas *</label>
               <input v-model="form.vagas" type="number" class="form-control">
             </div>
 
-            <div class="col-12">
+            <div class="col-12 col-xl-5 excursion-values-section">
               <div class="gt-subtle-card p-3">
                 <div class="d-flex flex-column flex-md-row justify-content-between gap-2 align-items-md-center mb-3">
                   <div>
@@ -50,7 +50,7 @@
               </div>
             </div>
 
-            <div class="col-12">
+            <div class="col-12 col-xl-7 excursion-contract-section">
               <div class="gt-card p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
                   <div>
@@ -71,7 +71,7 @@
               </div>
             </div>
 
-            <div class="col-12">
+            <div class="col-12 col-lg-6">
               <div class="gt-card p-3 d-flex align-items-center justify-content-between gap-3 contract-toggle-card">
                 <div>
                   <label class="fw-bold mb-0" for="contrato">Ativar contrato</label>
@@ -83,7 +83,7 @@
               </div>
             </div>
 
-            <div class="col-12">
+            <div class="col-12 col-lg-6">
               <div class="gt-card p-3 d-flex align-items-center justify-content-between gap-3 contract-toggle-card open-trip-toggle-card">
                 <div>
                   <label class="fw-bold mb-0" for="mostrarAberta">Mostrar em Excursões Abertas</label>
@@ -95,7 +95,7 @@
               </div>
             </div>
 
-            <div class="col-12">
+            <div class="col-12 col-lg-6">
               <label class="form-label small fw-bold">Guia responsável</label>
               <select v-model="form.guiaId" class="form-select">
                 <option :value="null">Nenhum guia vinculado</option>
@@ -103,7 +103,7 @@
               </select>
             </div>
 
-            <div class="col-12">
+            <div class="col-12 col-lg-6">
               <div class="gt-subtle-card p-3 small">
                 <strong>Resumo:</strong>
                 {{ form.usuarios?.length || form._count?.usuarios || 0 }} passageiros cadastrados, {{ form.vagas }} vagas totais.

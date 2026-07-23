@@ -1,14 +1,14 @@
 <template>
-  <div class="modal fade show d-block" style="background: rgba(15,23,42,.55); z-index: 1060; overflow-y:auto">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable px-3" style="max-width: 620px">
+  <div class="modal fade show d-block gt-modal-backdrop" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable px-3">
       <div class="modal-content border-0 rounded-gt shadow-soft">
         <div class="modal-header bg-white">
           <div><h5 class="fw-bold mb-0">Matricular {{ userParaVincular.nome }}</h5><p class="text-muted small mb-0">Selecione a excursão, o plano e depois os parentes se quiser.</p></div>
           <button class="btn-close" @click="$emit('close')"></button>
         </div>
         <div class="modal-body p-4 bg-white">
-          <div v-if="!excursaoSelecionada" class="d-grid gap-2">
-            <button v-for="ex in excursoes" :key="ex.id" class="btn btn-soft text-start p-3 rounded-gt" :disabled="ocupadas(ex) >= ex.vagas" @click="selecionar(ex)">
+          <div v-if="!excursaoSelecionada" class="vincular-trip-grid">
+            <button v-for="ex in excursoes" :key="ex.id" class="btn btn-soft text-start p-3 rounded-gt vincular-trip-option" :disabled="ocupadas(ex) >= ex.vagas" @click="selecionar(ex)">
               <strong>{{ ex.nome }}</strong><br><span class="text-muted small">{{ ex.lugar }} • {{ ocupadas(ex) }}/{{ ex.vagas }} vagas</span>
             </button>
           </div>
@@ -31,8 +31,8 @@
             <div v-if="familiares.length" class="mb-3">
               <input v-model="buscaParente" class="form-control" placeholder="Buscar dependente...">
             </div>
-            <div v-if="familiaresFiltrados.length" class="d-grid gap-2">
-              <div v-for="p in familiaresFiltrados" :key="p.id" class="gt-card p-3 d-flex justify-content-between align-items-center gap-3">
+            <div v-if="familiaresFiltrados.length" class="vincular-family-grid">
+              <div v-for="p in familiaresFiltrados" :key="p.id" class="gt-card p-3 d-flex justify-content-between align-items-center gap-3 vincular-family-option">
                 <div><strong>{{ p.nome }}</strong><br><span class="text-muted small">CPF: {{ p.cpf }}</span></div>
                 <button class="btn rounded-pill" :class="adicionados.includes(p.id) ? 'btn-success' : 'btn-brand'" :disabled="adicionados.includes(p.id) || salvando" @click="prepararParente(p)">
                   {{ adicionados.includes(p.id) ? 'Adicionado' : 'Adicionar' }}
@@ -48,7 +48,7 @@
       </div>
     </div>
 
-    <div v-if="parenteSelecionado" class="modal fade show d-block" style="background: rgba(15,23,42,.55); z-index: 1080">
+    <div v-if="parenteSelecionado" class="modal fade show d-block gt-modal-backdrop" style="z-index: 1080">
       <div class="modal-dialog modal-dialog-centered px-3" style="max-width: 430px">
         <div class="modal-content border-0 rounded-gt shadow-soft">
           <div class="modal-header border-0"><h5 class="fw-bold mb-0">Pagamento do dependente</h5><button class="btn-close" @click="parenteSelecionado = null"></button></div>

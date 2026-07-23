@@ -59,7 +59,11 @@
         </div>
       </section>
 
-      <section v-else class="public-flow">
+      <section v-else class="public-flow" :class="{
+        'public-flow-passenger': step === 'login',
+        'public-flow-form': step === 'cadastro',
+        'public-flow-success': step === 'sucesso'
+      }">
         <PublicAreaPassageiro v-if="step === 'login'" @editarDados="editarDados" @cadastrarFamiliar="cadastrarFamiliar" />
 
         <div v-if="step === 'cadastro'" class="public-form-wrap">
@@ -67,7 +71,12 @@
             <h1>{{ usuarioEditando ? 'Editar meus dados' : cpfFamiliar ? 'Cadastrar familiar' : 'Cadastro de passageiro' }}</h1>
             <p>Preencha os dados para manter seu cadastro atualizado.</p>
           </div>
-          <PublicFormPassageiro :cpfFamiliar="cpfFamiliar" :usuarioEditando="usuarioEditando" @sucesso="sucesso" />
+          <PublicFormPassageiro
+            :cpfFamiliar="cpfFamiliar"
+            :usuarioEditando="usuarioEditando"
+            @sucesso="sucesso"
+            @acessarViagem="step = 'login'"
+          />
         </div>
 
         <div v-if="step === 'sucesso'" class="gt-card success-panel">

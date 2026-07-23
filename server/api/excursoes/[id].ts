@@ -2,6 +2,8 @@ import { prisma } from '../../utils/prisma'
 import { parseJson } from '../../utils/json'
 import { appendLog, adminDetail } from '../../utils/logs'
 
+const PAGAMENTOS_MENSAIS_KEY = '__pagamentosMensais'
+
 const boolFromBody = (value: unknown, fallback: boolean) => {
   if (value === undefined || value === null) return fallback
   return Boolean(value)
@@ -10,6 +12,12 @@ const boolFromBody = (value: unknown, fallback: boolean) => {
 const fmt = (value: unknown) => String(value ?? 'não informado')
 const brlLog = (value: unknown) => Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const changeLine = (label: string, before: unknown, after: unknown) => String(before ?? '') !== String(after ?? '') ? `${label}: ${fmt(before)} → ${fmt(after)}.` : null
+
+const pagamentosSemInternos = (value: string | null | undefined) => {
+  const parsed = parseJson<Record<string, any>>(value || '{}', {})
+  delete parsed[PAGAMENTOS_MENSAIS_KEY]
+  return parsed
+}
 
 function buildAdminSignatures(existing: Record<string, any>, users: any[], grupos: Record<string, string[]>, guia: any) {
   const assinaturas = { ...(existing || {}) }
@@ -49,12 +57,13 @@ export default defineEventHandler(async (event) => {
     let assinaturas = parseJson<Record<string, any>>(atual.assinaturasJson, {})
     const pagamentosAntigos = atual.pagamentosJson || '{}'
     const pagamentosNovos = String(body.pagamentosJson ?? pagamentosAntigos)
+    const pagamentosPublicosAlterados = JSON.stringify(pagamentosSemInternos(pagamentosAntigos)) !== JSON.stringify(pagamentosSemInternos(pagamentosNovos))
     const gruposAntigos = atual.contratoGrupos || '{}'
     const gruposNovos = String(body.contratoGrupos ?? gruposAntigos)
     const detalhesAntigos = atual.contratoDetalhes || '{}'
     const detalhesNovos = String(body.contratoDetalhes ?? detalhesAntigos)
 
-    if (pagamentosAntigos !== pagamentosNovos || gruposAntigos !== gruposNovos || detalhesAntigos !== detalhesNovos) {
+    if (pagamentosPublicosAlterados || gruposAntigos !== gruposNovos || detalhesAntigos !== detalhesNovos) {
       const assinaturasAtuais = parseJson<Record<string, any>>(String(body.assinaturasJson || atual.assinaturasJson || '{}'), {})
       assinaturas = Object.fromEntries(Object.entries(assinaturasAtuais).filter(([k]) => k.startsWith('admin_')))
     }
@@ -111,13 +120,13 @@ export default defineEventHandler(async (event) => {
     }
     if (detalhesNovos !== (atual.contratoDetalhes || '{}')) { changes.push('detalhes do contrato'); detalhesAlteracoes.push('Detalhes do contrato foram alterados.') }
     if (gruposNovos !== (atual.contratoGrupos || '{}')) { changes.push('grupos familiares'); detalhesAlteracoes.push('Grupos familiares foram alterados.') }
-    if (pagamentosNovos !== (atual.pagamentosJson || '{}')) changes.push('pagamentos')
+    if (pagamentosNovos !== (atual.pagamentosJson || '{}')) changes.push(pagamentosPublicosAlterados ? 'pagamentos' : 'pagamentos mensais')
     if (novasDespesasJson !== (atual.despesasJson || '[]')) changes.push('despesas')
     if (String(body.listaEsperaJson ?? atual.listaEsperaJson ?? '[]') !== (atual.listaEsperaJson || '[]')) { changes.push('lista de espera'); detalhesAlteracoes.push('Lista de espera foi alterada.') }
     const pagamentoDetalhes: string[] = []
-    if (pagamentosNovos !== (atual.pagamentosJson || '{}')) {
-      const antigos = parseJson<Record<string, string>>(atual.pagamentosJson, {})
-      const novos = parseJson<Record<string, string>>(pagamentosNovos, {})
+    if (pagamentosPublicosAlterados) {
+      const antigos = pagamentosSemInternos(atual.pagamentosJson)
+      const novos = pagamentosSemInternos(pagamentosNovos)
       const ids = [...new Set([...Object.keys(antigos), ...Object.keys(novos)])]
       for (const pid of ids) {
         if (String(antigos[pid] || 'Pendente') !== String(novos[pid] || 'Pendente')) {
@@ -151,7 +160,7 @@ export default defineEventHandler(async (event) => {
     } else if (changes.length) {
       const onlyExpenseRemoval = despesaDetalhes.length && changes.length === 1 && changes[0] === 'despesas' && despesaDetalhes.every((linha) => linha.startsWith('Despesa removida'))
       await appendLog({
-        entity: despesaDetalhes.length ? 'financeiro' : 'excursao',
+        entity: despesaDetalhes.length || changes.some((change) => change.startsWith('pagamentos')) ? 'financeiro' : 'excursao',
         action: onlyExpenseRemoval ? 'expense-delete' : 'update',
         title: onlyExpenseRemoval ? 'Despesa removida' : (atual.finalizada ? 'Excursão finalizada atualizada' : 'Excursão atualizada'),
         detail: adminDetail(onlyExpenseRemoval ? 'removeu despesa de uma excursão' : 'editou uma excursão', [

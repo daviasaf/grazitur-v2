@@ -1,5 +1,12 @@
 <template>
-  <div class="gt-card gt-card-hover p-3 h-100 cursor-pointer" @click="$emit('gerenciar', excursao)">
+  <div
+    class="gt-card gt-card-hover p-3 h-100 cursor-pointer excursion-card-admin"
+    role="button"
+    tabindex="0"
+    @click="$emit('gerenciar', excursao)"
+    @keyup.enter="$emit('gerenciar', excursao)"
+    @keyup.space.prevent="$emit('gerenciar', excursao)"
+  >
     <div class="d-flex justify-content-between gap-3 mb-2">
       <div class="min-w-0">
         <h5 class="excursion-card-title mb-1 text-truncate">{{ excursao.nome }}</h5>

@@ -15,25 +15,24 @@
         </header>
 
         <section class="admin-page">
-          <div v-if="active === 'dashboard'">
-            <div class="page-heading">
-              <div>
-                <h2>Dashboard</h2>
-                <p>Resumo financeiro com viagens ativas e finalizadas em blocos separados.</p>
-              </div>
-              <div class="toolbar-actions">
-                <button class="gt-btn gt-btn-primary" @click="acaoRelatorio"><span class="btn-svg"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></span>Relatório geral</button>
-              </div>
-            </div>
-
-            <div class="row g-3 mb-4">
+          <div v-if="active === 'dashboard'" class="admin-view admin-dashboard-view">
+            <div class="dashboard-desktop-layout">
+              <section class="dashboard-main-column">
+            <div class="row g-3 mb-3 dashboard-metrics-row">
               <div class="col-md-6 col-xl-3"><div class="gt-card metric-card"><div><div class="metric-label">Receita de excursões ativas</div><div class="metric-value">{{ brl(total.receita) }}</div></div><div class="metric-icon icon-green"><svg viewBox="0 0 24 24"><path d="M5 17 17 5"/><path d="M8 5h9v9"/></svg></div></div></div>
               <div class="col-md-6 col-xl-3"><div class="gt-card metric-card"><div><div class="metric-label">Gastos de excursões ativas</div><div class="metric-value">{{ brl(total.gastos) }}</div></div><div class="metric-icon icon-red"><svg viewBox="0 0 24 24"><path d="m5 7 12 12"/><path d="M17 10v9H8"/></svg></div></div></div>
               <div class="col-md-6 col-xl-3"><div class="gt-card metric-card"><div><div class="metric-label">{{ total.lucro >= 0 ? 'Lucro de excursões ativas' : 'Prejuízo das ativas' }}</div><div class="metric-value" :class="total.lucro >= 0 ? 'text-success-gt' : 'text-danger-gt'">{{ brlAbs(total.lucro) }}</div></div><div class="metric-icon icon-blue"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 6.5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></div></div></div>
               <div class="col-md-6 col-xl-3"><div class="gt-card metric-card"><div><div class="metric-label">Excursões Ativas</div><div class="metric-value">{{ excursoesAtivas.length }}</div></div><div class="metric-icon icon-orange"><svg viewBox="0 0 24 24"><path d="M6 19V5l6 3 6-3v14l-6-3-6 3Z"/><path d="M12 8v8"/></svg></div></div></div>
             </div>
 
-            <div class="gt-card chart-card mb-4">
+            <div class="gt-card chart-card dashboard-chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <strong>Receita x gastos</strong>
+                  <span>Excursões ativas</span>
+                </div>
+                <button class="gt-btn gt-btn-primary dashboard-report-button" @click="acaoRelatorio"><span class="btn-svg"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></span>Relatório geral</button>
+              </div>
               <div class="chart-wrap">
                 <div v-for="item in financeiroAtivas" :key="item.ex.id" class="chart-group">
                   <div class="chart-bars">
@@ -45,14 +44,17 @@
                 <div v-if="financeiroAtivas.length === 0" class="text-center text-muted w-100 py-5">Nenhuma excursão ativa cadastrada.</div>
               </div>
             </div>
+              </section>
+
+              <section class="dashboard-trips-column">
 
 
             <div v-for="grupo in dashboardGrupos" :key="grupo.label" class="dashboard-trip-section">
               <div class="d-flex align-items-center justify-content-between gap-2 mb-3"><div><h3 class="section-title">{{ grupo.label }}</h3><p class="text-muted small mb-0">{{ grupo.description }}</p></div></div>
-              <div class="row g-3">
+              <div class="row g-3 dashboard-trip-grid">
                 <div v-for="item in grupo.items" :key="item.ex.id" class="col-md-6 col-xl-4">
                   <div class="gt-card gt-card-hover p-3 h-100 position-relative dashboard-trip-card-admin">
-                    <div class="d-flex justify-content-between gap-3 mb-3 align-items-start">
+                    <div class="dashboard-trip-card-head d-flex justify-content-between gap-3 mb-3 align-items-start">
                       <div class="min-w-0">
                         <h6 class="fw-bold mb-1 text-truncate">{{ item.ex.nome }}</h6>
                         <p class="text-muted small mb-0 lh-sm">{{ item.ex.lugar }}</p>
@@ -87,29 +89,31 @@
                 <div v-if="grupo.items.length === 0" class="col-12"><div class="gt-card p-4 text-center text-muted">Nenhuma excursão nesta categoria.</div></div>
               </div>
             </div>
+              </section>
+            </div>
           </div>
 
-          <div v-if="active === 'excursoes-ativas'">
-            <div class="page-heading"><div><h2>Excursões Ativas</h2><p>Gerencie passageiros, pagamentos, contratos e parâmetros da viagem.</p></div><button class="gt-btn gt-btn-primary" @click="abrirNovaExcursao">+ Nova Excursão</button></div>
-            <div class="row g-3">
+          <div v-if="active === 'excursoes-ativas'" class="admin-view">
+            <div class="page-heading"><div><h2>Excursões Ativas</h2><p>Gerencie passageiros, pagamentos, contratos e parâmetros da viagem.</p></div><button class="gt-btn gt-btn-primary" @click="abrirNovaExcursao"><span class="btn-svg"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>Nova Excursão</button></div>
+            <div class="row g-3 admin-card-grid excursion-cards-grid">
               <div v-for="ex in excursoesAtivas" :key="ex.id" class="col-md-6 col-xl-4"><ExcursoesExcursaoCard :excursao="ex" @gerenciar="abrirGerenciar" /></div>
               <div v-if="excursoesAtivas.length === 0" class="col-12"><div class="gt-card p-5 text-center text-muted">Nenhuma excursão ativa cadastrada.</div></div>
             </div>
           </div>
 
-          <div v-if="active === 'excursoes-finalizadas'">
+          <div v-if="active === 'excursoes-finalizadas'" class="admin-view">
             <div class="page-heading"><div><h2>Excursões Finalizadas</h2><p>Viagens encerradas continuam protegidas, mas podem receber ajustes mediante confirmação.</p></div></div>
-            <div class="row g-3">
+            <div class="row g-3 admin-card-grid excursion-cards-grid">
               <div v-for="ex in excursoesFinalizadas" :key="ex.id" class="col-md-6 col-xl-4"><ExcursoesExcursaoCard :excursao="ex" @gerenciar="abrirGerenciar" /></div>
               <div v-if="excursoesFinalizadas.length === 0" class="col-12"><div class="gt-card p-5 text-center text-muted">Nenhuma excursão finalizada ainda.</div></div>
             </div>
           </div>
 
-          <div v-if="active === 'passageiros'">
-            <div class="page-heading"><div><h2>Base de Passageiros</h2><p>Cadastros, familiares, guias e vínculo com excursões.</p></div><div class="toolbar-actions passenger-toolbar-actions"><input v-model="buscaUser" class="form-control" placeholder="Buscar passageiro..."><button class="gt-btn gt-btn-primary" @click="abrirNovoUser">+ Cadastro</button></div></div>
+          <div v-if="active === 'passageiros'" class="admin-view">
+            <div class="page-heading"><div><h2>Base de Passageiros</h2><p>Cadastros, familiares, guias e vínculo com excursões.</p></div><div class="toolbar-actions passenger-toolbar-actions"><input v-model="buscaUser" class="form-control" placeholder="Buscar passageiro..."><button class="gt-btn gt-btn-primary" @click="abrirNovoUser"><span class="btn-svg"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>Cadastro</button></div></div>
             <PassageirosTabela :usuarios="usuariosFiltrados" @vincular="abrirVincular" @editar="abrirEdicaoUser" @excluir="u => pedirConfirmacao('user', u.id, 'Excluir passageiro', 'Deseja excluir este passageiro?')" />
           </div>
-          <div v-if="active === 'aniversariantes'">
+          <div v-if="active === 'aniversariantes'" class="admin-view">
             <div class="page-heading">
               <div>
                 <h2>Aniversariantes</h2>
@@ -120,12 +124,12 @@
             <div class="birthday-layout">
               <section class="gt-card birthday-calendar-card">
                 <div class="birthday-calendar-toolbar">
-                  <button class="gt-icon-btn" title="Mês anterior" @click="mesAniversario--">&lsaquo;</button>
+                  <button class="gt-icon-btn" title="Mês anterior" aria-label="Mês anterior" @click="mesAniversario--"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
                   <div>
                     <strong>{{ mesAniversarioLabel }}</strong>
                     <span>{{ totalAniversariosMes }} neste mês</span>
                   </div>
-                  <button class="gt-icon-btn" title="Próximo mês" @click="mesAniversario++">&rsaquo;</button>
+                  <button class="gt-icon-btn" title="Próximo mês" aria-label="Próximo mês" @click="mesAniversario++"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
                 </div>
 
                 <div class="birthday-weekdays">
@@ -156,7 +160,7 @@
               </section>
             </div>
           </div>
-          <div v-if="active === 'logs'">
+          <div v-if="active === 'logs'" class="admin-view">
             <div class="page-heading"><div><h2>Logs do sistema</h2><p>Histórico das principais alterações realizadas no painel.</p></div><div class="toolbar-actions"><button class="gt-btn gt-btn-danger-outline" @click="modalApagarLogs = true">Apagar logs</button></div></div>
             <div class="gt-card p-3 p-md-4">
               <div class="logs-toolbar mb-3">
@@ -177,7 +181,7 @@
               </div>
 
               <div v-if="logsFiltrados.length === 0" class="text-center text-muted py-5">Nenhuma movimentação encontrada com os filtros atuais.</div>
-              <div v-else class="table-responsive">
+              <div v-else class="table-responsive logs-table-scroll">
                 <table class="table logs-table align-middle mb-0">
                   <thead>
                     <tr>
@@ -202,9 +206,9 @@
             </div>
           </div>
 
-          <div v-if="active === 'configuracoes'">
+          <div v-if="active === 'configuracoes'" class="admin-view">
             <div class="page-heading"><div><h2>Configuração</h2><p>Ferramentas do sistema, aparência e seed do banco.</p></div></div>
-            <div class="row g-3">
+            <div class="row g-3 config-grid">
               <div class="col-md-6"><div class="gt-card p-4 h-100 config-card config-card-spacious"><div class="config-card-icon"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg></div><h5 class="fw-bold mb-1">Modo de aparência</h5><p class="text-muted small mb-4">Ative ou desative o modo dark para todo o sistema.</p><button class="gt-btn gt-btn-primary" @click="alternarTema">{{ temaEscuro ? 'Desativar modo dark' : 'Ativar modo dark' }}</button></div></div>
               <div class="col-md-6"><div class="gt-card p-4 h-100 config-card config-card-spacious"><div class="config-card-icon"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4"/><path d="M9 13h6"/><path d="M9 17h4"/></svg></div><h5 class="fw-bold mb-1">Gerar seed</h5><p class="text-muted small mb-4">Baixa um JSON com usuários, excursões e campos importantes do sistema.</p><button class="gt-btn gt-btn-primary w-100" @click="gerarSeedJson">Baixar seed JSON</button></div></div>
             </div>

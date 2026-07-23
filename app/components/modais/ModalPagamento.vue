@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade show d-block" style="background: rgba(15,23,42,.55); z-index: 1070">
+  <div class="modal fade show d-block gt-modal-backdrop" style="z-index: 1070">
     <div class="modal-dialog modal-dialog-centered px-3" style="max-width: 460px">
       <div class="modal-content border-0 rounded-gt shadow-soft">
         <div class="modal-header border-0 pb-0">

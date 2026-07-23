@@ -1,0 +1,314 @@
+import { createHotContext as __vite__createHotContext } from "/_nuxt/@vite/client";import.meta.hot = __vite__createHotContext("/pages/index.vue");import { default as __nuxt_component_0 } from "/_nuxt/components/ui/ToastManager.vue";
+import { default as __nuxt_component_1 } from "/_nuxt/components/ui/BusIcon.vue";
+import { default as __nuxt_component_2 } from "/_nuxt/components/public/AreaPassageiro.vue";
+import { default as __nuxt_component_3 } from "/_nuxt/components/public/FormPassageiro.vue";
+import { recordPosition as _tracerRecordPosition } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vite-plugin-vue-tracer@1.4._c8e6474912ceed6e1485fad075c614ca/node_modules/vite-plugin-vue-tracer/dist/client/record.mjs?v=41241ef9"
+import { defineComponent as _defineComponent } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+
+import { ref } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+const _sfc_main = /* @__PURE__ */ _defineComponent({
+  __name: "index",
+  setup(__props, { expose: __expose }) {
+    __expose();
+    const step = ref("home");
+    const cpfFamiliar = ref("");
+    const cpfTitularCadastro = ref("");
+    const usuarioEditando = ref(null);
+    const lugaresViajados = [
+      "Bio Parque",
+      "Arraial do Cabo",
+      "Guapi Parque das Águas",
+      "Jonosake",
+      "Petrópolis (Itaipava)",
+      "Vitória / Vila Velha",
+      "Terra do Dino",
+      "Campos do Jordão",
+      "Porto Seguro",
+      "Penedo",
+      "Aparecida",
+      "Aracruz",
+      "Rio de Janeiro (Cristo Redentor)"
+    ];
+    const voltar = () => {
+      step.value = "home";
+      cpfFamiliar.value = "";
+      cpfTitularCadastro.value = "";
+      usuarioEditando.value = null;
+    };
+    const sucesso = (cpfSalvo) => {
+      if (!usuarioEditando.value && !cpfFamiliar.value && cpfSalvo) cpfTitularCadastro.value = String(cpfSalvo).replace(/\D/g, "");
+      step.value = "sucesso";
+      cpfFamiliar.value = "";
+      usuarioEditando.value = null;
+    };
+    const adicionarParenteDepois = () => {
+      cpfFamiliar.value = cpfTitularCadastro.value;
+      usuarioEditando.value = null;
+      step.value = "cadastro";
+    };
+    const editarDados = (u) => {
+      usuarioEditando.value = u;
+      cpfFamiliar.value = "";
+      step.value = "cadastro";
+    };
+    const cadastrarFamiliar = (u) => {
+      usuarioEditando.value = null;
+      cpfFamiliar.value = u.cpf;
+      step.value = "cadastro";
+    };
+    const __returned__ = { step, cpfFamiliar, cpfTitularCadastro, usuarioEditando, lugaresViajados, voltar, sucesso, adicionarParenteDepois, editarDados, cadastrarFamiliar };
+    Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+    return __returned__;
+  }
+});
+import { resolveComponent as _resolveComponent, createVNode as _createVNode, createElementVNode as _createElementVNode, openBlock as _openBlock, createElementBlock as _createElementBlock, createCommentVNode as _createCommentVNode, renderList as _renderList, Fragment as _Fragment, toDisplayString as _toDisplayString, createBlock as _createBlock, normalizeClass as _normalizeClass, createStaticVNode as _createStaticVNode } from "/_nuxt/@fs/C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/node_modules/.pnpm/vue@3.5.34/node_modules/vue/dist/vue.runtime.esm-bundler.js?v=41241ef9";
+import _imports_0 from "/_nuxt/@id/virtual:public?%2Fgrazi-turismo.png";
+const _hoisted_1 = { class: "public-shell min-vh-100" };
+const _hoisted_2 = { class: "public-site-header" };
+const _hoisted_3 = { class: "container public-header-inner" };
+const _hoisted_4 = { class: "logo-icon" };
+const _hoisted_5 = { class: "container public-main" };
+const _hoisted_6 = {
+  key: 0,
+  class: "public-home"
+};
+const _hoisted_7 = { class: "gt-card public-hero-showcase" };
+const _hoisted_8 = { class: "public-hero-content" };
+const _hoisted_9 = { class: "public-actions-grid" };
+const _hoisted_10 = { class: "gt-card places-panel places-panel-pro" };
+const _hoisted_11 = { class: "places-list-pro" };
+const _hoisted_12 = {
+  key: 1,
+  class: "public-form-wrap"
+};
+const _hoisted_13 = { class: "flow-heading" };
+const _hoisted_14 = {
+  key: 2,
+  class: "gt-card success-panel"
+};
+const _hoisted_15 = { class: "success-actions" };
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  const _component_UiToastManager = __nuxt_component_0;
+  const _component_UiBusIcon = __nuxt_component_1;
+  const _component_PublicAreaPassageiro = __nuxt_component_2;
+  const _component_PublicFormPassageiro = __nuxt_component_3;
+  return _openBlock(), _tracer(2,2,_createElementBlock("div", _hoisted_1, [
+    _tracer(3,4,_createVNode(_component_UiToastManager)),
+    _tracer(5,4,_createElementVNode("header", _hoisted_2, [
+      _tracer(6,6,_createElementVNode("div", _hoisted_3, [
+        _tracer(7,8,_createElementVNode("button", {
+          class: "public-brand",
+          onClick: $setup.voltar
+        }, [
+          _tracer(8,10,_createElementVNode("span", _hoisted_4, [
+            _tracer(8,34,_createVNode(_component_UiBusIcon))
+          ])),
+          _cache[3] || (_cache[3] = _tracer(9,10,_createElementVNode(
+            "strong",
+            null,
+            "GraziTur",
+            -1
+            /* CACHED */
+          )))
+        ])),
+        $setup.step !== "home" ? (_openBlock(), _tracer(11,8,_createElementBlock("button", {
+          key: 0,
+          class: "gt-btn gt-btn-outline",
+          onClick: $setup.voltar
+        }, "Voltar ao início"))) : _createCommentVNode("v-if", true)
+      ]))
+    ])),
+    _tracer(15,4,_createElementVNode("main", _hoisted_5, [
+      $setup.step === "home" ? (_openBlock(), _tracer(16,6,_createElementBlock("section", _hoisted_6, [
+        _tracer(17,8,_createElementVNode("div", _hoisted_7, [
+          _tracer(18,10,_createElementVNode("div", _hoisted_8, [
+            _cache[6] || (_cache[6] = _tracer(19,24,_createElementVNode(
+              "h1",
+              null,
+              "Viajar em grupo com cuidado, organização e carinho.",
+              -1
+              /* CACHED */
+            ))),
+            _cache[7] || (_cache[7] = _tracer(20,12,_createElementVNode(
+              "p",
+              null,
+              "A GraziTur organiza excursões, acompanha os passageiros e facilita contratos, familiares e pagamentos em um só lugar.",
+              -1
+              /* CACHED */
+            ))),
+            _tracer(22,12,_createElementVNode("div", _hoisted_9, [
+              _tracer(23,14,_createElementVNode("button", {
+                class: "public-action-card",
+                onClick: _cache[0] || (_cache[0] = ($event) => $setup.step = "cadastro")
+              }, [..._cache[4] || (_cache[4] = [
+                _createStaticVNode('<span class="public-action-icon"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"></path><path d="M4 21a8 8 0 0 1 16 0"></path><path d="M19 8h3"></path><path d="M20.5 6.5v3"></path></svg></span><span><strong>Novo cadastro</strong><small>Cadastrar passageiro ou familiar.</small></span>', 2)
+              ])])),
+              _tracer(31,14,_createElementVNode("button", {
+                class: "public-action-card",
+                onClick: _cache[1] || (_cache[1] = ($event) => $setup.step = "login")
+              }, [..._cache[5] || (_cache[5] = [
+                _createStaticVNode('<span class="public-action-icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="m10 17 5-5-5-5"></path><path d="M15 12H3"></path></svg></span><span><strong>Acessar minha viagem</strong><small>Ver contratos, PIX e familiares.</small></span>', 2)
+              ])]))
+            ]))
+          ])),
+          _cache[8] || (_cache[8] = _tracer(41,10,_createElementVNode(
+            "div",
+            { class: "public-hero-visual" },
+            [
+              _tracer(42,12,_createElementVNode("img", {
+                src: _imports_0,
+                alt: "Grazi Turismo em frente ao ônibus"
+              }))
+            ],
+            -1
+            /* CACHED */
+          )))
+        ])),
+        _tracer(46,8,_createElementVNode("div", _hoisted_10, [
+          _cache[9] || (_cache[9] = _tracer(47,10,_createElementVNode(
+            "div",
+            { class: "places-heading-pro" },
+            [
+              _tracer(48,12,_createElementVNode("div", null, [
+                _tracer(49,28,_createElementVNode("h2", null, "Lugares já viajados")),
+                _tracer(50,14,_createElementVNode("p", null, "Alguns destinos que já fizeram parte da rota da GraziTur."))
+              ]))
+            ],
+            -1
+            /* CACHED */
+          ))),
+          _tracer(53,10,_createElementVNode("div", _hoisted_11, [
+            (_openBlock(), _tracer(54,12,_createElementBlock(
+              _Fragment,
+              null,
+              _renderList($setup.lugaresViajados, (lugar, index) => {
+                return _tracer(54,12,_createElementVNode("div", {
+                  key: lugar,
+                  class: "place-item-pro"
+                }, [
+                  _tracer(55,14,_createElementVNode(
+                    "span",
+                    null,
+                    _toDisplayString(String(index + 1).padStart(2, "0")),
+                    1
+                    /* TEXT */
+                  )),
+                  _tracer(56,14,_createElementVNode(
+                    "strong",
+                    null,
+                    _toDisplayString(lugar),
+                    1
+                    /* TEXT */
+                  ))
+                ]));
+              }),
+              64
+              /* STABLE_FRAGMENT */
+            )))
+          ]))
+        ]))
+      ]))) : (_openBlock(), _tracer(62,6,_createElementBlock(
+        "section",
+        {
+          key: 1,
+          class: _normalizeClass(["public-flow", {
+            "public-flow-passenger": $setup.step === "login",
+            "public-flow-form": $setup.step === "cadastro",
+            "public-flow-success": $setup.step === "sucesso"
+          }])
+        },
+        [
+          $setup.step === "login" ? (_openBlock(), _tracer(67,8,_createBlock(_component_PublicAreaPassageiro, {
+            key: 0,
+            onEditarDados: $setup.editarDados,
+            onCadastrarFamiliar: $setup.cadastrarFamiliar
+          }))) : _createCommentVNode("v-if", true),
+          $setup.step === "cadastro" ? (_openBlock(), _tracer(69,8,_createElementBlock("div", _hoisted_12, [
+            _tracer(70,10,_createElementVNode("div", _hoisted_13, [
+              _tracer(71,12,_createElementVNode(
+                "h1",
+                null,
+                _toDisplayString($setup.usuarioEditando ? "Editar meus dados" : $setup.cpfFamiliar ? "Cadastrar familiar" : "Cadastro de passageiro"),
+                1
+                /* TEXT */
+              )),
+              _cache[10] || (_cache[10] = _tracer(72,12,_createElementVNode(
+                "p",
+                null,
+                "Preencha os dados para manter seu cadastro atualizado.",
+                -1
+                /* CACHED */
+              )))
+            ])),
+            _tracer(74,10,_createVNode(_component_PublicFormPassageiro, {
+              cpfFamiliar: $setup.cpfFamiliar,
+              usuarioEditando: $setup.usuarioEditando,
+              onSucesso: $setup.sucesso,
+              onAcessarViagem: _cache[2] || (_cache[2] = ($event) => $setup.step = "login")
+            }, null, 8, ["cpfFamiliar", "usuarioEditando"]))
+          ]))) : _createCommentVNode("v-if", true),
+          $setup.step === "sucesso" ? (_openBlock(), _tracer(82,8,_createElementBlock("div", _hoisted_14, [
+            _cache[11] || (_cache[11] = _tracer(83,10,_createElementVNode(
+              "span",
+              { class: "success-ring" },
+              [
+                _tracer(83,37,_createElementVNode("svg", { viewBox: "0 0 24 24" }, [
+                  _tracer(83,62,_createElementVNode("path", { d: "m5 13 4 4L19 7" }))
+                ]))
+              ],
+              -1
+              /* CACHED */
+            ))),
+            _cache[12] || (_cache[12] = _tracer(84,10,_createElementVNode(
+              "h2",
+              null,
+              "Cadastro salvo!",
+              -1
+              /* CACHED */
+            ))),
+            _cache[13] || (_cache[13] = _tracer(85,10,_createElementVNode(
+              "p",
+              null,
+              "Os dados foram registrados com sucesso.",
+              -1
+              /* CACHED */
+            ))),
+            _tracer(86,10,_createElementVNode("div", _hoisted_15, [
+              _tracer(87,12,_createElementVNode("button", {
+                class: "gt-btn gt-btn-primary",
+                onClick: $setup.voltar
+              }, "Concluir")),
+              $setup.cpfTitularCadastro ? (_openBlock(), _tracer(88,12,_createElementBlock("button", {
+                key: 0,
+                class: "gt-btn gt-btn-outline",
+                onClick: $setup.adicionarParenteDepois
+              }, "Adicionar parente/amigo"))) : _createCommentVNode("v-if", true)
+            ]))
+          ]))) : _createCommentVNode("v-if", true)
+        ],
+        2
+        /* CLASS */
+      )))
+    ]))
+  ]));
+}
+_sfc_main.__hmrId = "02281a80";
+typeof __VUE_HMR_RUNTIME__ !== "undefined" && __VUE_HMR_RUNTIME__.createRecord(_sfc_main.__hmrId, _sfc_main);
+import.meta.hot.on("file-changed", ({ file }) => {
+  __VUE_HMR_RUNTIME__.CHANGED_FILE = file;
+});
+import.meta.hot.accept((mod) => {
+  if (!mod) return;
+  const { default: updated, _rerender_only } = mod;
+  if (_rerender_only) {
+    __VUE_HMR_RUNTIME__.rerender(updated.__hmrId, updated.render);
+  } else {
+    __VUE_HMR_RUNTIME__.reload(updated.__hmrId, updated);
+  }
+});
+import _export_sfc from "/_nuxt/@id/__x00__plugin-vue:export-helper";
+export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "C:/Users/Asaf/Desktop/Códigos/site-elotrip/grazitur-v2/app/pages/index.vue"]]);
+
+function _tracer(line, column, vnode) { return _tracerRecordPosition("app/pages/index.vue", line, column, vnode) }
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBZ0dBLFVBQU0sT0FBTyxJQUErQyxNQUFNO0FBQ2xFLFVBQU0sY0FBYyxJQUFJLEVBQUU7QUFDMUIsVUFBTSxxQkFBcUIsSUFBSSxFQUFFO0FBQ2pDLFVBQU0sa0JBQWtCLElBQVMsSUFBSTtBQUNyQyxVQUFNLGtCQUFrQjtBQUFBLE1BQ3RCO0FBQUEsTUFDQTtBQUFBLE1BQ0E7QUFBQSxNQUNBO0FBQUEsTUFDQTtBQUFBLE1BQ0E7QUFBQSxNQUNBO0FBQUEsTUFDQTtBQUFBLE1BQ0E7QUFBQSxNQUNBO0FBQUEsTUFDQTtBQUFBLE1BQ0E7QUFBQSxNQUNBO0FBQUEsSUFDRjtBQUNBLFVBQU0sU0FBUyxNQUFNO0FBQUUsV0FBSyxRQUFRO0FBQVEsa0JBQVksUUFBUTtBQUFJLHlCQUFtQixRQUFRO0FBQUksc0JBQWdCLFFBQVE7QUFBQSxJQUFLO0FBQ2hJLFVBQU0sVUFBVSxDQUFDLGFBQXNCO0FBQUUsVUFBSSxDQUFDLGdCQUFnQixTQUFTLENBQUMsWUFBWSxTQUFTLFNBQVUsb0JBQW1CLFFBQVEsT0FBTyxRQUFRLEVBQUUsUUFBUSxPQUFPLEVBQUU7QUFBRyxXQUFLLFFBQVE7QUFBVyxrQkFBWSxRQUFRO0FBQUksc0JBQWdCLFFBQVE7QUFBQSxJQUFLO0FBQ3BQLFVBQU0seUJBQXlCLE1BQU07QUFBRSxrQkFBWSxRQUFRLG1CQUFtQjtBQUFPLHNCQUFnQixRQUFRO0FBQU0sV0FBSyxRQUFRO0FBQUEsSUFBVztBQUMzSSxVQUFNLGNBQWMsQ0FBQyxNQUFXO0FBQUUsc0JBQWdCLFFBQVE7QUFBRyxrQkFBWSxRQUFRO0FBQUksV0FBSyxRQUFRO0FBQUEsSUFBVztBQUM3RyxVQUFNLG9CQUFvQixDQUFDLE1BQVc7QUFBRSxzQkFBZ0IsUUFBUTtBQUFNLGtCQUFZLFFBQVEsRUFBRTtBQUFLLFdBQUssUUFBUTtBQUFBLElBQVc7Ozs7Ozs7T0E5RXhHLGdCQUF3QjtxQkF4Q2xDLE9BQU0sMEJBQXlCO3FCQUcxQixPQUFNLHFCQUFvQjtxQkFDM0IsT0FBTSxnQ0FBK0I7cUJBRWhDLE9BQU0sWUFBVztxQkFPdkIsT0FBTSx3QkFBdUI7OztFQUNELE9BQU07O3FCQUMvQixPQUFNLCtCQUE4QjtxQkFDbEMsT0FBTSxzQkFBcUI7cUJBSXpCLE9BQU0sc0JBQXFCO3NCQXdCL0IsT0FBTSx3Q0FBdUM7c0JBTzNDLE9BQU0sa0JBQWlCOzs7RUFnQkUsT0FBTTs7c0JBQy9CLE9BQU0sZUFBYzs7O0VBWUksT0FBTTs7c0JBSTlCLE9BQU0sa0JBQWlCOzs7Ozs7bUNBcEZwQyxvQkEyRk0sT0EzRk4sWUEyRk07QUFBQSxnQkExRkosYUFBa0I7QUFBQSxnQkFFbEIsb0JBUVMsVUFSVCxZQVFTO0FBQUEsa0JBUFAsb0JBTU0sT0FOTixZQU1NO0FBQUEsb0JBTEosb0JBR1M7QUFBQSxVQUhELE9BQU07QUFBQSxVQUFnQixTQUFPO0FBQUE7dUJBQ25DLG9CQUE0QyxRQUE1QyxZQUE0QztBQUFBLHlCQUFwQixhQUFhO0FBQUE7aURBQ3JDO0FBQUEsWUFBeUI7QUFBQTtBQUFBLFlBQWpCO0FBQUEsWUFBUTtBQUFBO0FBQUE7QUFBQTtRQUVKLGdCQUFJLHFDQUFsQixvQkFBc0c7QUFBQTtVQUF2RSxPQUFNO0FBQUEsVUFBeUIsU0FBTztBQUFBLFdBQVEsa0JBQWdCOzs7aUJBSWpHLG9CQTZFTyxRQTdFUCxZQTZFTztBQUFBLE1BNUVVLGdCQUFJLHFDQUFuQixvQkE0Q1UsV0E1Q1YsWUE0Q1U7QUFBQSxxQkEzQ1Isb0JBMkJNLE9BM0JOLFlBMkJNO0FBQUEsd0JBMUJKLG9CQXFCTSxPQXJCTixZQXFCTTtBQUFBLG9EQXBCUTtBQUFBLGNBQTREO0FBQUE7QUFBQSxjQUF4RDtBQUFBLGNBQW1EO0FBQUE7QUFBQTtBQUFBLG9EQUNuRTtBQUFBLGNBQTRIO0FBQUE7QUFBQSxjQUF6SDtBQUFBLGNBQXFIO0FBQUE7QUFBQTtBQUFBLDBCQUV4SCxvQkFnQk0sT0FoQk4sWUFnQk07QUFBQSw0QkFmSixvQkFNUztBQUFBLGdCQU5ELE9BQU07QUFBQSxnQkFBc0IsU0FBSyxzQ0FBRSxjQUFJO0FBQUE7Ozs0QkFRL0Msb0JBTVM7QUFBQSxnQkFORCxPQUFNO0FBQUEsZ0JBQXNCLFNBQUssc0NBQUUsY0FBSTtBQUFBOzs7OztrREFVbkQ7QUFBQSxZQUVNO0FBQUEsY0FGRCxPQUFNLHFCQUFvQjtBQUFBO0FBQUEsNEJBQzdCLG9CQUFzRTtBQUFBLGdCQUFqRTtBQUFBLGdCQUF5QixLQUFJO0FBQUE7Ozs7OztxQkFJdEMsb0JBYU0sT0FiTixhQWFNO0FBQUEsa0RBWko7QUFBQSxZQUtNO0FBQUEsY0FMRCxPQUFNLHFCQUFvQjtBQUFBO0FBQUEsNEJBQzdCLG9CQUdNO0FBQUEsOEJBRlUsb0JBQTRCLFlBQXhCLHFCQUFtQjtBQUFBLDhCQUNyQyxvQkFBZ0UsV0FBN0QsMkRBQXlEO0FBQUE7Ozs7O3dCQUdoRSxvQkFLTSxPQUxOLGFBS007QUFBQSx5Q0FKSjtBQUFBLGNBR007QUFBQTtBQUFBLDBCQUh3Qix3QkFBZSxDQUFoQyxPQUFPLFVBQUs7cUNBQXpCLG9CQUdNO0FBQUEsa0JBSDBDLEtBQUs7QUFBQSxrQkFBTyxPQUFNO0FBQUE7Z0NBQ2hFO0FBQUEsb0JBQXFEO0FBQUE7QUFBQSxxQ0FBNUMsT0FBTyxRQUFLLEdBQU0sU0FBUTtBQUFBO0FBQUE7QUFBQTtBQUFBLGdDQUNuQztBQUFBLG9CQUE0QjtBQUFBO0FBQUEscUNBQWpCLEtBQUs7QUFBQTtBQUFBO0FBQUE7QUFBQTs7Ozs7Ozt5Q0FNeEI7QUFBQSxRQTZCVTtBQUFBO0FBQUE7VUE3Qk0sT0FBSyxpQkFBQyxlQUFhO0FBQUEscUNBQTRDLGdCQUFJO0FBQUEsZ0NBQTBDLGdCQUFJO0FBQUEsbUNBQWdELGdCQUFJO0FBQUE7OztVQUt2SixnQkFBSSxzQ0FBaEMsYUFBa0g7QUFBQTtZQUFuRSxlQUFhO0FBQUEsWUFBYyxxQkFBbUI7QUFBQTtVQUVsRixnQkFBSSx5Q0FBZixvQkFXTSxPQVhOLGFBV007QUFBQSwwQkFWSixvQkFHTSxPQUhOLGFBR007QUFBQSw0QkFGSjtBQUFBLGdCQUFvSDtBQUFBO0FBQUEsaUNBQTdHLHlCQUFlLHNCQUF5QixxQkFBVztBQUFBO0FBQUE7QUFBQTtBQUFBLHdEQUMxRDtBQUFBLGdCQUE2RDtBQUFBO0FBQUEsZ0JBQTFEO0FBQUEsZ0JBQXNEO0FBQUE7QUFBQTtBQUFBOzBCQUUzRCxhQUtFO0FBQUEsY0FKQyxhQUFhO0FBQUEsY0FDYixpQkFBaUI7QUFBQSxjQUNqQixXQUFTO0FBQUEsY0FDVCxpQkFBYSxzQ0FBRSxjQUFJO0FBQUE7O1VBSWIsZ0JBQUksd0NBQWYsb0JBUU0sT0FSTixhQVFNO0FBQUEsc0RBUEo7QUFBQSxjQUE0RjtBQUFBLGdCQUF0RixPQUFNLGVBQWM7QUFBQTtBQUFBLDhCQUFDLG9CQUEwRCxTQUFyRCxTQUFRLFlBQVc7QUFBQSxnQ0FBQyxvQkFBMkIsVUFBckIsR0FBRSxpQkFBZ0I7QUFBQTs7Ozs7c0RBQzVFO0FBQUEsY0FBd0I7QUFBQTtBQUFBLGNBQXBCO0FBQUEsY0FBZTtBQUFBO0FBQUE7QUFBQSxzREFDbkI7QUFBQSxjQUE4QztBQUFBO0FBQUEsY0FBM0M7QUFBQSxjQUF1QztBQUFBO0FBQUE7QUFBQSwwQkFDMUMsb0JBR00sT0FITixhQUdNO0FBQUEsNEJBRkosb0JBQXVFO0FBQUEsZ0JBQS9ELE9BQU07QUFBQSxnQkFBeUIsU0FBTztBQUFBLGlCQUFRLFVBQVE7QUFBQSxjQUNoRCx5REFBZCxvQkFBZ0k7QUFBQTtnQkFBOUYsT0FBTTtBQUFBLGdCQUF5QixTQUFPO0FBQUEsaUJBQXdCLHlCQUF1QiIsIm5hbWVzIjpbXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiaW5kZXgudnVlIl0sInNvdXJjZXNDb250ZW50IjpbIjx0ZW1wbGF0ZT5cclxuICA8ZGl2IGNsYXNzPVwicHVibGljLXNoZWxsIG1pbi12aC0xMDBcIj5cclxuICAgIDxVaVRvYXN0TWFuYWdlciAvPlxyXG5cclxuICAgIDxoZWFkZXIgY2xhc3M9XCJwdWJsaWMtc2l0ZS1oZWFkZXJcIj5cclxuICAgICAgPGRpdiBjbGFzcz1cImNvbnRhaW5lciBwdWJsaWMtaGVhZGVyLWlubmVyXCI+XHJcbiAgICAgICAgPGJ1dHRvbiBjbGFzcz1cInB1YmxpYy1icmFuZFwiIEBjbGljaz1cInZvbHRhclwiPlxyXG4gICAgICAgICAgPHNwYW4gY2xhc3M9XCJsb2dvLWljb25cIj48VWlCdXNJY29uIC8+PC9zcGFuPlxyXG4gICAgICAgICAgPHN0cm9uZz5HcmF6aVR1cjwvc3Ryb25nPlxyXG4gICAgICAgIDwvYnV0dG9uPlxyXG4gICAgICAgIDxidXR0b24gdi1pZj1cInN0ZXAgIT09ICdob21lJ1wiIGNsYXNzPVwiZ3QtYnRuIGd0LWJ0bi1vdXRsaW5lXCIgQGNsaWNrPVwidm9sdGFyXCI+Vm9sdGFyIGFvIGluw61jaW88L2J1dHRvbj5cclxuICAgICAgPC9kaXY+XHJcbiAgICA8L2hlYWRlcj5cclxuXHJcbiAgICA8bWFpbiBjbGFzcz1cImNvbnRhaW5lciBwdWJsaWMtbWFpblwiPlxyXG4gICAgICA8c2VjdGlvbiB2LWlmPVwic3RlcCA9PT0gJ2hvbWUnXCIgY2xhc3M9XCJwdWJsaWMtaG9tZVwiPlxyXG4gICAgICAgIDxkaXYgY2xhc3M9XCJndC1jYXJkIHB1YmxpYy1oZXJvLXNob3djYXNlXCI+XHJcbiAgICAgICAgICA8ZGl2IGNsYXNzPVwicHVibGljLWhlcm8tY29udGVudFwiPlxyXG4gICAgICAgICAgICAgICAgICAgICAgICA8aDE+VmlhamFyIGVtIGdydXBvIGNvbSBjdWlkYWRvLCBvcmdhbml6YcOnw6NvIGUgY2FyaW5oby48L2gxPlxyXG4gICAgICAgICAgICA8cD5BIEdyYXppVHVyIG9yZ2FuaXphIGV4Y3Vyc8O1ZXMsIGFjb21wYW5oYSBvcyBwYXNzYWdlaXJvcyBlIGZhY2lsaXRhIGNvbnRyYXRvcywgZmFtaWxpYXJlcyBlIHBhZ2FtZW50b3MgZW0gdW0gc8OzIGx1Z2FyLjwvcD5cclxuXHJcbiAgICAgICAgICAgIDxkaXYgY2xhc3M9XCJwdWJsaWMtYWN0aW9ucy1ncmlkXCI+XHJcbiAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz1cInB1YmxpYy1hY3Rpb24tY2FyZFwiIEBjbGljaz1cInN0ZXAgPSAnY2FkYXN0cm8nXCI+XHJcbiAgICAgICAgICAgICAgICA8c3BhbiBjbGFzcz1cInB1YmxpYy1hY3Rpb24taWNvblwiPjxzdmcgdmlld0JveD1cIjAgMCAyNCAyNFwiPjxwYXRoIGQ9XCJNMTIgMTJhNCA0IDAgMSAwLTQtNCA0IDQgMCAwIDAgNCA0WlwiLz48cGF0aCBkPVwiTTQgMjFhOCA4IDAgMCAxIDE2IDBcIi8+PHBhdGggZD1cIk0xOSA4aDNcIi8+PHBhdGggZD1cIk0yMC41IDYuNXYzXCIvPjwvc3ZnPjwvc3Bhbj5cclxuICAgICAgICAgICAgICAgIDxzcGFuPlxyXG4gICAgICAgICAgICAgICAgICA8c3Ryb25nPk5vdm8gY2FkYXN0cm88L3N0cm9uZz5cclxuICAgICAgICAgICAgICAgICAgPHNtYWxsPkNhZGFzdHJhciBwYXNzYWdlaXJvIG91IGZhbWlsaWFyLjwvc21hbGw+XHJcbiAgICAgICAgICAgICAgICA8L3NwYW4+XHJcbiAgICAgICAgICAgICAgPC9idXR0b24+XHJcblxyXG4gICAgICAgICAgICAgIDxidXR0b24gY2xhc3M9XCJwdWJsaWMtYWN0aW9uLWNhcmRcIiBAY2xpY2s9XCJzdGVwID0gJ2xvZ2luJ1wiPlxyXG4gICAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9XCJwdWJsaWMtYWN0aW9uLWljb25cIj48c3ZnIHZpZXdCb3g9XCIwIDAgMjQgMjRcIj48cGF0aCBkPVwiTTE1IDNoNGEyIDIgMCAwIDEgMiAydjE0YTIgMiAwIDAgMS0yIDJoLTRcIi8+PHBhdGggZD1cIm0xMCAxNyA1LTUtNS01XCIvPjxwYXRoIGQ9XCJNMTUgMTJIM1wiLz48L3N2Zz48L3NwYW4+XHJcbiAgICAgICAgICAgICAgICA8c3Bhbj5cclxuICAgICAgICAgICAgICAgICAgPHN0cm9uZz5BY2Vzc2FyIG1pbmhhIHZpYWdlbTwvc3Ryb25nPlxyXG4gICAgICAgICAgICAgICAgICA8c21hbGw+VmVyIGNvbnRyYXRvcywgUElYIGUgZmFtaWxpYXJlcy48L3NtYWxsPlxyXG4gICAgICAgICAgICAgICAgPC9zcGFuPlxyXG4gICAgICAgICAgICAgIDwvYnV0dG9uPlxyXG4gICAgICAgICAgICA8L2Rpdj5cclxuICAgICAgICAgIDwvZGl2PlxyXG5cclxuICAgICAgICAgIDxkaXYgY2xhc3M9XCJwdWJsaWMtaGVyby12aXN1YWxcIj5cclxuICAgICAgICAgICAgPGltZyBzcmM9XCIvZ3JhemktdHVyaXNtby5wbmdcIiBhbHQ9XCJHcmF6aSBUdXJpc21vIGVtIGZyZW50ZSBhbyDDtG5pYnVzXCI+XHJcbiAgICAgICAgICA8L2Rpdj5cclxuICAgICAgICA8L2Rpdj5cclxuXHJcbiAgICAgICAgPGRpdiBjbGFzcz1cImd0LWNhcmQgcGxhY2VzLXBhbmVsIHBsYWNlcy1wYW5lbC1wcm9cIj5cclxuICAgICAgICAgIDxkaXYgY2xhc3M9XCJwbGFjZXMtaGVhZGluZy1wcm9cIj5cclxuICAgICAgICAgICAgPGRpdj5cclxuICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxoMj5MdWdhcmVzIGrDoSB2aWFqYWRvczwvaDI+XHJcbiAgICAgICAgICAgICAgPHA+QWxndW5zIGRlc3Rpbm9zIHF1ZSBqw6EgZml6ZXJhbSBwYXJ0ZSBkYSByb3RhIGRhIEdyYXppVHVyLjwvcD5cclxuICAgICAgICAgICAgPC9kaXY+XHJcbiAgICAgICAgICA8L2Rpdj5cclxuICAgICAgICAgIDxkaXYgY2xhc3M9XCJwbGFjZXMtbGlzdC1wcm9cIj5cclxuICAgICAgICAgICAgPGRpdiB2LWZvcj1cIihsdWdhciwgaW5kZXgpIGluIGx1Z2FyZXNWaWFqYWRvc1wiIDprZXk9XCJsdWdhclwiIGNsYXNzPVwicGxhY2UtaXRlbS1wcm9cIj5cclxuICAgICAgICAgICAgICA8c3Bhbj57eyBTdHJpbmcoaW5kZXggKyAxKS5wYWRTdGFydCgyLCAnMCcpIH19PC9zcGFuPlxyXG4gICAgICAgICAgICAgIDxzdHJvbmc+e3sgbHVnYXIgfX08L3N0cm9uZz5cclxuICAgICAgICAgICAgPC9kaXY+XHJcbiAgICAgICAgICA8L2Rpdj5cclxuICAgICAgICA8L2Rpdj5cclxuICAgICAgPC9zZWN0aW9uPlxyXG5cclxuICAgICAgPHNlY3Rpb24gdi1lbHNlIGNsYXNzPVwicHVibGljLWZsb3dcIiA6Y2xhc3M9XCJ7XG4gICAgICAgICdwdWJsaWMtZmxvdy1wYXNzZW5nZXInOiBzdGVwID09PSAnbG9naW4nLFxuICAgICAgICAncHVibGljLWZsb3ctZm9ybSc6IHN0ZXAgPT09ICdjYWRhc3RybycsXG4gICAgICAgICdwdWJsaWMtZmxvdy1zdWNjZXNzJzogc3RlcCA9PT0gJ3N1Y2Vzc28nXG4gICAgICB9XCI+XG4gICAgICAgIDxQdWJsaWNBcmVhUGFzc2FnZWlybyB2LWlmPVwic3RlcCA9PT0gJ2xvZ2luJ1wiIEBlZGl0YXJEYWRvcz1cImVkaXRhckRhZG9zXCIgQGNhZGFzdHJhckZhbWlsaWFyPVwiY2FkYXN0cmFyRmFtaWxpYXJcIiAvPlxyXG5cclxuICAgICAgICA8ZGl2IHYtaWY9XCJzdGVwID09PSAnY2FkYXN0cm8nXCIgY2xhc3M9XCJwdWJsaWMtZm9ybS13cmFwXCI+XHJcbiAgICAgICAgICA8ZGl2IGNsYXNzPVwiZmxvdy1oZWFkaW5nXCI+XHJcbiAgICAgICAgICAgIDxoMT57eyB1c3VhcmlvRWRpdGFuZG8gPyAnRWRpdGFyIG1ldXMgZGFkb3MnIDogY3BmRmFtaWxpYXIgPyAnQ2FkYXN0cmFyIGZhbWlsaWFyJyA6ICdDYWRhc3RybyBkZSBwYXNzYWdlaXJvJyB9fTwvaDE+XHJcbiAgICAgICAgICAgIDxwPlByZWVuY2hhIG9zIGRhZG9zIHBhcmEgbWFudGVyIHNldSBjYWRhc3RybyBhdHVhbGl6YWRvLjwvcD5cclxuICAgICAgICAgIDwvZGl2PlxyXG4gICAgICAgICAgPFB1YmxpY0Zvcm1QYXNzYWdlaXJvXG4gICAgICAgICAgICA6Y3BmRmFtaWxpYXI9XCJjcGZGYW1pbGlhclwiXG4gICAgICAgICAgICA6dXN1YXJpb0VkaXRhbmRvPVwidXN1YXJpb0VkaXRhbmRvXCJcbiAgICAgICAgICAgIEBzdWNlc3NvPVwic3VjZXNzb1wiXG4gICAgICAgICAgICBAYWNlc3NhclZpYWdlbT1cInN0ZXAgPSAnbG9naW4nXCJcbiAgICAgICAgICAvPlxuICAgICAgICA8L2Rpdj5cclxuXHJcbiAgICAgICAgPGRpdiB2LWlmPVwic3RlcCA9PT0gJ3N1Y2Vzc28nXCIgY2xhc3M9XCJndC1jYXJkIHN1Y2Nlc3MtcGFuZWxcIj5cclxuICAgICAgICAgIDxzcGFuIGNsYXNzPVwic3VjY2Vzcy1yaW5nXCI+PHN2ZyB2aWV3Qm94PVwiMCAwIDI0IDI0XCI+PHBhdGggZD1cIm01IDEzIDQgNEwxOSA3XCIgLz48L3N2Zz48L3NwYW4+XHJcbiAgICAgICAgICA8aDI+Q2FkYXN0cm8gc2Fsdm8hPC9oMj5cclxuICAgICAgICAgIDxwPk9zIGRhZG9zIGZvcmFtIHJlZ2lzdHJhZG9zIGNvbSBzdWNlc3NvLjwvcD5cclxuICAgICAgICAgIDxkaXYgY2xhc3M9XCJzdWNjZXNzLWFjdGlvbnNcIj5cclxuICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz1cImd0LWJ0biBndC1idG4tcHJpbWFyeVwiIEBjbGljaz1cInZvbHRhclwiPkNvbmNsdWlyPC9idXR0b24+XHJcbiAgICAgICAgICAgIDxidXR0b24gdi1pZj1cImNwZlRpdHVsYXJDYWRhc3Ryb1wiIGNsYXNzPVwiZ3QtYnRuIGd0LWJ0bi1vdXRsaW5lXCIgQGNsaWNrPVwiYWRpY2lvbmFyUGFyZW50ZURlcG9pc1wiPkFkaWNpb25hciBwYXJlbnRlL2FtaWdvPC9idXR0b24+XHJcbiAgICAgICAgICA8L2Rpdj5cclxuICAgICAgICA8L2Rpdj5cclxuICAgICAgPC9zZWN0aW9uPlxyXG4gICAgPC9tYWluPlxyXG4gIDwvZGl2PlxyXG48L3RlbXBsYXRlPlxyXG5cclxuPHNjcmlwdCBzZXR1cCBsYW5nPVwidHNcIj5cclxuY29uc3Qgc3RlcCA9IHJlZjwnaG9tZScgfCAnY2FkYXN0cm8nIHwgJ2xvZ2luJyB8ICdzdWNlc3NvJz4oJ2hvbWUnKVxyXG5jb25zdCBjcGZGYW1pbGlhciA9IHJlZignJylcclxuY29uc3QgY3BmVGl0dWxhckNhZGFzdHJvID0gcmVmKCcnKVxyXG5jb25zdCB1c3VhcmlvRWRpdGFuZG8gPSByZWY8YW55PihudWxsKVxyXG5jb25zdCBsdWdhcmVzVmlhamFkb3MgPSBbXHJcbiAgJ0JpbyBQYXJxdWUnLFxyXG4gICdBcnJhaWFsIGRvIENhYm8nLFxyXG4gICdHdWFwaSBQYXJxdWUgZGFzIMOBZ3VhcycsXHJcbiAgJ0pvbm9zYWtlJyxcclxuICAnUGV0csOzcG9saXMgKEl0YWlwYXZhKScsXHJcbiAgJ1ZpdMOzcmlhIC8gVmlsYSBWZWxoYScsXHJcbiAgJ1RlcnJhIGRvIERpbm8nLFxyXG4gICdDYW1wb3MgZG8gSm9yZMOjbycsXHJcbiAgJ1BvcnRvIFNlZ3VybycsXHJcbiAgJ1BlbmVkbycsXHJcbiAgJ0FwYXJlY2lkYScsXHJcbiAgJ0FyYWNydXonLFxyXG4gICdSaW8gZGUgSmFuZWlybyAoQ3Jpc3RvIFJlZGVudG9yKSdcclxuXVxyXG5jb25zdCB2b2x0YXIgPSAoKSA9PiB7IHN0ZXAudmFsdWUgPSAnaG9tZSc7IGNwZkZhbWlsaWFyLnZhbHVlID0gJyc7IGNwZlRpdHVsYXJDYWRhc3Ryby52YWx1ZSA9ICcnOyB1c3VhcmlvRWRpdGFuZG8udmFsdWUgPSBudWxsIH1cclxuY29uc3Qgc3VjZXNzbyA9IChjcGZTYWx2bz86IHN0cmluZykgPT4geyBpZiAoIXVzdWFyaW9FZGl0YW5kby52YWx1ZSAmJiAhY3BmRmFtaWxpYXIudmFsdWUgJiYgY3BmU2Fsdm8pIGNwZlRpdHVsYXJDYWRhc3Ryby52YWx1ZSA9IFN0cmluZyhjcGZTYWx2bykucmVwbGFjZSgvXFxEL2csICcnKTsgc3RlcC52YWx1ZSA9ICdzdWNlc3NvJzsgY3BmRmFtaWxpYXIudmFsdWUgPSAnJzsgdXN1YXJpb0VkaXRhbmRvLnZhbHVlID0gbnVsbCB9XHJcbmNvbnN0IGFkaWNpb25hclBhcmVudGVEZXBvaXMgPSAoKSA9PiB7IGNwZkZhbWlsaWFyLnZhbHVlID0gY3BmVGl0dWxhckNhZGFzdHJvLnZhbHVlOyB1c3VhcmlvRWRpdGFuZG8udmFsdWUgPSBudWxsOyBzdGVwLnZhbHVlID0gJ2NhZGFzdHJvJyB9XHJcbmNvbnN0IGVkaXRhckRhZG9zID0gKHU6IGFueSkgPT4geyB1c3VhcmlvRWRpdGFuZG8udmFsdWUgPSB1OyBjcGZGYW1pbGlhci52YWx1ZSA9ICcnOyBzdGVwLnZhbHVlID0gJ2NhZGFzdHJvJyB9XHJcbmNvbnN0IGNhZGFzdHJhckZhbWlsaWFyID0gKHU6IGFueSkgPT4geyB1c3VhcmlvRWRpdGFuZG8udmFsdWUgPSBudWxsOyBjcGZGYW1pbGlhci52YWx1ZSA9IHUuY3BmOyBzdGVwLnZhbHVlID0gJ2NhZGFzdHJvJyB9XHJcbjwvc2NyaXB0PlxyXG4iXSwiZmlsZSI6IkM6L1VzZXJzL0FzYWYvRGVza3RvcC9Dw7NkaWdvcy9zaXRlLWVsb3RyaXAvZ3Jheml0dXItdjIvYXBwL3BhZ2VzL2luZGV4LnZ1ZSJ9

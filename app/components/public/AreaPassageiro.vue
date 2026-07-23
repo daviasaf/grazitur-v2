@@ -54,6 +54,7 @@
         <span>Quando você for vinculado a uma excursão ativa, ela aparecerá aqui.</span>
       </div>
 
+      <div v-if="excursoes.length" class="passenger-trips-grid">
       <article v-for="ex in excursoes" :key="ex.id" class="gt-card passenger-trip-pro">
         <header class="passenger-trip-header-pro">
           <div>
@@ -100,6 +101,7 @@
           <button v-else-if="!verificarSeEhDependente(ex) && !verificarAssinatura(ex)" class="gt-btn gt-btn-primary" @click="abrirContrato(ex)">Ler e assinar</button>
         </div>
       </article>
+      </div>
 
       <section class="passenger-open-trips">
         <div class="passenger-section-header">
