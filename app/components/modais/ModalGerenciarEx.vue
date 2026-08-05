@@ -118,8 +118,8 @@
     />
 
     <div v-if="modalDownload" class="modal fade show d-block gt-modal-backdrop" style="z-index: 1070;">
-      <div class="modal-dialog modal-dialog-centered px-3">
-        <div class="modal-content border-0 shadow-large">
+      <div class="modal-dialog modal-dialog-centered px-3 export-list-dialog">
+        <div class="modal-content border-0 shadow-large export-list-modal">
           <div class="modal-header gt-modal-header">
             <div>
               <h5 class="fw-bold mb-0">Baixar lista</h5>
@@ -127,16 +127,55 @@
             </div>
             <button class="btn-close" @click="modalDownload = false"></button>
           </div>
-          <div class="modal-body p-4">
-            <div class="export-columns-grid mb-4">
-              <label v-for="coluna in opcoesColunasLista" :key="coluna.id" class="export-column-option">
-                <input v-model="colunasListaSelecionadas" class="form-check-input" type="checkbox" :value="coluna.id">
-                <span>{{ coluna.label }}</span>
-              </label>
-            </div>
-            <div class="download-options-clean">
-              <button class="gt-btn gt-btn-outline" @click="baixarListaPDF">Baixar PDF</button>
-              <button class="gt-btn gt-btn-primary" @click="baixarListaODT">Baixar ODT</button>
+          <div class="modal-body p-0">
+            <section class="export-ordering-section" aria-labelledby="export-ordering-title">
+              <div class="export-section-heading">
+                <div>
+                  <strong id="export-ordering-title">Organização do arquivo</strong>
+                  <small>Escolha como os passageiros serão apresentados.</small>
+                </div>
+                <span>1 opção</span>
+              </div>
+              <div class="export-ordering-options" role="radiogroup" aria-label="Organização do arquivo">
+                <label class="export-order-option" :class="{ active: ordenacaoLista === 'alfabetica' }">
+                  <input v-model="ordenacaoLista" type="radio" name="ordenacao-lista" value="alfabetica">
+                  <span class="export-order-icon">A–Z</span>
+                  <span class="export-order-copy">
+                    <strong>Ordem alfabética</strong>
+                    <small>Todos os passageiros organizados pelo nome.</small>
+                  </span>
+                  <span class="export-order-radio" aria-hidden="true"></span>
+                </label>
+                <label class="export-order-option" :class="{ active: ordenacaoLista === 'grupos' }">
+                  <input v-model="ordenacaoLista" type="radio" name="ordenacao-lista" value="grupos">
+                  <span class="export-order-icon">1+</span>
+                  <span class="export-order-copy">
+                    <strong>Ordem com grupos</strong>
+                    <small>Titular primeiro e grupos em dois tons suaves alternados.</small>
+                  </span>
+                  <span class="export-order-radio" aria-hidden="true"></span>
+                </label>
+              </div>
+            </section>
+
+            <div class="export-fields-section">
+              <div class="export-section-heading export-columns-heading">
+                <div>
+                  <strong>Colunas do arquivo</strong>
+                  <small>Marque as informações que devem aparecer.</small>
+                </div>
+                <span>{{ colunasListaSelecionadas.length }} selecionadas</span>
+              </div>
+              <div class="export-columns-grid mb-4">
+                <label v-for="coluna in opcoesColunasLista" :key="coluna.id" class="export-column-option">
+                  <input v-model="colunasListaSelecionadas" class="form-check-input" type="checkbox" :value="coluna.id">
+                  <span>{{ coluna.label }}</span>
+                </label>
+              </div>
+              <div class="download-options-clean">
+                <button class="gt-btn gt-btn-outline" @click="baixarListaPDF">Baixar PDF</button>
+                <button class="gt-btn gt-btn-primary" @click="baixarListaODT">Baixar ODT</button>
+              </div>
             </div>
           </div>
         </div>
@@ -281,7 +320,7 @@
           <div class="modal-header gt-modal-header">
             <div>
               <h5 class="fw-bold mb-0">Compartilhar pagamentos</h5>
-              <p class="text-muted small mb-0">Confira o texto antes de abrir o WhatsApp.</p>
+              <p class="text-muted small mb-0">Cada ✓ representa um mês pago; não há marcação para meses pendentes.</p>
             </div>
             <button class="btn-close" @click="modalCompartilharPagamentos = false"></button>
           </div>
@@ -456,7 +495,7 @@
 </template>
 
 <script setup lang="ts">
-import { LISTA_PASSAGEIROS_COLUNAS, exportarListaODT, exportarListaPDF, gerarContratoAssinadoPDF, type ListaPassageiroColunaId } from '~/utils/exportacoes'
+import { LISTA_PASSAGEIROS_COLUNAS, exportarListaODT, exportarListaPDF, gerarContratoAssinadoPDF, type ListaPassageiroColunaId, type ListaPassageirosOrdenacao } from '~/utils/exportacoes'
 
 const props = defineProps<{ excursaoSelecionada: any }>()
 const emit = defineEmits(['close', 'editar', 'editarFinalizada', 'desvincular', 'refresh'])
@@ -474,6 +513,7 @@ const modalCompartilharPagamentos = ref(false)
 const modalDownload = ref(false)
 const opcoesColunasLista = LISTA_PASSAGEIROS_COLUNAS
 const colunasListaSelecionadas = ref<ListaPassageiroColunaId[]>(['nome', 'cpf', 'orgaoExpeditor'])
+const ordenacaoLista = ref<ListaPassageirosOrdenacao>('alfabetica')
 const buscaDependenteGrupo = ref('')
 const grupoParaApagar = ref<number | null>(null)
 const mesParaApagar = ref<string | null>(null)
@@ -597,10 +637,19 @@ const usersPagamentosOrdenados = computed(() => {
   })
 })
 const textoCompartilharPagamentos = computed(() => {
-  const mes = mesSelecionado.value
-  if (!mes) return ''
-  const linhas = usersPagamentosOrdenados.value.map((u: any) => `${mes.pagos?.[String(u.id)] ? '✓' : 'X'} ${u.nome}`)
-  return [`Lista de pagamentos efetivas do mês ${mes.nome}`, '', ...linhas].join('\n')
+  if (!pagamentosMensais.value.length) return ''
+  const linhas = usersLista.value.map((u: any, index: number) => {
+    const mesesPagos = pagamentosMensais.value.filter((mes) => Boolean(mes.pagos?.[String(u.id)])).length
+    const conferes = '✓'.repeat(mesesPagos)
+    return `${index + 1} - ${u.nome}${conferes ? ` ${conferes}` : ''}`
+  })
+  return [
+    '*Grazi Turismo*',
+    `*Lista de passageiros (${props.excursaoSelecionada.nome})*`,
+    'Cada ✓ representa um mês pago.',
+    '',
+    ...linhas
+  ].join('\n')
 })
 
 watch(() => modalPagamentos.value, (aberto) => {
@@ -638,13 +687,13 @@ const colunasExportacao = () => {
 const baixarListaODT = () => {
   const colunas = colunasExportacao()
   if (!colunas) return
-  exportarListaODT(props.excursaoSelecionada, showToast, colunas)
+  exportarListaODT(props.excursaoSelecionada, showToast, colunas, ordenacaoLista.value)
   modalDownload.value = false
 }
 const baixarListaPDF = async () => {
   const colunas = colunasExportacao()
   if (!colunas) return
-  await exportarListaPDF(props.excursaoSelecionada, showToast, colunas)
+  await exportarListaPDF(props.excursaoSelecionada, showToast, colunas, ordenacaoLista.value)
   modalDownload.value = false
 }
 const baixarContrato = (userId: number) => gerarContratoAssinadoPDF(props.excursaoSelecionada, userId, showToast)

@@ -3,7 +3,11 @@ import { brl, mascaraCPF, moneyToNumber } from './formatadores'
 
 type ToastFn = (message: string, type?: string) => void
 export type ListaPassageiroColunaId = 'nome' | 'cpf' | 'orgaoExpeditor' | 'idade' | 'rg' | 'nascimento' | 'celular' | 'cidade' | 'endereco' | 'email' | 'pagamento'
+export type ListaPassageirosOrdenacao = 'alfabetica' | 'grupos'
 type ListaPassageiroColuna = { id: ListaPassageiroColunaId; label: string; value: (user: any, excursao: any) => string }
+type ListaPassageiroSecao = { passageiros: any[]; tipo: 'lista' | 'grupo' | 'sem-grupo'; corGrupo?: 0 | 1; numeroGrupo?: number }
+
+const CORES_GRUPOS_PDF: Array<[number, number, number]> = [[229, 236, 216], [238, 235, 255]]
 
 type Financeiro = {
   receita: number
@@ -72,7 +76,7 @@ async function getPdfTools() {
   return { jsPDF, autoTable }
 }
 
-function passageirosOrdenados(excursao: any) {
+function passageirosDaExcursao(excursao: any) {
   const usuarios = [...(excursao.usuarios || [])]
   const guia = excursao.guia
   const guiaId = excursao.guiaId ? String(excursao.guiaId) : ''
@@ -87,38 +91,139 @@ function passageirosOrdenados(excursao: any) {
     if (!guiaJaNaLista) usuarios.push({ ...guia, id: guia.id, _guiaLista: true })
   }
 
-  return usuarios
-    .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'))
-    .map((u: any) => {
-      const ehGuiaDaExcursao = (guiaId && String(u.id) === guiaId) || (guiaCpf && onlyDigits(u.cpf) === guiaCpf) || Boolean(u._guiaLista)
-      return { ...u, nomeLista: `${ehGuiaDaExcursao ? '(GUIA) ' : ''}${u.nome || ''}` }
-    })
+  return usuarios.map((u: any) => {
+    const ehGuiaDaExcursao = (guiaId && String(u.id) === guiaId) || (guiaCpf && onlyDigits(u.cpf) === guiaCpf) || Boolean(u._guiaLista)
+    return { ...u, _guiaLista: ehGuiaDaExcursao }
+  })
 }
 
-export function exportarListaODT(excursao: any, showToast: ToastFn, colunasIds?: ListaPassageiroColunaId[]) {
+const compararNomes = (a: any, b: any) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR')
+const nomePassageiroLista = (passageiro: any) => `${passageiro._guiaLista ? '(Guia) ' : ''}${passageiro.nome || ''}`
+
+function passageirosOrdenados(excursao: any) {
+  return passageirosDaExcursao(excursao)
+    .sort(compararNomes)
+    .map((passageiro: any) => ({ ...passageiro, nomeLista: nomePassageiroLista(passageiro) }))
+}
+
+function secoesListaPassageiros(excursao: any, ordenacao: ListaPassageirosOrdenacao): ListaPassageiroSecao[] {
+  if (ordenacao === 'alfabetica') {
+    return [{ passageiros: passageirosOrdenados(excursao), tipo: 'lista' }]
+  }
+
+  const passageiros = passageirosDaExcursao(excursao)
+  const passageirosPorId = new Map(passageiros.map((passageiro: any) => [String(passageiro.id), passageiro]))
+  const adicionados = new Set<string>()
+  const grupos = Object.entries(excursao.grupos || {})
+    .map(([liderId, dependentesIds]: [string, any]) => ({
+      lider: passageirosPorId.get(String(liderId)),
+      dependentesIds: Array.isArray(dependentesIds) ? dependentesIds.map(String) : []
+    }))
+    .filter((grupo: any) => grupo.lider)
+    .sort((a: any, b: any) => compararNomes(a.lider, b.lider))
+
+  const secoes: ListaPassageiroSecao[] = grupos.map((grupo: any, index: number) => {
+    const liderId = String(grupo.lider.id)
+    adicionados.add(liderId)
+    const lider = { ...grupo.lider, _papelGrupo: 'Titular', nomeLista: nomePassageiroLista(grupo.lider) }
+    const dependentes = grupo.dependentesIds
+      .map((id: string) => passageirosPorId.get(id))
+      .filter((passageiro: any) => passageiro && !adicionados.has(String(passageiro.id)))
+      .sort(compararNomes)
+      .map((passageiro: any) => {
+        adicionados.add(String(passageiro.id))
+        return { ...passageiro, _papelGrupo: 'Dependente', nomeLista: nomePassageiroLista(passageiro) }
+      })
+
+    return {
+      passageiros: [lider, ...dependentes],
+      tipo: 'grupo' as const,
+      corGrupo: (index % 2) as 0 | 1,
+      numeroGrupo: index + 1
+    }
+  })
+
+  const semGrupo = passageiros
+    .filter((passageiro: any) => !adicionados.has(String(passageiro.id)))
+    .sort(compararNomes)
+    .map((passageiro: any) => ({ ...passageiro, nomeLista: nomePassageiroLista(passageiro) }))
+
+  if (semGrupo.length || !secoes.length) {
+    secoes.push({ passageiros: semGrupo, tipo: 'sem-grupo' })
+  }
+
+  return secoes
+}
+
+export function exportarListaODT(
+  excursao: any,
+  showToast: ToastFn,
+  colunasIds?: ListaPassageiroColunaId[],
+  ordenacao: ListaPassageirosOrdenacao = 'alfabetica'
+) {
   try {
-    const passageiros = passageirosOrdenados(excursao)
     const colunas = colunasLista(colunasIds)
-    const rows = passageiros.map((u: any, index: number) => `
+    const secoes = secoesListaPassageiros(excursao, ordenacao)
+    const mostrarColunaGrupo = ordenacao === 'grupos'
+    let numeroPassageiro = 0
+    const rows = secoes.map((secao) => {
+      const passageirosRows = secao.passageiros.map((u: any, indexNaSecao: number) => {
+        numeroPassageiro += 1
+        const estiloCelula = secao.tipo === 'grupo'
+          ? ` table:style-name="GroupCell${Number(secao.corGrupo || 0) + 1}"`
+          : ordenacao === 'grupos' ? ' table:style-name="PlainCell"' : ''
+        const estiloParagrafo = u._papelGrupo === 'Titular' ? ' text:style-name="LeaderText"' : ''
+        const celulaGrupo = !mostrarColunaGrupo
+          ? ''
+          : secao.tipo !== 'grupo'
+            ? '<table:table-cell table:style-name="PlainCell" office:value-type="string"><text:p text:style-name="GroupNumberText"></text:p></table:table-cell>'
+            : indexNaSecao === 0
+              ? `<table:table-cell table:style-name="GroupNumberCell${Number(secao.corGrupo || 0) + 1}" table:number-rows-spanned="${secao.passageiros.length}" office:value-type="string"><text:p text:style-name="GroupNumberText">${secao.numeroGrupo}</text:p></table:table-cell>`
+              : '<table:covered-table-cell/>'
+        return `
       <table:table-row>
-        <table:table-cell office:value-type="string"><text:p>${index + 1}</text:p></table:table-cell>
-        ${colunas.map((coluna) => `<table:table-cell office:value-type="string"><text:p>${xmlEscape(coluna.value(u, excursao))}</text:p></table:table-cell>`).join('')}
-      </table:table-row>`).join('')
+        <table:table-cell${estiloCelula} office:value-type="string"><text:p${estiloParagrafo}>${numeroPassageiro}</text:p></table:table-cell>
+        ${celulaGrupo}
+        ${colunas.map((coluna) => `<table:table-cell${estiloCelula} office:value-type="string"><text:p${estiloParagrafo}>${xmlEscape(coluna.value(u, excursao))}</text:p></table:table-cell>`).join('')}
+      </table:table-row>`
+      }).join('')
+      return passageirosRows
+    }).join('')
+
+    const legenda = ordenacao === 'grupos' ? `
+    <table:table table:name="Legenda">
+      <table:table-row>
+        <table:table-cell table:style-name="GroupCell1" office:value-type="string"><text:p text:style-name="LegendText">Grupo - tom 1</text:p></table:table-cell>
+        <table:table-cell table:style-name="GroupCell2" office:value-type="string"><text:p text:style-name="LegendText">Grupo - tom 2</text:p></table:table-cell>
+        <table:table-cell table:style-name="PlainLegendCell" office:value-type="string"><text:p text:style-name="LegendText">Sem grupo - fundo padrão</text:p></table:table-cell>
+      </table:table-row>
+    </table:table>` : ''
 
     const content = `<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" office:version="1.2">
   <office:automatic-styles>
     <style:style style:name="h1" style:family="paragraph"><style:text-properties fo:font-size="18pt" fo:font-weight="bold"/></style:style>
     <style:style style:name="h2" style:family="paragraph"><style:text-properties fo:font-size="11pt" fo:font-weight="bold"/></style:style>
+    <style:style style:name="LegendText" style:family="paragraph"><style:text-properties fo:font-size="8pt" fo:color="#596273"/></style:style>
+    <style:style style:name="LeaderText" style:family="paragraph"><style:text-properties fo:font-weight="bold"/></style:style>
+    <style:style style:name="GroupNumberText" style:family="paragraph"><style:paragraph-properties fo:text-align="center"/><style:text-properties fo:font-weight="bold"/></style:style>
+    <style:style style:name="GroupCell1" style:family="table-cell"><style:table-cell-properties fo:background-color="#e5ecd8" fo:padding="0.05in"/></style:style>
+    <style:style style:name="GroupCell2" style:family="table-cell"><style:table-cell-properties fo:background-color="#eeebff" fo:padding="0.05in"/></style:style>
+    <style:style style:name="GroupNumberCell1" style:family="table-cell"><style:table-cell-properties fo:background-color="#e5ecd8" style:vertical-align="middle" fo:padding="0.05in"/></style:style>
+    <style:style style:name="GroupNumberCell2" style:family="table-cell"><style:table-cell-properties fo:background-color="#eeebff" style:vertical-align="middle" fo:padding="0.05in"/></style:style>
+    <style:style style:name="PlainCell" style:family="table-cell"><style:table-cell-properties fo:padding="0.05in"/></style:style>
+    <style:style style:name="PlainLegendCell" style:family="table-cell"><style:table-cell-properties fo:background-color="#ffffff" fo:border="0.5pt solid #dadde5" fo:padding="0.05in"/></style:style>
   </office:automatic-styles>
   <office:body><office:text>
     <text:p text:style-name="h1">Lista de Passageiros - ${xmlEscape(excursao.nome)}</text:p>
     <text:p>Destino: ${xmlEscape(excursao.lugar || '-')}</text:p>
     <text:p>Gerado em: ${xmlEscape(new Date().toLocaleString('pt-BR'))}</text:p>
+    ${legenda}
     <text:p></text:p>
     <table:table table:name="Passageiros">
       <table:table-row>
         <table:table-cell office:value-type="string"><text:p text:style-name="h2">Nº</text:p></table:table-cell>
+        ${mostrarColunaGrupo ? '<table:table-cell office:value-type="string"><text:p text:style-name="h2">GRUPO</text:p></table:table-cell>' : ''}
         ${colunas.map((coluna) => `<table:table-cell office:value-type="string"><text:p text:style-name="h2">${xmlEscape(coluna.label.toUpperCase())}</text:p></table:table-cell>`).join('')}      </table:table-row>
       ${rows}
     </table:table>
@@ -143,7 +248,7 @@ export function exportarListaODT(excursao: any, showToast: ToastFn, colunasIds?:
     link.download = `Lista_${safeName(excursao.nome)}.odt`
     link.click()
     URL.revokeObjectURL(link.href)
-    showToast('Lista ODT gerada em ordem alfabética.', 'success')
+    showToast(`Lista ODT gerada ${ordenacao === 'grupos' ? 'por grupos' : 'em ordem alfabética'}.`, 'success')
   } catch (error) {
     console.error(error)
     showToast('Erro ao gerar a lista ODT.', 'danger')
@@ -151,22 +256,77 @@ export function exportarListaODT(excursao: any, showToast: ToastFn, colunasIds?:
 }
 
 // Mantidas para compatibilidade com versões antigas dos botões.
-export async function exportarListaPDF(excursao: any, showToast: ToastFn, colunasIds?: ListaPassageiroColunaId[]) {
+export async function exportarListaPDF(
+  excursao: any,
+  showToast: ToastFn,
+  colunasIds?: ListaPassageiroColunaId[],
+  ordenacao: ListaPassageirosOrdenacao = 'alfabetica'
+) {
   try {
     const { jsPDF, autoTable } = await getPdfTools()
     const doc = new jsPDF()
-    const passageiros = passageirosOrdenados(excursao)
     const colunas = colunasLista(colunasIds)
+    const secoes = secoesListaPassageiros(excursao, ordenacao)
+    const mostrarColunaGrupo = ordenacao === 'grupos'
+    let numeroPassageiro = 0
+    const body = secoes.flatMap((secao) => {
+      const linhasPassageiros = secao.passageiros.map((u: any, indexNaSecao: number) => {
+        numeroPassageiro += 1
+        const styles = {
+          ...(secao.tipo === 'grupo' ? { fillColor: CORES_GRUPOS_PDF[secao.corGrupo || 0] } : {}),
+          ...(u._papelGrupo === 'Titular' ? { fontStyle: 'bold' } : {})
+        }
+        const celulasGrupo = !mostrarColunaGrupo
+          ? []
+          : secao.tipo !== 'grupo'
+            ? [{ content: '', styles: { ...styles, halign: 'center', valign: 'middle' } }]
+            : indexNaSecao === 0
+              ? [{
+                  content: String(secao.numeroGrupo),
+                  rowSpan: secao.passageiros.length,
+                  styles: { ...styles, halign: 'center', valign: 'middle', fontStyle: 'bold' }
+                }]
+              : []
+        return [
+          { content: String(numeroPassageiro), styles },
+          ...celulasGrupo,
+          ...colunas.map((coluna) => ({ content: coluna.value(u, excursao), styles }))
+        ]
+      })
+      return linhasPassageiros
+    })
+
     doc.setFontSize(16)
     doc.text(`Lista de Passageiros - ${excursao.nome}`, 14, 18)
+    doc.setFontSize(9)
+    doc.setTextColor(92, 98, 112)
+    let tabelaInicioY = 31
+    if (ordenacao === 'grupos') {
+      doc.setFontSize(8)
+      doc.text('Legenda:', 14, 32)
+      doc.setFillColor(...CORES_GRUPOS_PDF[0])
+      doc.rect(30, 28.5, 4, 4, 'F')
+      doc.setFillColor(...CORES_GRUPOS_PDF[1])
+      doc.rect(35, 28.5, 4, 4, 'F')
+      doc.text('Grupos', 42, 32)
+      doc.setFillColor(255, 255, 255)
+      doc.setDrawColor(218, 221, 229)
+      doc.rect(102, 28.5, 4, 4, 'FD')
+      doc.text('Sem grupo', 109, 32)
+      tabelaInicioY = 42
+    }
+    doc.setTextColor(0, 0, 0)
     autoTable(doc, {
-      startY: 28,
-      head: [['Nº', ...colunas.map((coluna) => coluna.label)]],
-      body: passageiros.map((u: any, i: number) => [i + 1, ...colunas.map((coluna) => coluna.value(u, excursao))]),
-      styles: { fontSize: 8 }
+      startY: tabelaInicioY,
+      head: [['Nº', ...(mostrarColunaGrupo ? ['Grupo'] : []), ...colunas.map((coluna) => coluna.label)]],
+      body,
+      theme: 'grid',
+      headStyles: { fillColor: [46, 49, 66], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 8, lineColor: [218, 221, 230], lineWidth: .15, cellPadding: 2.2 },
+      rowPageBreak: 'avoid'
     })
     doc.save(`Lista_${safeName(excursao.nome)}.pdf`)
-    showToast('Lista PDF gerada.', 'success')
+    showToast(`Lista PDF gerada ${ordenacao === 'grupos' ? 'por grupos' : 'em ordem alfabética'}.`, 'success')
   } catch (error) { console.error(error); showToast('Erro ao gerar PDF.', 'danger') }
 }
 
