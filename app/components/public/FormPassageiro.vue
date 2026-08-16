@@ -48,7 +48,7 @@
 
       <div class="col-md-4">
         <label class="form-label small fw-bold">Estado *</label>
-        <select v-model="estadoSelecionado" class="form-select py-3" :disabled="carregandoEstados" @change="buscarCidades">
+        <select v-model="estadoSelecionado" class="form-select py-3" :disabled="carregandoEstados" @change="buscarCidades()">
           <option value="" disabled>{{ carregandoEstados ? 'Carregando...' : 'UF' }}</option>
           <option v-for="uf in estados" :key="uf.sigla" :value="uf.sigla">{{ uf.sigla }}</option>
         </select>
@@ -232,21 +232,6 @@ const salvar = async () => {
     const method = form.value.id ? 'PUT' : 'POST'
     const url = form.value.id ? `/api/users/${form.value.id}` : '/api/users'
     await $fetch(url, { method, body: { ...form.value, idade: Number(form.value.idade), celular: mascaraCelular(form.value.celular), origem: 'area-passageiro' } })
-    await $fetch('/api/logs', {
-      method: 'POST',
-      body: {
-        entity: 'user',
-        action: form.value.id ? 'passenger-update' : 'passenger-create',
-        title: form.value.id ? 'Cadastro editado pelo passageiro' : 'Cadastro feito pelo passageiro',
-        detail: [
-          'Responsável: Passageiro.',
-          `Ação: ${form.value.id ? 'editou seus dados na área do passageiro' : 'realizou cadastro na área do passageiro'}.`,
-          `Passageiro: ${form.value.nome}.`,
-          `CPF: ${form.value.cpf.replace(/\D/g, '')}.`,
-          form.value.cpfFamiliar ? `Cadastro vinculado como familiar do CPF ${String(form.value.cpfFamiliar).replace(/\D/g, '')}.` : null
-        ].filter(Boolean).join('\n')
-      }
-    }).catch(() => null)
     emit('sucesso', form.value.cpf.replace(/\D/g, ''), form.value.nome)
   } catch (e: any) {
     erro.value = e.data?.statusMessage || 'Erro ao salvar cadastro.'

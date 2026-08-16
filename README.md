@@ -23,8 +23,8 @@ Acesse:
 Credenciais padrão no `.env.example`:
 
 ```env
-ADMIN_EMAIL="admin@grazitur.com"
-ADMIN_PASSWORD="123456"
+SUPABASE_URL="https://SEU-PROJECT-REF.supabase.co"
+SUPABASE_PUBLISHABLE_KEY="sb_publishable_SUBSTITUA"
 ```
 
 ## Configurando Supabase no `.env`
@@ -38,6 +38,18 @@ DIRECT_URL="postgresql://postgres.SEU-PROJECT-REF:SUA-SENHA@db.SEU-PROJECT-REF.s
 
 Troque `SEU-PROJECT-REF` e `SUA-SENHA` pelos dados reais do seu projeto.
 
+## Segurança e dados pessoais
+
+O painel usa Supabase Auth para administradores e cookies `HttpOnly`. Conceda o papel administrativo em `app_metadata.role = "admin"`; nunca use `user_metadata` para autorização. O fallback `ADMIN_EMAIL`/`ADMIN_PASSWORD` existe apenas para desenvolvimento local e só funciona com `GRAZITUR_ALLOW_LEGACY_ADMIN_AUTH=true` fora de produção.
+
+O CPF usa criptografia autenticada AES-256-GCM no backend e HMAC-SHA-256 separado para busca exata. Configure chaves diferentes por ambiente e por finalidade. Gere cada valor em Base64, por exemplo:
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+```
+
+Nunca coloque as chaves no Git, no banco da aplicação ou em variáveis públicas. Consulte [o plano de proteção](docs/security/grazitur-data-protection.md) antes de executar migrations ou backfill.
+
 Se aparecer erro `P1001 Can't reach database server`, geralmente é uma destas coisas:
 
 1. senha do banco errada;
@@ -48,7 +60,7 @@ Se aparecer erro `P1001 Can't reach database server`, geralmente é uma destas c
 
 ## Seed do banco
 
-O painel tem um botão em **Configuração > Baixar seed JSON**. O arquivo exportado inclui usuários, familiares, excursões, pagamentos, grupos, despesas, lista de espera, assinaturas e logs do sistema.
+Exports com dados pessoais ficam desabilitados por padrão e exigem autorização administrativa. Seeds reais nunca devem entrar no Git; use um arquivo fora do repositório e informe-o explicitamente por `SEED_FILE`.
 
 Para importar um arquivo de seed:
 

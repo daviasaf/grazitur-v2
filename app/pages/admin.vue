@@ -542,22 +542,30 @@ const confirmarApagarLogs = async () => {
 }
 const aplicarTema = () => { if (import.meta.client) document.documentElement.setAttribute('data-theme', temaEscuro.value ? 'dark' : 'light') }
 
-onMounted(() => {
+onMounted(async () => {
   if (import.meta.client) {
     temaEscuro.value = localStorage.getItem('graziTurTheme') === 'dark'
     aplicarTema()
-    if (localStorage.getItem('graziTurAdmin') === 'true') {
+    const session = await $fetch<{ authenticated: boolean }>('/api/auth').catch(() => ({ authenticated: false }))
+    if (session.authenticated) {
       logado.value = true
-      carregar()
+      await carregar()
     }
   }
 })
 const aoLogar = () => { logado.value = true; carregar() }
 const pedirLogout = () => { modalLogout.value = true }
-const confirmarLogout = () => { modalLogout.value = false; logado.value = false; if (import.meta.client) localStorage.removeItem('graziTurAdmin') }
+const confirmarLogout = async () => {
+  modalLogout.value = false
+  await $fetch('/api/auth', { method: 'DELETE' }).catch(() => null)
+  logado.value = false
+  usuarios.value = []
+  excursoes.value = []
+  logs.value = []
+}
 const alternarTema = () => { temaEscuro.value = !temaEscuro.value; if (import.meta.client) localStorage.setItem('graziTurTheme', temaEscuro.value ? 'dark' : 'light'); aplicarTema() }
 const carregar = async () => {
-  usuarios.value = await $fetch('/api/users')
+  usuarios.value = await $fetch<any[]>('/api/users')
   const res = await $fetch<any[]>('/api/excursoes')
   excursoes.value = res.map(formatarExcursao)
   logs.value = await $fetch<any[]>('/api/logs').catch(() => [])
@@ -567,7 +575,11 @@ const acaoRelatorio = () => { modalRelatorio.value = true }
 const confirmarRelatorio = () => { modalRelatorio.value = false; exportarRelatorioGeralPDF(excursoes.value, usuarios.value, showToast, Number(mesesRelatorio.value) || 12) }
 const toggleActionMenu = (id: number) => { actionMenuId.value = actionMenuId.value === id ? null : id; despesaMenuId.value = null }
 const toggleDespesaMenu = (id: number) => { despesaMenuId.value = despesaMenuId.value === id ? null : id }
-const gerarRelatorioViagem = (item: { ex: any, financeiro: Financeiro }) => exportarRelatorioExcursaoPDF(item.ex, item.financeiro, showToast)
+const gerarRelatorioViagem = async (item: { ex: any, financeiro: Financeiro }) => {
+  const purpose = 'Relatório administrativo da excursão'
+  const sensitive = await $fetch<any>(`/api/excursoes/${item.ex.id}`, { query: { purpose } })
+  await exportarRelatorioExcursaoPDF(formatarExcursao(sensitive), item.financeiro, showToast)
+}
 const abrirDespesa = (ex: any | null) => { exSelecionada.value = ex; modalDespesa.value = true }
 const abrirRemoverDespesa = (ex: any) => { exSelecionada.value = ex; modalRemoverDespesa.value = true }
 const removerDespesa = async (despesa: any) => {
@@ -591,7 +603,10 @@ const removerDespesa = async (despesa: any) => {
   await carregar()
 }
 const abrirNovoUser = () => { userSelecionado.value = null; modalUser.value = true }
-const abrirEdicaoUser = (u: any) => { userSelecionado.value = u; modalUser.value = true }
+const abrirEdicaoUser = async (u: any) => {
+  userSelecionado.value = await $fetch(`/api/users/${u.id}`, { query: { reveal: 'cpf' } })
+  modalUser.value = true
+}
 const abrirVincular = (u: any) => { userSelecionado.value = u; modalVincular.value = true }
 const abrirNovaExcursao = () => { exSelecionada.value = null; modalExcursao.value = true }
 const abrirGerenciar = (ex: any) => { exSelecionada.value = excursoes.value.find((e) => e.id === ex.id); modalGerenciar.value = true }
@@ -741,7 +756,9 @@ Grazi`
 }
 const gerarSeedJson = async () => {
   try {
-    const payload = await $fetch<any>('/api/seed/export')
+    const purpose = window.prompt('Informe a finalidade autorizada para exportar dados pessoais:')?.trim()
+    if (!purpose || purpose.length < 8) return
+    const payload = await $fetch<any>('/api/seed/export', { query: { purpose } })
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)

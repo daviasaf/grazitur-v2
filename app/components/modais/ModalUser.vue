@@ -63,7 +63,7 @@
                   </div>
                   <div class="col-md-4">
                     <label class="form-label small fw-bold">Estado *</label>
-                    <select v-model="estadoSelecionado" class="form-select" :disabled="carregandoEstados" @change="buscarCidades">
+                    <select v-model="estadoSelecionado" class="form-select" :disabled="carregandoEstados" @change="buscarCidades()">
                       <option value="" disabled>{{ carregandoEstados ? 'Carregando...' : 'UF' }}</option>
                       <option v-for="uf in estados" :key="uf.sigla" :value="uf.sigla">{{ uf.sigla }}</option>
                     </select>

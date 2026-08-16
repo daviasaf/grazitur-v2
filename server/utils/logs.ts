@@ -1,4 +1,5 @@
 import { prisma } from './prisma'
+import { redactSensitiveText } from './cpf-security'
 
 export type SystemLogEntry = {
   id: string
@@ -16,7 +17,7 @@ function normalizeLog(log: any): SystemLogEntry {
     entity: String(log.entity || 'sistema'),
     action: String(log.action || 'manual'),
     title: String(log.title || 'Registro do sistema'),
-    detail: log.detail ?? null
+    detail: log.detail ? redactSensitiveText(log.detail) : null
   }
 }
 
@@ -40,7 +41,7 @@ export async function readLogs(): Promise<SystemLogEntry[]> {
     })
     return logs.map(normalizeLog)
   } catch (error) {
-    console.error('Erro ao ler logs do banco:', error)
+    console.error('Erro ao ler logs do banco:', redactSensitiveText(error instanceof Error ? error.message : 'erro desconhecido'))
     return []
   }
 }
@@ -52,11 +53,11 @@ export async function appendLog(entry: Omit<SystemLogEntry, 'id' | 'createdAt'>)
         entity: String(entry.entity || 'sistema'),
         action: String(entry.action || 'manual'),
         title: String(entry.title || 'Registro do sistema'),
-        detail: entry.detail ? String(entry.detail) : null
+        detail: entry.detail ? redactSensitiveText(entry.detail) : null
       }
     })
   } catch (error) {
-    console.error('Erro ao salvar log no banco:', error)
+    console.error('Erro ao salvar log no banco:', redactSensitiveText(error instanceof Error ? error.message : 'erro desconhecido'))
   }
 }
 
@@ -71,13 +72,13 @@ export async function writeLogs(entries: SystemLogEntry[]) {
           entity: String(entry.entity || 'sistema'),
           action: String(entry.action || 'manual'),
           title: String(entry.title || 'Registro do sistema'),
-          detail: entry.detail ? String(entry.detail) : null
+          detail: entry.detail ? redactSensitiveText(entry.detail) : null
         })),
         skipDuplicates: true
       })
     }
   } catch (error) {
-    console.error('Erro ao sobrescrever logs no banco:', error)
+    console.error('Erro ao sobrescrever logs no banco:', redactSensitiveText(error instanceof Error ? error.message : 'erro desconhecido'))
   }
 }
 

@@ -67,7 +67,6 @@ const fazerLogin = async () => {
   carregando.value = true
   try {
     await $fetch('/api/auth', { method: 'POST', body: { email: email.value, password: password.value } })
-    if (import.meta.client) localStorage.setItem('graziTurAdmin', 'true')
     emit('sucesso')
   } catch (e: any) {
     erro.value = e.data?.statusMessage || 'E-mail ou senha incorretos.'

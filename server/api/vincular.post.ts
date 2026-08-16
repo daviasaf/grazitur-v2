@@ -5,9 +5,7 @@ import { appendLog, adminDetail } from '../utils/logs'
 function adminSignature(guia: any) {
   return {
     data: new Date().toISOString(),
-    guiaNome: guia?.nome || '58.904.532 LÍVIA GRAZIELA DOS SANTOS - GRAZI TURISMO',
-    guiaCpf: guia?.cpf || '',
-    guiaCelular: guia?.celular || ''
+    guiaNome: guia?.nome || 'Grazi Turismo'
   }
 }
 
@@ -61,6 +59,6 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  await appendLog({ entity: 'vinculo', action: 'create', title: 'Passageiro adicionado à excursão', detail: adminDetail('adicionou passageiro à excursão', [`Passageiro: ${user?.nome || `Usuário #${userId}`}.`, user?.cpf ? `CPF: ${user.cpf}.` : null, `Excursão: ${excursao.nome}.`, opcaoPagamento ? `Pagamento definido: ${opcaoPagamento}.` : 'Pagamento definido: pendente / a combinar.', liderId && liderId !== userId ? `Adicionado como dependente do titular #${liderId}.` : 'Adicionado como passageiro titular.']) })
+  await appendLog({ entity: 'vinculo', action: 'create', title: 'Passageiro adicionado à excursão', detail: adminDetail('adicionou passageiro à excursão', [`Passageiro ID: ${userId}.`, `Excursão: ${excursao.nome}.`, opcaoPagamento ? `Pagamento definido: ${opcaoPagamento}.` : 'Pagamento definido: pendente / a combinar.', liderId && liderId !== userId ? `Adicionado como dependente do titular #${liderId}.` : 'Adicionado como passageiro titular.']) })
   return { success: true }
 })

@@ -34,3 +34,9 @@ Thumbs.db
 # Prisma (Caso você use SQLite localmente para testes)
 # Se o seu banco de dados local for um arquivo .db, descomente a linha abaixo:
 # *.db
+
+# Dados pessoais, exports e cópias de banco nunca entram no Git.
+prisma/seed-users.json
+*.pii.json
+exports/
+backups/

@@ -12,14 +12,12 @@ export default defineEventHandler(async (event) => {
 
   const entradaId = String(body.entradaId || '')
   const userId = body.userId ? Number(body.userId) : null
-  const cpf = String(body.cpf || '').replace(/\D/g, '')
   const listaOriginal = parseJson<any[]>(excursao.listaEsperaJson, [])
   const removidos: any[] = []
   const lista = listaOriginal.filter((item) => {
     const remover = Boolean(
       (entradaId && String(item.id) === entradaId) ||
-      (userId && Number(item.userId) === userId) ||
-      (cpf && String(item.cpf).replace(/\D/g, '') === cpf)
+      (userId && Number(item.userId) === userId)
     )
     if (remover) removidos.push(item)
     return !remover
