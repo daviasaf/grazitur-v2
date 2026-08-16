@@ -1,5 +1,6 @@
 import type { H3Event } from 'h3'
 import { deleteCookie, getCookie, setCookie } from 'h3'
+import { buildAdminPasswordRecoveryRequest } from './admin-password-recovery'
 import { constantTimeTextEqual, requireSessionSecret, signSession, verifySession } from './signed-session'
 
 const ACCESS_COOKIE = 'grazitur_admin_access'
@@ -127,9 +128,10 @@ export async function loginAdmin(event: H3Event, email: string, password: string
 }
 
 export async function requestAdminPasswordRecovery(email: string, redirectTo: string) {
-  const result = await authRequest('/recover', {
+  const request = buildAdminPasswordRecoveryRequest(email, redirectTo)
+  const result = await authRequest(request.path, {
     method: 'POST',
-    body: JSON.stringify({ email, redirect_to: redirectTo })
+    body: request.body
   })
 
   // Auth deliberately returns a generic response for unknown users. Preserve that
