@@ -20,6 +20,12 @@ type TokenResponse = {
   user: SupabaseUser
 }
 
+type AuthRequestResult<T> = {
+  ok: boolean
+  status: number
+  data: T | null
+}
+
 type AdminSession = {
   id: string
   email?: string
@@ -46,7 +52,7 @@ function isAdmin(user: SupabaseUser | null | undefined) {
   return role === 'admin' || (Array.isArray(roles) && roles.includes('admin'))
 }
 
-async function authFetch<T>(path: string, init: RequestInit = {}) {
+async function authRequest<T>(path: string, init: RequestInit = {}): Promise<AuthRequestResult<T>> {
   const config = supabaseConfig()
   if (!config) throw createError({ statusCode: 503, statusMessage: 'Supabase Auth não configurado.' })
   const response = await fetch(`${config.url}/auth/v1${path}`, {
@@ -57,8 +63,13 @@ async function authFetch<T>(path: string, init: RequestInit = {}) {
       ...(init.headers || {})
     }
   })
-  if (!response.ok) return null
-  return await response.json() as T
+  const data = await response.json().catch(() => null) as T | null
+  return { ok: response.ok, status: response.status, data }
+}
+
+async function authFetch<T>(path: string, init: RequestInit = {}) {
+  const result = await authRequest<T>(path, init)
+  return result.ok ? result.data : null
 }
 
 function setSupabaseCookies(event: H3Event, tokens: TokenResponse) {
@@ -113,6 +124,49 @@ export async function loginAdmin(event: H3Event, email: string, password: string
   const secret = requireSessionSecret('ADMIN_SESSION_SECRET')
   setCookie(event, LEGACY_COOKIE, signSession({ sub: 'admin', exp: now + 3600 }, secret, 'admin'), cookieOptions(3600))
   return { id: 'legacy-development-admin', email: expectedEmail, source: 'legacy-development' }
+}
+
+export async function requestAdminPasswordRecovery(email: string, redirectTo: string) {
+  const result = await authRequest('/recover', {
+    method: 'POST',
+    body: JSON.stringify({ email, redirect_to: redirectTo })
+  })
+
+  // Auth deliberately returns a generic response for unknown users. Preserve that
+  // behavior so this public endpoint cannot be used to enumerate administrators.
+  if (!result.ok && result.status >= 500) {
+    throw createError({ statusCode: 503, statusMessage: 'Não foi possível solicitar a recuperação agora.' })
+  }
+}
+
+export async function updateAdminPasswordWithRecoveryToken(accessToken: string, password: string) {
+  const authorization = { Authorization: `Bearer ${accessToken}` }
+  const userResult = await authRequest<SupabaseUser>('/user', { headers: authorization })
+  if (!userResult.ok || !isAdmin(userResult.data)) {
+    throw createError({ statusCode: 401, statusMessage: 'Link de recuperação inválido ou expirado.' })
+  }
+
+  const updateResult = await authRequest('/user', {
+    method: 'PUT',
+    headers: authorization,
+    body: JSON.stringify({ password })
+  })
+  if (!updateResult.ok) {
+    const statusCode = updateResult.status >= 500 ? 503 : 400
+    throw createError({
+      statusCode,
+      statusMessage: statusCode === 503
+        ? 'Não foi possível atualizar a senha agora.'
+        : 'A senha não foi aceita. Revise os requisitos e tente novamente.'
+    })
+  }
+
+  // The recovery session has served its purpose. Revoking every existing session
+  // prevents an older token from surviving a password reset.
+  await authRequest('/logout?scope=global', {
+    method: 'POST',
+    headers: authorization
+  }).catch(() => null)
 }
 
 export async function getAdminSession(event: H3Event): Promise<AdminSession | null> {
