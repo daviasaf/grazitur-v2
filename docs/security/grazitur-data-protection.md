@@ -4,7 +4,7 @@ Data do diagnóstico: 16 de agosto de 2026. Este documento não contém valores 
 
 ## 1. Resumo executivo
 
-O risco atual é **crítico**. O projeto Supabase confirmado é `form-app` (`xgrcwdtkalelegoysxbw`) e foi classificado conservadoramente como **produção**, pois contém dados reais e atende a aplicação hospedada no Render. As cinco tabelas do GraziTur estão no schema exposto `public`, têm RLS desabilitado e concedem privilégios amplos — inclusive leitura, escrita e `TRUNCATE` — a `anon`, `authenticated` e `service_role`. O Security Advisor confirmou os cinco erros de RLS.
+O risco atual é **crítico**. O projeto Supabase confirmado é `form-app` (`xgrcwdtkalelegoysxbw`) e foi classificado conservadoramente como **produção**, pois contém dados reais e atende a aplicação hospedada na Vercel. As cinco tabelas do GraziTur estão no schema exposto `public`, têm RLS desabilitado e concedem privilégios amplos — inclusive leitura, escrita e `TRUNCATE` — a `anon`, `authenticated` e `service_role`. O Security Advisor confirmou os cinco erros de RLS.
 
 Há 237 cadastros com CPF em texto claro. Todos têm 11 dígitos, checksum válido e não há duplicidades normalizadas. Há 280 logs com CPF ou outro rótulo sensível. A autenticação administrativa anterior existia apenas no cliente e não protegia as APIs; a consulta do passageiro enviava CPF na URL e o mantinha no navegador.
 
@@ -132,9 +132,12 @@ Somente a migration expand foi aplicada ao projeto remoto. Backfill, hardening d
 - Pré-condição remota da expand: zero colunas/índices/constraints novos existentes e zero locks pendentes em `User` no momento da consulta.
 - Migration remota `20260816191144 secure_grazitur_personal_data_expand` registrada com sucesso no `form-app`: 237 usuários preservados, 0 CPFs legados nulos, 0 ciphertexts criados, cinco colunas, dois índices e duas constraints confirmados.
 - Security Advisor: cinco erros `rls_disabled_in_public`; dois warnings `function_search_path_mutable`.
-- Auth/Storage: 0 usuários Auth, 0 buckets e 0 objetos.
+- Inventário inicial de Auth/Storage: 0 usuários Auth, 0 buckets e 0 objetos.
+- Supabase Auth provisionado depois do inventário: um usuário administrativo confirmado, com autorização somente em `app_metadata.role=admin`.
+- Vercel `grazitur`/Production configurada com dez variáveis necessárias, segredos distintos e `GRAZITUR_CPF_PROTECTION_MODE=dual`; nenhum valor secreto foi versionado ou exibido.
+- Dry-run remoto do backfill: 237 registros pendentes; `CPF_BACKFILL_APPLY` permaneceu falso e nenhuma linha foi alterada.
 - Views/materialized views/publications: nenhuma.
-- Migrations remotas: nenhuma registrada.
+- Migrations remotas: somente a expand registrada; hardening, limpeza, contract e renomeação continuam sem aplicação.
 - `pnpm exec prisma validate`: schema válido.
 - `pnpm test`: 6/6 testes verdes — normalização, validação, máscara, HMAC, encrypt/decrypt, AAD incorreto, adulteração e redação.
 - `pnpm typecheck`: sem erros.
