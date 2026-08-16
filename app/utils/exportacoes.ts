@@ -7,7 +7,7 @@ export type ListaPassageirosOrdenacao = 'alfabetica' | 'grupos'
 type ListaPassageiroColuna = { id: ListaPassageiroColunaId; label: string; value: (user: any, excursao: any) => string }
 type ListaPassageiroSecao = { passageiros: any[]; tipo: 'lista' | 'grupo' | 'sem-grupo'; corGrupo?: 0 | 1; numeroGrupo?: number }
 
-const CORES_GRUPOS_PDF: Array<[number, number, number]> = [[229, 236, 216], [238, 235, 255]]
+const CORES_GRUPOS_PDF = [[229, 236, 216], [238, 235, 255]] as const
 
 type Financeiro = {
   receita: number

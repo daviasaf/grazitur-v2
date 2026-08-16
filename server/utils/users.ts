@@ -1,10 +1,30 @@
 import * as z from 'zod'
 import { formatarNome, validarCPF } from '../../app/utils/formatadores'
 import { uniqueIds } from './json'
+import { buildCpfWriteFields, cpfBlindIndexes, cpfProtectionMode, getPlainCpf, maskCpf, normalizeCpf } from './cpf-security'
+import { prisma } from './prisma'
 
 export const formatNameServer = formatarNome
 
-export function normalizeUser(user: Record<string, unknown>) {
+function publicUserFields(user: Record<string, any>, revealCpf: boolean) {
+  const cpf = getPlainCpf(user)
+  const {
+    cpfCiphertext: _cpfCiphertext,
+    cpfBlindIndex: _cpfBlindIndex,
+    cpfKeyVersion: _cpfKeyVersion,
+    cpfContextId: _cpfContextId,
+    ...safe
+  } = user
+  return {
+    ...safe,
+    cpf: revealCpf ? cpf : maskCpf(cpf),
+    cpfMasked: maskCpf(cpf),
+    cpfLast4: user.cpfLast4 || cpf.slice(-4) || null
+  }
+}
+
+export function normalizeUser(user: Record<string, unknown>, options: { revealCpf?: boolean } = {}) {
+  const revealCpf = Boolean(options.revealCpf)
   const parentes = Array.isArray(user.parentes) ? user.parentes as Array<Record<string, unknown>> : []
   const parentesDe = Array.isArray(user.parentesDe) ? user.parentesDe as Array<Record<string, unknown>> : []
   const mapa = new Map<number, Record<string, unknown>>()
@@ -12,7 +32,32 @@ export function normalizeUser(user: Record<string, unknown>) {
     const id = Number(p.id)
     if (Number.isFinite(id) && id !== Number(user.id)) mapa.set(id, p)
   }
-  return { ...user, parentes: [...mapa.values()], parentesDe }
+  return {
+    ...publicUserFields(user, revealCpf),
+    parentes: [...mapa.values()].map((relative) => publicUserFields(relative, revealCpf)),
+    parentesDe: parentesDe.map((relative) => publicUserFields(relative, revealCpf))
+  }
+}
+
+export async function findUserByCpf(cpfValue: unknown, options: Record<string, unknown> = {}) {
+  const cpf = normalizeCpf(cpfValue)
+  if (!validarCPF(cpf)) return null
+
+  let blindIndexes: string[] = []
+  try {
+    blindIndexes = cpfProtectionMode() === 'disabled' ? [] : cpfBlindIndexes(cpf)
+  } catch (error) {
+    if (cpfProtectionMode() === 'required') throw error
+  }
+
+  const where = blindIndexes.length
+    ? { OR: [{ cpfBlindIndex: { in: blindIndexes } }, { cpf }] }
+    : { cpf }
+  return await prisma.user.findFirst({ ...options, where } as any)
+}
+
+export function protectedCpfData(cpfValue: unknown, existingContextId?: string | null) {
+  return buildCpfWriteFields(cpfValue, existingContextId)
 }
 
 export function parentesIdsFromBody(body: Record<string, unknown>, selfId?: number) {
@@ -44,10 +89,14 @@ export function validateUserPayload(body: Record<string, unknown>) {
       throw createError({ statusCode: 400, statusMessage: 'Informe pelo menos o nome do passageiro.' })
     }
 
+    if (cpfLimpo && !validarCPF(cpfLimpo)) {
+      throw createError({ statusCode: 400, statusMessage: 'CPF inválido. Deixe o campo vazio se o cadastro ainda não tiver documento.' })
+    }
+
     return {
       nome,
       email: body.email ? String(body.email).trim() : null,
-      cpf: cpfLimpo || `TEMP${Date.now()}`,
+      cpf: cpfLimpo || null,
       rg: body.rg ? String(body.rg) : null,
       orgaoExpeditor: body.orgaoExpeditor ? String(body.orgaoExpeditor) : null,
       nascimento: body.nascimento ? String(body.nascimento) : null,

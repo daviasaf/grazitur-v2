@@ -1,6 +1,8 @@
 import { prisma } from '../utils/prisma'
 import { parseJson } from '../utils/json'
 import { appendLog, adminDetail } from '../utils/logs'
+import { getPassengerUserId } from '../utils/passenger-auth'
+import { normalizeUser } from '../utils/users'
 
 function buildAdminSignatures(existing: Record<string, any>, users: any[], grupos: Record<string, string[]>, guia: any) {
   const assinaturas = { ...(existing || {}) }
@@ -10,9 +12,7 @@ function buildAdminSignatures(existing: Record<string, any>, users: any[], grupo
     const key = `admin_${u.id}`
     assinaturas[key] = assinaturas[key] || {
       data: new Date().toISOString(),
-      guiaNome: guia?.nome || '58.904.532 LÍVIA GRAZIELA DOS SANTOS - GRAZI TURISMO',
-      guiaCpf: guia?.cpf || '',
-      guiaCelular: guia?.celular || ''
+      guiaNome: guia?.nome || 'Grazi Turismo'
     }
   }
   return assinaturas
@@ -31,38 +31,71 @@ export default defineEventHandler(async (event) => {
         ? { finalizada: false, ...(somenteAbertas ? { mostrarAberta: true } : {}) }
         : (somenteAbertas ? { finalizada: false, mostrarAberta: true } : {})
 
+    if (somenteAbertas) {
+      const publicTrips = await prisma.excursao.findMany({
+        where,
+        select: {
+          id: true,
+          nome: true,
+          lugar: true,
+          vagas: true,
+          mostrarAberta: true,
+          finalizada: true,
+          createdAt: true,
+          listaEsperaJson: true,
+          _count: { select: { usuarios: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+      let passengerId: number | null = null
+      try { passengerId = getPassengerUserId(event) } catch { passengerId = null }
+      return publicTrips.map((trip) => ({
+        id: trip.id,
+        nome: trip.nome,
+        lugar: trip.lugar,
+        vagas: trip.vagas,
+        mostrarAberta: trip.mostrarAberta,
+        finalizada: trip.finalizada,
+        createdAt: trip.createdAt,
+        _count: trip._count,
+        onWaitlist: passengerId ? parseJson<any[]>(trip.listaEsperaJson, []).some((item) => Number(item.userId) === passengerId) : false
+      }))
+    }
+
     const excursoes = await prisma.excursao.findMany({
       where,
       include: { usuarios: true, guia: true, _count: { select: { usuarios: true } } },
       orderBy: [{ finalizada: 'asc' }, { createdAt: 'desc' }]
     })
 
-    const users = await prisma.user.findMany({ select: { id: true, nome: true, cpf: true, celular: true } })
+    const users = await prisma.user.findMany()
     const byId = new Map(users.map((u) => [String(u.id), u]))
-    const byCpf = new Map(users.map((u) => [String(u.cpf || '').replace(/\D/g, ''), u]))
 
-    return await Promise.all(excursoes.map(async (ex) => {
+    return excursoes.map((ex) => {
       const listaOriginal = parseJson<any[]>(ex.listaEsperaJson, [])
       const listaHidratada = listaOriginal
         .map((item) => {
-          const user = item?.userId ? byId.get(String(item.userId)) : byCpf.get(String(item?.cpf || '').replace(/\D/g, ''))
+          const user = item?.userId ? byId.get(String(item.userId)) : null
           if (!user) return null
           return {
-            ...item,
+            id: item.id,
             userId: user.id,
             nome: user.nome,
-            cpf: user.cpf,
-            celular: user.celular || item.celular || ''
+            cpf: normalizeUser(user).cpfMasked,
+            celular: user.celular || '',
+            createdAt: item.createdAt,
+            origem: item.origem
           }
         })
         .filter(Boolean)
 
-      if (JSON.stringify(listaOriginal) !== JSON.stringify(listaHidratada)) {
-        await prisma.excursao.update({ where: { id: ex.id }, data: { listaEsperaJson: JSON.stringify(listaHidratada) } })
+      return {
+        ...ex,
+        usuarios: ex.usuarios.map((user) => normalizeUser(user)),
+        guia: ex.guia ? normalizeUser(ex.guia) : null,
+        listaEsperaJson: JSON.stringify(listaHidratada)
       }
-
-      return { ...ex, listaEsperaJson: JSON.stringify(listaHidratada) }
-    }))
+    })
   }
 
   if (method === 'POST') {

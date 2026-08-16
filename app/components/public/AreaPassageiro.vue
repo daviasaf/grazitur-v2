@@ -4,7 +4,7 @@
       <div class="gt-card passenger-login-card">
         <div class="login-mark"><UiBusIcon /></div>
         <h1>Acessar minha viagem</h1>
-        <p>Digite seu CPF para consultar viagens, familiares, PIX e contratos digitais.</p>
+        <p>Informe CPF e data de nascimento para consultar suas viagens.</p>
 
         <div class="login-form-box">
           <label class="form-label">CPF do passageiro</label>
@@ -15,6 +15,17 @@
             placeholder="000.000.000-00"
             inputmode="numeric"
             @input="e => cpf = mascaraCPF((e.target as HTMLInputElement).value)"
+            @keyup.enter="entrar"
+          >
+          <label class="form-label mt-3">Data de nascimento</label>
+          <input
+            :value="nascimento"
+            maxlength="10"
+            class="form-control auth-input"
+            placeholder="DD/MM/AAAA"
+            inputmode="numeric"
+            autocomplete="bday"
+            @input="e => nascimento = mascaraData((e.target as HTMLInputElement).value)"
             @keyup.enter="entrar"
           >
           <button class="gt-btn gt-btn-primary w-100" :disabled="carregando" @click="entrar">
@@ -164,7 +175,7 @@
           <div class="modal-body pt-0 waitlist-choice-body">
             <button class="waitlist-choice-main" @click="enviarListaEspera(false)">
               <strong>Somente eu</strong>
-              <span>Envia seu nome e CPF no WhatsApp.</span>
+              <span>Envia somente seu nome no WhatsApp.</span>
             </button>
             <div v-if="parentesListaEspera.length" class="waitlist-family-box">
               <strong>Adicionar parentes</strong>
@@ -203,12 +214,13 @@
 </template>
 
 <script setup lang="ts">
-import { mascaraCPF } from '~/utils/formatadores'
+import { mascaraCPF, mascaraData } from '~/utils/formatadores'
 import { gerarContratoHtml, gerarContratoAssinadoPDF } from '~/utils/exportacoes'
 
 defineEmits(['editarDados', 'cadastrarFamiliar'])
 const { showToast } = useToasts()
 const cpf = ref('')
+const nascimento = ref('')
 const usuario = ref<any>(null)
 const excursoes = ref<any[]>([])
 const excursoesDisponiveis = ref<any[]>([])
@@ -237,17 +249,24 @@ const contratoHtml = computed(() => {
 const parseJson = <T,>(v: any, fallback: T): T => { if (!v) return fallback; if (typeof v !== 'string') return v; try { return JSON.parse(v) } catch { return fallback } }
 const formatarExcursao = (ex: any) => ({ ...ex, valores: parseJson(ex.valores, []), pagamentos: parseJson(ex.pagamentosJson, {}), detalhes: parseJson(ex.contratoDetalhes, {}), grupos: parseJson(ex.contratoGrupos, {}), assinaturas: parseJson(ex.assinaturasJson, {}), despesas: parseJson(ex.despesasJson, []), listaEspera: parseJson(ex.listaEsperaJson, []) })
 const excursoesDisponiveisFiltradas = computed(() => { const idsMinhas = new Set(excursoes.value.map((ex) => String(ex.id))); return excursoesDisponiveis.value.filter((ex) => !ex.finalizada && ex.mostrarAberta !== false && !idsMinhas.has(String(ex.id))) })
-const jaEstouNaEspera = (ex: any) => { const cpfAtual = String(usuario.value?.cpf || '').replace(/\D/g, ''); return (ex.listaEspera || []).some((item: any) => String(item.cpf || '').replace(/\D/g, '') === cpfAtual || Number(item.userId) === Number(usuario.value?.id)) }
+const jaEstouNaEspera = (ex: any) => Boolean(ex.onWaitlist)
 const linkWhatsApp = computed(() => { const nomeViagem = pixData.value.nomeViagem || 'a excursão'; const msg = `Olá, acabei de pagar a taxa da viagem ${nomeViagem} no valor de ${pixData.value.valor}, pelo passageiro ${pixData.value.nome}`; return `https://wa.me/5522999454860?text=${encodeURIComponent(msg)}` })
 
-onMounted(async () => { const salvo = import.meta.client ? localStorage.getItem('graziTurCPF') : ''; if (salvo) { cpf.value = mascaraCPF(salvo); entrar() } })
+onMounted(async () => {
+  try {
+    const res = await $fetch<any>('/api/passageiro/viagens')
+    usuario.value = res.user
+    excursoes.value = res.excursoes
+    await carregarDisponiveis()
+  } catch {}
+})
 const carregarDisponiveis = async () => { try { const res = await $fetch<any[]>('/api/excursoes?finalizada=false&publico=true'); excursoesDisponiveis.value = res.map(formatarExcursao) } catch {} }
-const entrar = async () => { erro.value = ''; carregando.value = true; try { const res = await $fetch<any>(`/api/passageiro/viagens?cpf=${cpf.value.replace(/\D/g, '')}`); usuario.value = res.user; excursoes.value = res.excursoes; await carregarDisponiveis(); if (import.meta.client) localStorage.setItem('graziTurCPF', usuario.value.cpf) } catch (e: any) { erro.value = e.data?.statusMessage || 'CPF não encontrado.'; if (import.meta.client) localStorage.removeItem('graziTurCPF') } finally { carregando.value = false } }
-const sair = () => { usuario.value = null; excursoes.value = []; excursoesDisponiveis.value = []; cpf.value = ''; if (import.meta.client) localStorage.removeItem('graziTurCPF') }
+const entrar = async () => { erro.value = ''; carregando.value = true; try { const res = await $fetch<any>('/api/passageiro/viagens', { method: 'POST', body: { cpf: cpf.value, nascimento: nascimento.value } }); usuario.value = res.user; excursoes.value = res.excursoes; await carregarDisponiveis() } catch (e: any) { erro.value = e.data?.statusMessage || 'Dados não conferem.' } finally { carregando.value = false } }
+const sair = async () => { await $fetch('/api/passageiro/viagens', { method: 'DELETE' }).catch(() => null); usuario.value = null; excursoes.value = []; excursoesDisponiveis.value = []; cpf.value = ''; nascimento.value = '' }
 
 const abrirListaEspera = (ex: any) => { if (!usuario.value) return; excursaoListaEspera.value = ex; parentesSelecionadosEspera.value = []; modalListaEsperaAberto.value = true }
-const textoListaEspera = (ex: any, incluirParentes: boolean, parentes: any[] = []) => { const base = [`Olá, Grazi! Tudo bem?`, '', `Tenho interesse na viagem ${ex.nome}.`, `Meu nome é ${usuario.value.nome}.`, `CPF: ${String(usuario.value.cpf || '').replace(/\D/g, '')}.`, 'Estou na lista de espera.']; if (!incluirParentes || !parentes.length) return base.join('\n'); return [...base, '', 'Gostaria de colocar estes parentes também na lista de espera:', ...parentes.map((p: any) => `- ${p.nome} | CPF: ${String(p.cpf || '').replace(/\D/g, '')}`)].join('\n') }
-const enviarListaEspera = async (incluirParentes: boolean) => { const ex = excursaoListaEspera.value; if (!usuario.value || !ex) return; const parentes = (usuario.value?.parentes || []).filter((p: any) => parentesSelecionadosEspera.value.includes(String(p.id))); try { await $fetch(`/api/excursoes/${ex.id}/espera`, { method: 'POST', body: { userId: usuario.value.id, origem: 'Área do passageiro' } }); if (incluirParentes) for (const parente of parentes) await $fetch(`/api/excursoes/${ex.id}/espera`, { method: 'POST', body: { userId: parente.id, origem: 'Área do passageiro - parentes' } }); await $fetch('/api/logs', { method: 'POST', body: { entity: 'excursao', action: 'passenger-waitlist', title: 'Lista de espera solicitada pelo passageiro', detail: ['Responsável: Passageiro.', 'Ação: entrou na lista de espera pela área do passageiro.', `Passageiro: ${usuario.value.nome}.`, `CPF: ${String(usuario.value.cpf || '').replace(/\D/g, '')}.`, `Excursão: ${ex.nome}.`, incluirParentes && parentes.length ? `Familiares incluídos: ${parentes.map((p: any) => p.nome).join(', ')}.` : null].filter(Boolean).join('\n') } }).catch(() => null); await carregarDisponiveis(); showToast('Lista de espera atualizada com sucesso.', 'success') } catch (e: any) { showToast(e.data?.statusMessage || 'Não foi possível entrar na lista de espera.', 'warning') } modalListaEsperaAberto.value = false; const msg = textoListaEspera(ex, incluirParentes, parentes); window.open(`https://wa.me/5522999454860?text=${encodeURIComponent(msg)}`, '_blank') }
+const textoListaEspera = (ex: any, incluirParentes: boolean, parentes: any[] = []) => { const base = [`Olá, Grazi! Tudo bem?`, '', `Tenho interesse na viagem ${ex.nome}.`, `Meu nome é ${usuario.value.nome}.`, 'Estou na lista de espera.']; if (!incluirParentes || !parentes.length) return base.join('\n'); return [...base, '', 'Gostaria de colocar estes parentes também na lista de espera:', ...parentes.map((p: any) => `- ${p.nome}`)].join('\n') }
+const enviarListaEspera = async (incluirParentes: boolean) => { const ex = excursaoListaEspera.value; if (!usuario.value || !ex) return; const parentes = (usuario.value?.parentes || []).filter((p: any) => parentesSelecionadosEspera.value.includes(String(p.id))); try { await $fetch(`/api/excursoes/${ex.id}/espera`, { method: 'POST', body: { userId: usuario.value.id, origem: 'Área do passageiro' } }); if (incluirParentes) for (const parente of parentes) await $fetch(`/api/excursoes/${ex.id}/espera`, { method: 'POST', body: { userId: parente.id, origem: 'Área do passageiro - parentes' } }); await carregarDisponiveis(); showToast('Lista de espera atualizada com sucesso.', 'success') } catch (e: any) { showToast(e.data?.statusMessage || 'Não foi possível entrar na lista de espera.', 'warning') } modalListaEsperaAberto.value = false; const msg = textoListaEspera(ex, incluirParentes, parentes); window.open(`https://wa.me/5522999454860?text=${encodeURIComponent(msg)}`, '_blank') }
 
 const obterPagamento = (ex: any, pId: number) => ex.pagamentos?.[String(pId)] || 'Pendente / À combinar'
 const obterDependentes = (ex: any) => { if (!ex || !usuario.value) return []; const idsDependentes = ex.grupos?.[String(usuario.value.id)] || []; return ex.usuarios.filter((u: any) => idsDependentes.map(String).includes(String(u.id))) }
@@ -276,21 +295,6 @@ const copiarPixEAvise = async () => {
   try {
     await navigator.clipboard.writeText(pixData.value.codigo)
     showToast('Pix copiado.', 'success')
-    await $fetch('/api/logs', {
-      method: 'POST',
-      body: {
-        entity: 'financeiro',
-        action: 'pix-copy',
-        title: 'Pix copiado pelo passageiro',
-        detail: [
-          'Responsável: Passageiro.',
-          'Ação: copiou o Pix para pagamento.',
-          `Passageiro: ${pixData.value.nome}.`,
-          `Viagem: ${pixData.value.nomeViagem || 'não informada'}.`,
-          `Valor: ${pixData.value.valor || 'não informado'}.`
-        ].join('\n')
-      }
-    }).catch(() => null)
   } catch {
     showToast('Não foi possível copiar automaticamente. Copie manualmente.', 'warning')
   }

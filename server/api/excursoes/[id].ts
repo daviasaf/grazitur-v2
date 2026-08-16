@@ -1,6 +1,7 @@
 import { prisma } from '../../utils/prisma'
 import { parseJson } from '../../utils/json'
 import { appendLog, adminDetail } from '../../utils/logs'
+import { normalizeUser } from '../../utils/users'
 
 const PAGAMENTOS_MENSAIS_KEY = '__pagamentosMensais'
 
@@ -27,9 +28,7 @@ function buildAdminSignatures(existing: Record<string, any>, users: any[], grupo
     const key = `admin_${u.id}`
     assinaturas[key] = assinaturas[key] || {
       data: new Date().toISOString(),
-      guiaNome: guia?.nome || '58.904.532 LÍVIA GRAZIELA DOS SANTOS - GRAZI TURISMO',
-      guiaCpf: guia?.cpf || '',
-      guiaCelular: guia?.celular || ''
+      guiaNome: guia?.nome || 'Grazi Turismo'
     }
   }
   return assinaturas
@@ -40,6 +39,20 @@ export default defineEventHandler(async (event) => {
   const method = getMethod(event)
 
   if (!Number.isFinite(id)) throw createError({ statusCode: 400, statusMessage: 'ID inválido.' })
+
+  if (method === 'GET') {
+    const purpose = String(getQuery(event).purpose || '').trim()
+    if (purpose.length < 8) throw createError({ statusCode: 400, statusMessage: 'Informe a finalidade do acesso aos dados completos.' })
+    const excursion = await prisma.excursao.findUnique({ where: { id }, include: { usuarios: true, guia: true, _count: { select: { usuarios: true } } } })
+    if (!excursion) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
+    setResponseHeader(event, 'Cache-Control', 'no-store')
+    await appendLog({ entity: 'privacy', action: 'sensitive-export', title: 'Dados completos liberados para documento', detail: adminDetail('acessou dados completos para documento', [`Excursão ID: ${id}.`, `Finalidade declarada: ${purpose}.`]) })
+    return {
+      ...excursion,
+      usuarios: excursion.usuarios.map((user) => normalizeUser(user, { revealCpf: true })),
+      guia: excursion.guia ? normalizeUser(excursion.guia, { revealCpf: true }) : null
+    }
+  }
 
   if (method === 'DELETE') {
     const atual = await prisma.excursao.findUnique({ where: { id } })

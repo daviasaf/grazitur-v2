@@ -1,13 +1,11 @@
 import { prisma } from '../../../utils/prisma'
 import { parseJson } from '../../../utils/json'
 import { appendLog, adminDetail } from '../../../utils/logs'
+import { requirePassengerSession } from '../../../utils/passenger-auth'
 
 type EntradaEspera = {
   id: string
-  userId?: number
-  nome: string
-  cpf: string
-  celular: string
+  userId: number
   createdAt: string
   origem: string
 }
@@ -22,35 +20,27 @@ export default defineEventHandler(async (event) => {
   if (!excursao) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
   if (excursao.finalizada) throw createError({ statusCode: 400, statusMessage: 'Esta excursão já foi finalizada.' })
 
-  let user: any = null
-  const userId = Number(body.userId || 0)
-  const cpfBody = String(body.cpf || '').replace(/\D/g, '')
-
-  if (userId) user = await prisma.user.findUnique({ where: { id: userId } })
-  else if (cpfBody) user = await prisma.user.findUnique({ where: { cpf: cpfBody } })
-
-  const cpf = String(user?.cpf || cpfBody || '').replace(/\D/g, '')
-  const nome = String(user?.nome || body.nome || '').trim()
-  const celular = String(user?.celular || body.celular || '').replace(/\D/g, '')
-
-  if (!cpf || !nome) throw createError({ statusCode: 400, statusMessage: 'Informe um passageiro válido para a lista de espera.' })
-  if (excursao.usuarios.some((u) => u.cpf === cpf)) throw createError({ statusCode: 400, statusMessage: 'Este passageiro já está vinculado a esta excursão.' })
+  const sessionUserId = requirePassengerSession(event)
+  const userId = Number(body.userId || sessionUserId)
+  const owner = await prisma.user.findUnique({ where: { id: sessionUserId }, include: { parentes: true, parentesDe: true } })
+  const allowedIds = new Set([sessionUserId, ...(owner?.parentes || []).map((item) => item.id), ...(owner?.parentesDe || []).map((item) => item.id)])
+  if (!allowedIds.has(userId)) throw createError({ statusCode: 403, statusMessage: 'Não é permitido incluir outro passageiro.' })
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) throw createError({ statusCode: 404, statusMessage: 'Passageiro não encontrado.' })
+  if (excursao.usuarios.some((item) => item.id === userId)) throw createError({ statusCode: 400, statusMessage: 'Este passageiro já está vinculado a esta excursão.' })
 
   const lista = parseJson<EntradaEspera[]>(excursao.listaEsperaJson, [])
-  const jaExiste = lista.some((item) => item.cpf === cpf || (user?.id && Number(item.userId) === Number(user.id)))
+  const jaExiste = lista.some((item) => Number(item.userId) === userId)
   if (jaExiste) return { success: true, alreadyExists: true, lista }
 
   lista.push({
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    userId: user?.id,
-    nome,
-    cpf,
-    celular,
+    userId,
     createdAt: new Date().toISOString(),
     origem: String(body.origem || 'Área do passageiro')
   })
 
   await prisma.excursao.update({ where: { id }, data: { listaEsperaJson: JSON.stringify(lista) } })
-  await appendLog({ entity: 'excursao', action: 'waitlist-create', title: 'Pessoa entrou na lista de espera', detail: adminDetail('registrou interesse em uma viagem', [`Passageiro: ${nome}.`, `CPF: ${cpf}.`, celular ? `WhatsApp: ${celular}.` : 'WhatsApp: não informado.', `Excursão: ${excursao.nome}.`, `Origem: ${String(body.origem || 'Área do passageiro')}.`]) })
+  await appendLog({ entity: 'excursao', action: 'waitlist-create', title: 'Pessoa entrou na lista de espera', detail: adminDetail('registrou interesse em uma viagem', [`Passageiro ID: ${userId}.`, `Excursão: ${excursao.nome}.`, `Origem: ${String(body.origem || 'Área do passageiro')}.`]) })
   return { success: true, lista }
 })

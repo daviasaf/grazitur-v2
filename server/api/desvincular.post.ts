@@ -36,6 +36,6 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  await appendLog({ entity: 'vinculo', action: 'delete', title: 'Passageiro removido da excursão', detail: adminDetail('removeu passageiro de uma excursão', [`Passageiro: ${user?.nome || `Usuário #${userId}`}.`, user?.cpf ? `CPF: ${user.cpf}.` : null, `Excursão: ${excursao.nome}.`, 'Foram removidos pagamento, assinatura e vínculos de grupo deste passageiro dentro da viagem.']) })
+  await appendLog({ entity: 'vinculo', action: 'delete', title: 'Passageiro removido da excursão', detail: adminDetail('removeu passageiro de uma excursão', [`Passageiro ID: ${userId}.`, `Excursão: ${excursao.nome}.`, 'Foram removidos pagamento, assinatura e vínculos de grupo deste passageiro dentro da viagem.']) })
   return { success: true }
 })

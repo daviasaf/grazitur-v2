@@ -135,7 +135,7 @@ const form = ref({
   valores: [] as Array<{ valor: string; vezes: number }>,
   ativarContrato: false,
   detalhes: { dataSaida: '', horaSaida: '', dataRetorno: '', horaRetorno: '', transporte: '', empresa: '', roteiro: '' },
-  grupos: {}, pagamentos: {}, despesas: [], usuarios: [] as any[], mostrarAberta: true, finalizada: false
+  grupos: {}, pagamentos: {}, despesas: [], usuarios: [] as any[], _count: { usuarios: 0 }, mostrarAberta: true, finalizada: false
 })
 const novoValor = ref('')
 const novasVezes = ref('')

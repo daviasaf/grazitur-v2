@@ -549,7 +549,7 @@ const usersSorted = computed(() => [...(props.excursaoSelecionada.usuarios || []
 const usersLista = computed(() => {
   const usuarios = props.excursaoSelecionada.usuarios || []
   const grupos = props.excursaoSelecionada.grupos || {}
-  const byId = new Map(usuarios.map((u: any) => [String(u.id), u]))
+  const byId = new Map<string, any>(usuarios.map((u: any) => [String(u.id), u]))
   const renderizados = new Set<string>()
   const resultado: any[] = []
 
@@ -665,7 +665,7 @@ watch(pagamentosMensais, (meses) => {
     mesSelecionadoId.value = ''
     return
   }
-  if (!meses.some((mes) => mes.id === mesSelecionadoId.value)) mesSelecionadoId.value = meses[0].id
+  if (!meses.some((mes) => mes.id === mesSelecionadoId.value)) mesSelecionadoId.value = meses[0]?.id || ''
 }, { immediate: true })
 
 const badgePagamentoClasse = (valor: string) => {
@@ -684,19 +684,28 @@ const colunasExportacao = () => {
   showToast('Selecione pelo menos uma coluna para baixar a lista.', 'warning')
   return null
 }
-const baixarListaODT = () => {
+const excursaoComDadosCompletos = async (purpose: string) => {
+  const raw = await $fetch<any>(`/api/excursoes/${props.excursaoSelecionada.id}`, { query: { purpose } })
+  return { ...props.excursaoSelecionada, ...raw }
+}
+const baixarListaODT = async () => {
   const colunas = colunasExportacao()
   if (!colunas) return
-  exportarListaODT(props.excursaoSelecionada, showToast, colunas, ordenacaoLista.value)
+  const excursion = await excursaoComDadosCompletos('Lista de passageiros autorizada')
+  exportarListaODT(excursion, showToast, colunas, ordenacaoLista.value)
   modalDownload.value = false
 }
 const baixarListaPDF = async () => {
   const colunas = colunasExportacao()
   if (!colunas) return
-  await exportarListaPDF(props.excursaoSelecionada, showToast, colunas, ordenacaoLista.value)
+  const excursion = await excursaoComDadosCompletos('Lista de passageiros autorizada')
+  await exportarListaPDF(excursion, showToast, colunas, ordenacaoLista.value)
   modalDownload.value = false
 }
-const baixarContrato = (userId: number) => gerarContratoAssinadoPDF(props.excursaoSelecionada, userId, showToast)
+const baixarContrato = async (userId: number) => {
+  const excursion = await excursaoComDadosCompletos('Contrato assinado solicitado pelo administrador')
+  await gerarContratoAssinadoPDF(excursion, userId, showToast)
+}
 const solicitarEdicao = () => {
   if (props.excursaoSelecionada.finalizada) emit('editarFinalizada', props.excursaoSelecionada)
   else emit('editar')
@@ -735,7 +744,7 @@ const pedirRemoverDaFila = (item: any) => { filaParaRemover.value = item; menuFi
 const confirmarRemoverDaFila = async () => {
   const item = filaParaRemover.value
   if (!item) return
-  await $fetch(`/api/excursoes/${props.excursaoSelecionada.id}/espera`, { method: 'DELETE', body: { entradaId: item.id, userId: item.userId, cpf: item.cpf } })
+  await $fetch(`/api/excursoes/${props.excursaoSelecionada.id}/espera`, { method: 'DELETE', body: { entradaId: item.id, userId: item.userId } })
   filaParaRemover.value = null
   showToast('Passageiro removido da lista de espera.', 'success')
   emit('refresh')
@@ -750,7 +759,7 @@ const matricularFilaPrincipal = async () => {
       return
     }
     await $fetch('/api/vincular', { method: 'POST', body: { userId: item.userId, excursaoId: props.excursaoSelecionada.id, opcaoPagamento: pagamentoFilaPrincipal.value } })
-    await $fetch(`/api/excursoes/${props.excursaoSelecionada.id}/espera`, { method: 'DELETE', body: { entradaId: item.id, userId: item.userId, cpf: item.cpf } })
+    await $fetch(`/api/excursoes/${props.excursaoSelecionada.id}/espera`, { method: 'DELETE', body: { entradaId: item.id, userId: item.userId } })
     showToast('Passageiro adicionado à viagem.', 'success')
     filaMatriculada.value = true
     emit('refresh')
@@ -766,7 +775,7 @@ const matricularParenteFila = async () => {
   salvandoFila.value = true
   try {
     await $fetch('/api/vincular', { method: 'POST', body: { userId: parenteFilaSelecionado.value.id, excursaoId: props.excursaoSelecionada.id, opcaoPagamento: pagamentoParenteFila.value, liderId: filaParaAdicionar.value.userId } })
-    await $fetch(`/api/excursoes/${props.excursaoSelecionada.id}/espera`, { method: 'DELETE', body: { userId: parenteFilaSelecionado.value.id, cpf: parenteFilaSelecionado.value.cpf } }).catch(() => null)
+    await $fetch(`/api/excursoes/${props.excursaoSelecionada.id}/espera`, { method: 'DELETE', body: { userId: parenteFilaSelecionado.value.id } }).catch(() => null)
     parentesFilaAdicionados.value.push(parenteFilaSelecionado.value.id)
     parenteFilaSelecionado.value = null
     showToast('Dependente adicionado ao contrato.', 'success')

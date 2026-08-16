@@ -1,6 +1,7 @@
 import { prisma } from '../../utils/prisma'
 import { parseJson } from '../../utils/json'
 import { appendLog, buildDetail } from '../../utils/logs'
+import { requirePassengerSession } from '../../utils/passenger-auth'
 
 function databaseErrorMessage(error: any) {
   if (error?.code === 'P1001' || String(error?.message || '').includes("Can't reach database server")) {
@@ -11,13 +12,13 @@ function databaseErrorMessage(error: any) {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<Record<string, unknown>>(event)
-  const userId = Number(body.userId)
+  const userId = requirePassengerSession(event, Number(body.userId))
   const excursaoId = Number(body.excursaoId)
 
   if (!userId || !excursaoId) throw createError({ statusCode: 400, statusMessage: 'Dados incompletos.' })
 
   try {
-    const excursao = await prisma.excursao.findUnique({ where: { id: excursaoId }, include: { guia: true } })
+    const excursao = await prisma.excursao.findUnique({ where: { id: excursaoId }, include: { guia: true, usuarios: { select: { id: true } } } })
     if (!excursao) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
     if (excursao.finalizada) throw createError({ statusCode: 400, statusMessage: 'Esta excursão já foi finalizada.' })
     if (!excursao.ativarContrato || !excursao.liberarContratos) {
@@ -25,6 +26,9 @@ export default defineEventHandler(async (event) => {
     }
     if (!excursao.guiaId) {
       throw createError({ statusCode: 403, statusMessage: 'A excursão precisa ter guia para liberar assinatura de contrato.' })
+    }
+    if (!excursao.usuarios.some((item) => item.id === userId)) {
+      throw createError({ statusCode: 403, statusMessage: 'Passageiro não vinculado a esta excursão.' })
     }
 
     const grupos = parseJson<Record<string, string[]>>(excursao.contratoGrupos, {})
@@ -37,14 +41,12 @@ export default defineEventHandler(async (event) => {
     assinaturas[String(userId)] = new Date().toISOString()
     assinaturas[`admin_${userId}`] = assinaturas[`admin_${userId}`] || {
       data: new Date().toISOString(),
-      guiaNome: excursao.guia?.nome || '58.904.532 LÍVIA GRAZIELA DOS SANTOS - GRAZI TURISMO',
-      guiaCpf: excursao.guia?.cpf || '',
-      guiaCelular: excursao.guia?.celular || ''
+      guiaNome: excursao.guia?.nome || 'Grazi Turismo'
     }
 
     await prisma.excursao.update({ where: { id: excursaoId }, data: { assinaturasJson: JSON.stringify(assinaturas) } })
     const user = await prisma.user.findUnique({ where: { id: userId } })
-    await appendLog({ entity: 'contrato', action: 'sign', title: 'Contrato assinado pelo passageiro', detail: buildDetail(['Responsável: Passageiro.', 'Ação: assinou contrato digital.', `Passageiro: ${user?.nome || `Usuário #${userId}`}.`, user?.cpf ? `CPF: ${user.cpf}.` : null, `Excursão: ${excursao.nome}.`, `Guia responsável: ${excursao.guia?.nome || 'não informado'}.`, `Assinado em: ${new Date().toLocaleString('pt-BR')}.`]) })
+    await appendLog({ entity: 'contrato', action: 'sign', title: 'Contrato assinado pelo passageiro', detail: buildDetail(['Responsável: Passageiro.', 'Ação: assinou contrato digital.', `Passageiro ID: ${userId}.`, `Excursão ID: ${excursao.id}.`, `Guia ID: ${excursao.guiaId || 'não definido'}.`, `Assinado em: ${new Date().toISOString()}.`]) })
     return { success: true, assinaturas }
   } catch (error: any) {
     if (error?.statusCode) throw error
