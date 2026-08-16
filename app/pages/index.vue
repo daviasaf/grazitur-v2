@@ -94,6 +94,16 @@
 </template>
 
 <script setup lang="ts">
+onMounted(() => {
+  const recoveryParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const isRecoveryResponse = recoveryParams.get('type') === 'recovery'
+    || recoveryParams.get('error_code') === 'otp_expired'
+
+  if (isRecoveryResponse) {
+    window.location.replace(`/admin/redefinir-senha${window.location.hash}`)
+  }
+})
+
 const step = ref<'home' | 'cadastro' | 'login' | 'sucesso'>('home')
 const cpfFamiliar = ref('')
 const cpfTitularCadastro = ref('')
