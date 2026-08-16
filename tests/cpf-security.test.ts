@@ -46,7 +46,9 @@ test('ciphertext adulterado é rejeitado', () => {
   const contextId = randomUUID()
   const encrypted = encryptCpf(TEST_CPF, contextId)
   const parts = encrypted.split('.')
-  parts[4] = `${parts[4].slice(0, -1)}${parts[4].endsWith('A') ? 'B' : 'A'}`
+  const tag = Buffer.from(parts[5]!, 'base64url')
+  tag[0] = tag[0]! ^ 1
+  parts[5] = tag.toString('base64url')
   assert.throws(() => decryptCpf({ cpfCiphertext: parts.join('.'), cpfKeyVersion: 1, cpfContextId: contextId }))
 })
 

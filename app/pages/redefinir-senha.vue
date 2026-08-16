@@ -90,6 +90,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ alias: ['/admin/redefinir-senha'] })
+
 useHead({
   title: 'Redefinir senha | GraziTur',
   meta: [{ name: 'referrer', content: 'no-referrer' }]
