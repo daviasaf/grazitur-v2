@@ -42,6 +42,8 @@ Troque `SEU-PROJECT-REF` e `SUA-SENHA` pelos dados reais do seu projeto.
 
 O painel usa Supabase Auth para administradores e cookies `HttpOnly`. Conceda o papel administrativo em `app_metadata.role = "admin"`; nunca use `user_metadata` para autorização. O fallback `ADMIN_EMAIL`/`ADMIN_PASSWORD` existe apenas para desenvolvimento local e só funciona com `GRAZITUR_ALLOW_LEGACY_ADMIN_AUTH=true` fora de produção.
 
+Para a recuperação de senha administrativa, configure `GRAZITUR_PUBLIC_URL` com a origem HTTPS de produção. No Supabase Auth, use essa origem como **Site URL** e permita o caminho `/admin/redefinir-senha` em **Redirect URLs**. O token do e-mail é removido da URL no navegador e validado no backend antes da atualização.
+
 O CPF usa criptografia autenticada AES-256-GCM no backend e HMAC-SHA-256 separado para busca exata. Configure chaves diferentes por ambiente e por finalidade. Gere cada valor em Base64, por exemplo:
 
 ```bash

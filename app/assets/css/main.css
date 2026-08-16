@@ -4320,6 +4320,32 @@ body { letter-spacing: -.01em; }
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.password-recovery-link {
+  display: inline-flex;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gt-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+.password-recovery-link:hover:not(:disabled) { text-decoration: underline; }
+.password-recovery-link:disabled { cursor: wait; opacity: .65; }
+.password-recovery-message {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--gt-success) 30%, var(--gt-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gt-success) 9%, var(--gt-panel));
+  color: var(--gt-text) !important;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.password-requirements {
+  color: var(--gt-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
 .logs-table-scroll {
   max-height: min(560px, calc(100vh - 250px));
   overflow: auto !important;
