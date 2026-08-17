@@ -111,7 +111,7 @@
 
           <div v-if="active === 'passageiros'" class="admin-view">
             <div class="page-heading"><div><h2>Base de Passageiros</h2><p>Cadastros, familiares, guias e vínculo com excursões.</p></div><div class="toolbar-actions passenger-toolbar-actions"><input v-model="buscaUser" class="form-control" placeholder="Buscar passageiro..."><button class="gt-btn gt-btn-primary" @click="abrirNovoUser"><span class="btn-svg"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>Cadastro</button></div></div>
-            <PassageirosTabela :usuarios="usuariosFiltrados" @vincular="abrirVincular" @editar="abrirEdicaoUser" @excluir="u => pedirConfirmacao('user', u.id, 'Excluir passageiro', 'Deseja excluir este passageiro?')" />
+            <PassageirosTabela :usuarios="usuariosFiltrados" @vincular="abrirVincular" @excluir="u => pedirConfirmacao('user', u.id, 'Excluir passageiro', 'Deseja excluir este passageiro?')" />
           </div>
           <div v-if="active === 'aniversariantes'" class="admin-view">
             <div class="page-heading">
@@ -244,7 +244,7 @@
         </div>
       </div>
     </div>
-    <ModaisModalUser v-if="modalUser" :usuarioEditando="userSelecionado" :todosUsuarios="usuarios" @close="modalUser = false" @salvo="carregar" />
+    <ModaisModalUser v-if="modalUser" :todosUsuarios="usuarios" @close="modalUser = false" @salvo="carregar" />
     <ModaisModalNovaExcursao v-if="modalExcursao" :excursaoEditando="exSelecionada" :guiasDisponiveis="guiasDisponiveis" @close="modalExcursao = false" @salvo="carregar" @apagar="id => pedirConfirmacao('excursao', id, 'Apagar excursão', 'Deseja apagar esta excursão?')" @finalizar="id => pedirConfirmacao('finalizar', id, 'Finalizar excursão', 'Tem certeza que deseja finalizar esta excursão? Ela irá para a aba de excursões finalizadas e não poderá mais ser apagada pelo painel.')" />
     <ModaisModalGerenciarEx v-if="modalGerenciar" :excursaoSelecionada="exSelecionada" @close="modalGerenciar = false" @refresh="carregar" @editar="abrirEditarExcursao()" @editarFinalizada="abrirEdicaoFinalizada" @desvincular="id => pedirConfirmacao('desvincular', id, 'Remover passageiro', 'Deseja remover este passageiro desta excursão?')" />
     <ModaisModalVincular v-if="modalVincular" :userParaVincular="userSelecionado" :excursoes="excursoesAtivas" @close="modalVincular = false" @atualizado="carregar" />
@@ -603,10 +603,6 @@ const removerDespesa = async (despesa: any) => {
   await carregar()
 }
 const abrirNovoUser = () => { userSelecionado.value = null; modalUser.value = true }
-const abrirEdicaoUser = async (u: any) => {
-  userSelecionado.value = await $fetch(`/api/users/${u.id}`, { query: { reveal: 'cpf' } })
-  modalUser.value = true
-}
 const abrirVincular = (u: any) => { userSelecionado.value = u; modalVincular.value = true }
 const abrirNovaExcursao = () => { exSelecionada.value = null; modalExcursao.value = true }
 const abrirGerenciar = (ex: any) => { exSelecionada.value = excursoes.value.find((e) => e.id === ex.id); modalGerenciar.value = true }

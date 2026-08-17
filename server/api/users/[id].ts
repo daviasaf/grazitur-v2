@@ -1,31 +1,12 @@
 import { prisma } from '../../utils/prisma'
-import { findUserByCpf, normalizeUser, formatNameServer, parentesIdsFromBody, protectedCpfData, validateUserPayload } from '../../utils/users'
-import { appendLog, adminDetail, buildDetail } from '../../utils/logs'
+import { appendLog, adminDetail } from '../../utils/logs'
 import { parseJson } from '../../utils/json'
-import { getAdminSession } from '../../utils/admin-auth'
-import { requirePassengerSession } from '../../utils/passenger-auth'
-import { getPlainCpf } from '../../utils/cpf-security'
-
-const includeFamily = { parentes: true, parentesDe: true }
-
-const changedField = (label: string, before: unknown, after: unknown) => String(before ?? '') !== String(after ?? '') ? label : null
 
 export default defineEventHandler(async (event) => {
   const id = Number(event.context.params?.id)
   const method = getMethod(event)
 
   if (!Number.isFinite(id)) throw createError({ statusCode: 400, statusMessage: 'ID inválido.' })
-
-  if (method === 'GET') {
-    const user = await prisma.user.findUnique({ where: { id }, include: includeFamily })
-    if (!user) throw createError({ statusCode: 404, statusMessage: 'Passageiro não encontrado.' })
-    const revealCpf = String(getQuery(event).reveal || '') === 'cpf'
-    if (revealCpf) {
-      setResponseHeader(event, 'Cache-Control', 'no-store')
-      await appendLog({ entity: 'privacy', action: 'cpf-reveal', title: 'CPF revelado para edição administrativa', detail: adminDetail('revelou um CPF', [`Passageiro ID: ${id}.`, 'Finalidade: edição cadastral.']) })
-    }
-    return normalizeUser(user, { revealCpf })
-  }
 
   if (method === 'DELETE') {
     const atual = await prisma.user.findUnique({ where: { id }, include: { parentes: true, parentesDe: true, excursoes: true, excursoesGuia: true } })
@@ -79,78 +60,8 @@ export default defineEventHandler(async (event) => {
     return { success: true }
   }
 
-  if (method === 'PUT') {
-    const body = await readBody<Record<string, unknown>>(event)
-    const admin = await getAdminSession(event)
-    if (!admin) {
-      requirePassengerSession(event, id)
-      const hasOwn = (field: string) => Object.prototype.hasOwnProperty.call(body, field)
-      if (['skipValidation', 'salvarSemValidacao', 'isGuia', 'parentesIds'].some(hasOwn)) {
-        throw createError({ statusCode: 403, statusMessage: 'Alteração administrativa não autorizada.' })
-      }
-    }
-    const valid = validateUserPayload(body)
-    const hasParentesIds = Array.isArray(body.parentesIds)
-    const parentesIds = hasParentesIds ? parentesIdsFromBody(body, id) : []
-
-    const atual = await prisma.user.findUnique({ where: { id } })
-    if (!atual) throw createError({ statusCode: 404, statusMessage: 'Passageiro não encontrado.' })
-    const cpfAntes = getPlainCpf(atual)
-    const duplicate = valid.cpf ? await findUserByCpf(valid.cpf) : null
-    if (duplicate && duplicate.id !== id) throw createError({ statusCode: 400, statusMessage: 'Já existe um passageiro cadastrado com este CPF.' })
-    try {
-      const user = await prisma.user.update({
-        where: { id },
-        data: {
-          nome: formatNameServer(valid.nome),
-          email: valid.email,
-          ...protectedCpfData(valid.cpf, atual.cpfContextId),
-          rg: valid.rg ? String(valid.rg) : null,
-          orgaoExpeditor: valid.orgaoExpeditor,
-          nascimento: valid.nascimento,
-          celular: valid.celular,
-          cidade: valid.cidade,
-          endereco: valid.endereco,
-          idade: valid.idade,
-          isGuia: admin ? Boolean(valid.isGuia) : atual.isGuia,
-          ...(hasParentesIds ? { parentes: { set: parentesIds.map((pid) => ({ id: pid })) } } : {})
-        },
-        include: includeFamily
-      })
-
-      const changedFields = [
-        changedField('nome', atual.nome, user.nome),
-        changedField('e-mail', atual.email, user.email),
-        changedField('CPF', cpfAntes, getPlainCpf(user)),
-        changedField('RG', atual.rg, user.rg),
-        changedField('órgão expedidor', atual.orgaoExpeditor, user.orgaoExpeditor),
-        changedField('nascimento', atual.nascimento, user.nascimento),
-        changedField('celular', atual.celular, user.celular),
-        changedField('cidade', atual.cidade, user.cidade),
-        changedField('endereço', atual.endereco, user.endereco),
-        changedField('idade', atual.idade, user.idade),
-        changedField('perfil de guia', atual.isGuia, user.isGuia)
-      ].filter(Boolean)
-      const logLines = [
-        `Passageiro ID: ${id}.`,
-        changedFields.length ? `Campos alterados: ${changedFields.join(', ')}.` : 'Nenhum valor cadastral foi alterado.',
-        Boolean(body.skipValidation || body.salvarSemValidacao) ? 'Cadastro incompleto autorizado.' : null,
-        hasParentesIds ? `Vínculos familiares atuais: ${parentesIds.length}.` : 'Vínculos familiares mantidos.'
-      ]
-      await appendLog({
-        entity: 'user',
-        action: 'update',
-        title: 'Cadastro atualizado',
-        detail: admin ? adminDetail('editou cadastro de passageiro', logLines) : buildDetail(['Responsável: Passageiro.', 'Ação: editou o próprio cadastro.', ...logLines])
-      })
-      return normalizeUser(user, { revealCpf: !admin })
-    } catch (err: unknown) {
-      const e = err as { code?: string }
-      if (e.code === 'P2002') {
-        throw createError({ statusCode: 400, statusMessage: 'Já existe um passageiro cadastrado com este CPF.' })
-      }
-      throw err
-    }
+  if (method === 'PUT' || method === 'PATCH') {
+    throw createError({ statusCode: 403, statusMessage: 'Cadastros concluídos não podem ser editados.' })
   }
 
   throw createError({ statusCode: 405, statusMessage: 'Método não permitido.' })

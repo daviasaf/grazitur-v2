@@ -33,6 +33,7 @@ async function passengerPayload(userId: number) {
     const assinaturas = filterRecord(parseJson<Record<string, any>>(ex.assinaturasJson, {}), allowedIds, true)
     const grupoVisivel = grupos[leaderId] ? { [leaderId]: grupos[leaderId] } : {}
 
+    const normalizedGuide = ex.guia ? normalizeUser(ex.guia) : null
     return {
       id: ex.id,
       nome: ex.nome,
@@ -40,7 +41,7 @@ async function passengerPayload(userId: number) {
       vagas: ex.vagas,
       valores: parseJson(ex.valores, []),
       guiaId: ex.guiaId,
-      guia: ex.guia ? { id: ex.guia.id, nome: ex.guia.nome } : null,
+      guia: normalizedGuide ? { id: normalizedGuide.id, nome: normalizedGuide.nome } : null,
       ativarContrato: ex.ativarContrato,
       aplicarParcelas: ex.aplicarParcelas,
       liberarContratos: ex.liberarContratos,
@@ -75,7 +76,8 @@ export default defineEventHandler(async (event) => {
   if (method === 'POST') {
     const body = await readBody<Record<string, unknown>>(event)
     const user = await findUserByCpf(body.cpf)
-    if (!user || !dateDigits(body.nascimento) || dateDigits(user.nascimento) !== dateDigits(body.nascimento)) {
+    const birthDate = user ? normalizeUser(user).nascimento : null
+    if (!user || !dateDigits(body.nascimento) || dateDigits(birthDate) !== dateDigits(body.nascimento)) {
       throw createError({ statusCode: 401, statusMessage: 'CPF ou data de nascimento não conferem.' })
     }
     setPassengerSession(event, user.id)

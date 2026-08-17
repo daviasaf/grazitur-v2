@@ -23,7 +23,6 @@
         <span class="passenger-cell-muted">{{ formatCpf(u.cpf) || '-' }}</span>
         <span class="passenger-cell-muted">{{ formatPhone(u.celular) || '-' }}</span>
         <span class="passenger-actions" @click.stop>
-          <button class="gt-icon-btn text-brand" title="Editar" @click="$emit('editar', u)"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
           <button class="gt-icon-btn text-danger" title="Excluir" @click="$emit('excluir', u)"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg></button>
         </span>
       </button>
@@ -44,7 +43,6 @@
           </span>
         </span>
         <span class="passenger-actions" @click.stop>
-          <button class="gt-icon-btn text-brand" title="Editar" @click="$emit('editar', u)"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
           <button class="gt-icon-btn text-danger" title="Excluir" @click="$emit('excluir', u)"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg></button>
         </span>
       </button>
@@ -55,7 +53,7 @@
 
 <script setup lang="ts">
 defineProps<{ usuarios: any[] }>()
-defineEmits(['vincular', 'editar', 'excluir'])
+defineEmits(['vincular', 'excluir'])
 
 const initials = (nome?: string) => String(nome || 'GT').trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase()
 const pluralFamiliares = (total: number) => `${total} ${total === 1 ? 'familiar' : 'familiares'}`

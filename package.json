@@ -11,7 +11,8 @@
     "seed": "node prisma/seed.mjs",
     "db:push": "npx prisma db push",
     "db:backfill-cpf": "node --experimental-strip-types prisma/backfill-cpf.ts",
-    "test": "node --experimental-strip-types --test tests/cpf-security.test.ts tests/password-recovery.test.ts",
+    "db:backfill-pii": "node --experimental-strip-types prisma/backfill-pii.ts",
+    "test": "node --experimental-strip-types --test tests/cpf-security.test.ts tests/password-recovery.test.ts tests/pii-security.test.ts",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {

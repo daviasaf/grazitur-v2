@@ -2,28 +2,43 @@ import * as z from 'zod'
 import { formatarNome, validarCPF } from '../../app/utils/formatadores'
 import { uniqueIds } from './json'
 import { buildCpfWriteFields, cpfBlindIndexes, cpfProtectionMode, getPlainCpf, maskCpf, normalizeCpf } from './cpf-security'
+import { buildPersonalDataWriteFields, getPlainPersonalData, type PersonalDataPayload } from './pii-security'
 import { prisma } from './prisma'
 
 export const formatNameServer = formatarNome
 
-function publicUserFields(user: Record<string, any>, revealCpf: boolean) {
+function publicUserFields(user: Record<string, any>, revealCpf: boolean): Record<string, any> {
   const cpf = getPlainCpf(user)
+  const profile = getPlainPersonalData(user)
   const {
+    nome: _nome,
+    email: _email,
+    rg: _rg,
+    orgaoExpeditor: _orgaoExpeditor,
+    nascimento: _nascimento,
+    celular: _celular,
+    cidade: _cidade,
+    endereco: _endereco,
+    idade: _idade,
     cpfCiphertext: _cpfCiphertext,
     cpfBlindIndex: _cpfBlindIndex,
     cpfKeyVersion: _cpfKeyVersion,
     cpfContextId: _cpfContextId,
+    piiCiphertext: _piiCiphertext,
+    piiKeyVersion: _piiKeyVersion,
+    piiContextId: _piiContextId,
     ...safe
   } = user
   return {
     ...safe,
+    ...profile,
     cpf: revealCpf ? cpf : maskCpf(cpf),
     cpfMasked: maskCpf(cpf),
     cpfLast4: user.cpfLast4 || cpf.slice(-4) || null
   }
 }
 
-export function normalizeUser(user: Record<string, unknown>, options: { revealCpf?: boolean } = {}) {
+export function normalizeUser(user: Record<string, unknown>, options: { revealCpf?: boolean } = {}): Record<string, any> {
   const revealCpf = Boolean(options.revealCpf)
   const parentes = Array.isArray(user.parentes) ? user.parentes as Array<Record<string, unknown>> : []
   const parentesDe = Array.isArray(user.parentesDe) ? user.parentesDe as Array<Record<string, unknown>> : []
@@ -58,6 +73,10 @@ export async function findUserByCpf(cpfValue: unknown, options: Record<string, u
 
 export function protectedCpfData(cpfValue: unknown, existingContextId?: string | null) {
   return buildCpfWriteFields(cpfValue, existingContextId)
+}
+
+export function protectedPersonalData(payload: PersonalDataPayload, existingContextId?: string | null) {
+  return buildPersonalDataWriteFields(payload, existingContextId)
 }
 
 export function parentesIdsFromBody(body: Record<string, unknown>, selfId?: number) {

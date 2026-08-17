@@ -1,161 +1,125 @@
-# Proteção de dados pessoais e prefixo de tabelas — GraziTur
+# Proteção de dados pessoais — GraziTur
 
-Data do diagnóstico: 16 de agosto de 2026. Este documento não contém valores pessoais nem segredos.
+Atualizado em 16 de agosto de 2026. Este documento não contém valores pessoais nem segredos.
 
-## 1. Resumo executivo
+## Resumo
 
-O risco atual é **crítico**. O projeto Supabase confirmado é `form-app` (`xgrcwdtkalelegoysxbw`) e foi classificado conservadoramente como **produção**, pois contém dados reais e atende a aplicação hospedada na Vercel. As cinco tabelas do GraziTur estão no schema exposto `public`, têm RLS desabilitado e concedem privilégios amplos — inclusive leitura, escrita e `TRUNCATE` — a `anon`, `authenticated` e `service_role`. O Security Advisor confirmou os cinco erros de RLS.
+O Supabase `form-app` (`xgrcwdtkalelegoysxbw`) é tratado como produção porque contém dados reais e atende `grazitur.vercel.app`.
 
-Há 237 cadastros com CPF em texto claro. Todos têm 11 dígitos, checksum válido e não há duplicidades normalizadas. Há 280 logs com CPF ou outro rótulo sensível. A autenticação administrativa anterior existia apenas no cliente e não protegia as APIs; a consulta do passageiro enviava CPF na URL e o mantinha no navegador.
+Já está ativo em produção:
 
-Recomendação: usar criptografia autenticada no backend e HMAC separado para o CPF, fechar a Data API para tabelas acessadas somente pelo Prisma, ativar autenticação server-side, executar expand/backfill/cutover e remover o plaintext somente após restauração comprovada. `grazitur_` foi confirmado como o prefixo definitivo, mas a renomeação permanece bloqueada até aprovação específica.
+- RLS nas cinco tabelas da aplicação;
+- revogação de todos os privilégios da Data API para `anon`, `authenticated` e `service_role`;
+- ausência intencional de policies públicas, resultando em negação total pela Data API;
+- autenticação administrativa no backend;
+- CPF fora de URLs, cookies e respostas comuns;
+- recuperação de senha administrativa pelo Supabase Auth;
+- expansão criptográfica do CPF e do perfil pessoal, sem alterar linhas legadas.
 
-## 2. Inventário de dados e mapa de exposição
+O backend continua funcionando pelo Prisma e a Data API não é consumida pela aplicação. O Security Advisor não apresenta mais erros de RLS; os avisos `rls_enabled_no_policy` são informativos e representam o contrato de negação total escolhido.
 
-| Local | Conteúdo / quantidade | Exposição observada | Risco / ação |
-|---|---|---|---|
-| `public."User"` | 237 linhas; CPF, nome, e-mail, RG, órgão, nascimento, celular, cidade, endereço e idade | Texto claro; RLS off; grants completos da Data API | Crítico. Expand criptográfico, backfill e fechamento da Data API |
-| CPF em `User` | 237 presentes; 237 checksums válidos; 0 duplicidades | Coluna única em texto claro e respostas comuns | AES-256-GCM + HMAC-SHA-256 + máscara |
-| E-mail, celular, nascimento e endereço | 237 presentes em cada campo | Texto claro e objetos completos enviados ao cliente | Minimizar projeções; finalidade/retenção e criptografia **[A definir]** |
-| RG | 72 presentes | Texto claro; usado em contrato | Criptografar ou separar em cofre de perfil após definir recuperação |
-| `Excursao.listaEsperaJson` | Uma excursão contém CPF no JSON legado | CPF e celular duplicados fora do cadastro canônico | Migrar para referência por `userId`; migration preparada |
-| `Excursao.pagamentosJson` | Dados financeiros identificados por ID; uma excursão correspondeu à busca de chaves financeiras | API administrativa carregava o objeto completo | Manter server-side e retornar apenas grupo autorizado |
-| `Excursao.assinaturasJson` | Código escrevia CPF e celular do guia | Duplicação desnecessária, embora a amostra atual não tenha correspondência | Escrita removida; migration remove chaves legadas |
-| `SystemLog` | 384 linhas; 280 com 11 dígitos/rótulos sensíveis | Leitura pela API e plaintext no banco | Redação defensiva no código e migration de saneamento |
-| Seed versionado | `prisma/seed-users.json`, introduzido no commit `eaf137a` | Dados pessoais no Git e no histórico | Removido do índice, preservado localmente e ignorado; reescrita do histórico requer aprovação |
-| Export de seed | Usuários, excursões, logs e CPF completo | Download pelo navegador | Desabilitado por padrão; sessão admin, finalidade, `no-store` e auditoria |
-| Supabase Auth | 0 usuários; nenhum metadata key | Não era usado pelo app | Admin local migrado para Auth; provisionamento ainda necessário |
-| Supabase Storage | 0 buckets, 0 objetos | Sem exposição encontrada | Nenhuma ação atual |
-| Views / materialized views | Nenhuma | — | Nenhuma ação atual |
-| Funções/triggers | `formatar_nome`, `trigger_formatar_nome_user`; trigger em INSERT/UPDATE | `search_path` mutável | Migration qualifica função e fixa `search_path` |
-| Realtime/publications | Nenhuma tabela `public` publicada | Sem exposição encontrada | Revalidar após renomeação |
+Ainda não está concluído:
 
-Foi criado e restaurado um dump lógico local do snapshot de 16/08/2026. Backups gerenciados/off-site, ferramentas de BI, analytics externos ou outros repositórios consumidores continuam **[A definir]**.
+- backfill criptográfico das linhas antigas;
+- mudança dos modos `dual` para `required`;
+- limpeza ou remoção dos valores pessoais legados em texto claro;
+- limpeza destrutiva de logs/JSON legados;
+- renomeação com o prefixo `grazitur_`.
 
-## 3. Matriz campo × finalidade × proteção
+Essas etapas exigem aprovação separada, reconciliação e restauração comprovada. Não declarar proteção em repouso concluída enquanto os campos legados permanecerem preenchidos.
 
-| Campo | Finalidade observada | Recuperar? | Buscar? | Proteção definida | Retenção |
-|---|---|---:|---:|---|---|
-| CPF | Cadastro, deduplicação, área do passageiro, contrato e export autorizado | Sim, excepcionalmente | Igualdade exata | AES-256-GCM aleatório + AAD; HMAC-SHA-256 separado; `last4` | **[A definir — LGPD/contratos]** |
-| Nome | Operação da excursão e contrato | Sim | Sim | Controle de acesso e projeção mínima; criptografia de campo a avaliar | **[A definir]** |
-| E-mail | Contato e futura identidade Auth | Sim | Possivelmente | Controle de acesso; criptografia de campo a avaliar | **[A definir]** |
-| RG / órgão | Contrato e documentação | Sim | Não observado | Candidato forte a criptografia autenticada | **[A definir]** |
-| Nascimento | Contrato e verificação transitória do passageiro | Sim | Igualdade na sessão transitória | Resposta mínima; migrar autenticação para Auth/OTP | **[A definir]** |
-| Celular | WhatsApp operacional | Sim | Não observado | Resposta por finalidade; criptografia a avaliar | **[A definir]** |
-| Cidade/endereço | Contrato | Sim | Não observado | Endereço candidato forte a criptografia | **[A definir]** |
-| Pagamentos/despesas | Financeiro e relatórios | Sim | Por ID | Backend/admin; sem Data API | **[A definir — fiscal]** |
-| Assinaturas | Evidência contratual | Sim | Por usuário/viagem | IDs e timestamps; sem CPF/celular duplicado | **[A definir — jurídico]** |
-| Senha | Autenticação administrativa | Não deve existir no domínio | — | Supabase Auth; `app_metadata.role` para autorização | Política do Auth |
+## Classificação dos dados
 
-## 4. Modelo criptográfico
+A LGPD considera dado pessoal toda informação relacionada a pessoa identificada ou identificável. A ANPD cita expressamente nome, RG, CPF e endereço residencial como exemplos. A aplicação contém:
 
-Foi implementada proteção **na aplicação/backend confiável**:
+| Categoria | Campos/objetos encontrados | Tratamento |
+|---|---|---|
+| Identificação civil | nome, CPF, RG, órgão expedidor, nascimento e idade | Criptografia autenticada; CPF também recebe HMAC para busca exata e últimos quatro dígitos para máscara |
+| Contato e localização | e-mail, celular, cidade e endereço | Criptografia autenticada no perfil pessoal |
+| Relações | vínculos familiares e participação em excursões | IDs técnicos; acesso somente pelo backend |
+| Contratual e financeiro | contratos, assinaturas, parcelas, pagamentos e despesas | Backend/admin; sem Data API; respostas do passageiro limitadas ao próprio grupo |
+| Auditoria | ações administrativas e finalidade de exportação | Redação automática de CPF/e-mail; limpeza legada pendente |
 
-- CPF normalizado e validado antes da transformação.
-- AES-256-GCM com IV aleatório de 96 bits e tag de 128 bits.
-- AAD: aplicação, entidade, UUID de contexto do registro, campo e versão da chave.
-- HMAC-SHA-256 determinístico, com chave independente, para igualdade e unicidade.
-- Envelope e índice cegos versionados; leitores aceitam versões configuradas durante rotação.
-- `cpf_last4` guarda somente os quatro últimos dígitos para máscara.
-- Modos `dual` (expand/backfill) e `required` (cutover); produção falha fechada por padrão.
-- Chaves nunca entram em migration, Git, cliente ou banco da aplicação.
+Não foram encontrados campos correspondentes às categorias legais de dados pessoais sensíveis do art. 5º, II — como saúde, biometria, religião, raça/etnia, opinião política, vida sexual ou dados genéticos. Isso não reduz o dever de proteger os dados pessoais comuns. Há cadastros de menores: a auditoria agregada estimou 54 pessoas com menos de 18 anos, sem retornar suas identidades.
 
-Alternativas: `pgsodium` não foi adotado porque o Supabase o marca como pendente de depreciação e desaconselha Transparent Column Encryption. Vault é apropriado para segredos usados dentro do Postgres, mas não substitui por si só o desenho de criptografia de cada CPF. Referências: [pgsodium](https://supabase.com/docs/guides/database/extensions/pgsodium), [Vault](https://supabase.com/docs/guides/database/vault).
+Referências oficiais: [FAQ da ANPD](https://www.gov.br/anpd/pt-br/acesso-a-informacao/perguntas-frequentes/perguntas-frequentes) e [LGPD, art. 5º](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm).
 
-KMS/secret manager, custódia, rotação e recuperação permanecem **[A definir]**. As chaves de produção não foram geradas.
+## Inventário técnico
 
-## 5. Ameaças e matriz de autorização
+| Objeto | Estado de acesso | Conteúdo relevante |
+|---|---|---|
+| `public."User"` | RLS ativo; sem grants/policies para Data API | perfil pessoal, CPF e vínculos |
+| `public."Excursao"` | RLS ativo; sem grants/policies para Data API | passageiros, pagamentos, contratos, assinaturas e lista de espera em JSON |
+| `public."SystemLog"` | RLS ativo; sem grants/policies para Data API | auditoria administrativa |
+| `public."_UserExcursao"` | RLS ativo; sem grants/policies para Data API | relação passageiro–excursão |
+| `public."_UserKinship"` | RLS ativo; sem grants/policies para Data API | relação familiar |
 
-| Ator/canal | Acesso esperado | Controle local implementado | Lacuna |
-|---|---|---|---|
-| Visitante | Criar cadastro validado; listar viagens abertas sem PII | Projeção pública mínima; sem CPF em URL | Rate limit/bot protection **[A definir]** |
-| Passageiro | Próprio perfil e grupo familiar da excursão | Cookie `HttpOnly`, `SameSite=Strict`, 30 min; CPF+nascimento só no POST | Verificação ainda é fator estático; migrar para Supabase Auth/OTP |
-| Administrador | Gestão e documentos justificados | Supabase Auth; papel somente em `app_metadata`; cookie server-side | Criar usuário Auth/admin e política de reautenticação |
-| `anon` / `authenticated` Data API | Nenhum acesso às tabelas internas | Migration revoga grants e ativa RLS sem políticas | Aplicação remota depende de aprovação |
-| Backend Prisma | CRUD de objetos GraziTur | Somente servidor; URLs de banco não são públicas | Hoje usa `postgres`; criar role dedicada de menor privilégio |
-| Outra aplicação no banco | Apenas seus objetos/contratos aprovados | Prefixo proposto e grants isolados | Ownership e matriz entre aplicações **[A definir]** |
-| Operador com dump | Não obter CPF sem chave | Ciphertext + chave externa | Outros campos pessoais ainda em plaintext |
+Contagem agregada atual: 237 usuários; 237 CPFs ainda presentes no campo legado; 0 perfis pessoais criptografados antes do backfill. Nenhum valor individual foi retornado durante a validação.
 
-Documentação de base: [Securing your API](https://supabase.com/docs/guides/api/securing-your-api), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Column Level Security](https://supabase.com/docs/guides/database/postgres/column-level-security). O changelog de 2026 também anuncia exposição opt-in de novas tabelas e enforcement em 30/10/2026: [breaking change](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically).
+## Modelo criptográfico
 
-## 6. Mapa de renomeação
+O código usa criptografia no backend confiável, com chaves externas ao banco e ao Git:
 
-Prefixo candidato: `grazitur_`.
+- AES-256-GCM, nonce aleatório de 96 bits e tag de 128 bits;
+- AAD com aplicação, entidade, UUID estável do registro, finalidade do envelope e versão da chave;
+- envelope versionado para rotação;
+- perfil pessoal criptografado como JSON autenticado contendo nome, e-mail, RG, órgão, nascimento, celular, cidade, endereço e idade;
+- CPF em envelope separado, com HMAC-SHA-256 de chave independente para igualdade/duplicidade;
+- modos `dual` para migração e `required` para o cutover;
+- falha fechada no modo obrigatório quando a linha ou chave não está protegida.
 
-| Atual | Proposto |
-|---|---|
-| `public."User"` | `public.grazitur_users` |
-| `public."Excursao"` | `public.grazitur_excursions` |
-| `public."SystemLog"` | `public.grazitur_system_logs` |
-| `public."_UserKinship"` | `public.grazitur_user_kinships` |
-| `public."_UserExcursao"` | `public.grazitur_excursion_users` |
+Arquivos principais:
 
-O SQL proposto está em `docs/security/grazitur-table-prefix-proposal.sql`. Embora o prefixo `grazitur_` esteja confirmado, a migration executável não foi criada porque a renomeação requer aprovação separada e as duas relações many-to-many implícitas do Prisma precisam virar modelos explícitos. Objetos `auth`, `storage`, `realtime`, `vault` e `extensions` não serão renomeados. O uso de `@@map`/`@map` permite manter a API do Prisma após o cutover: [Prisma database mapping](https://www.prisma.io/docs/orm/prisma-schema/data-model/database-mapping).
+- `server/utils/cpf-security.ts` — CPF, HMAC, máscara e rotação;
+- `server/utils/pii-security.ts` — perfil pessoal criptografado;
+- `prisma/backfill-cpf.ts` e `prisma/backfill-pii.ts` — backfills idempotentes, em lotes e somente diagnóstico por padrão;
+- `supabase/migrations/20260816175833_secure_grazitur_personal_data_expand.sql` — expand do CPF;
+- `supabase/migrations/20260816175838_harden_grazitur_data_api.sql` — RLS, grants e funções;
+- `supabase/migrations/20260816235908_secure_grazitur_pii_expand.sql` — expand do perfil pessoal;
+- `docs/security/grazitur-personal-data-contract-proposal.sql` — contract destrutivo ainda não executável.
 
-## 7. Expand/contract, backfill, cutover e rollback
+## Imutabilidade de cadastros
 
-1. Projeto, ambiente e prefixo confirmados; consumidores adicionais e política de retenção ainda precisam ser definidos.
-2. Criar backup apropriado, registrar checksum e restaurar em ambiente isolado. Sem evidência de restore, parar.
-3. Provisionar chaves distintas e segredos de sessão por ambiente; criar admin no Supabase Auth com `app_metadata.role=admin`.
-4. Aplicar somente a migration expand; deploy em modo `dual`.
-5. Executar `pnpm db:backfill-cpf` primeiro sem `CPF_BACKFILL_APPLY`; após aprovação, executar em lotes com a flag.
-6. Reconciliar contagens, nulos, checksum, duplicidades, decrypt autenticado e buscas por todas as versões.
-7. Aplicar hardening da Data API e testar backend, `anon` e `authenticated` negativa e positivamente.
-8. Aplicar limpeza de logs/JSON somente após backup e aprovação; é destrutiva.
-9. Deploy em modo `required`, monitorar e executar o contract proposto para remover plaintext.
-10. Renomear tabelas em deploy coordenado separado, após converter relações Prisma e confirmar `grazitur_`.
+Cadastros concluídos não podem mais ser editados:
 
-Rollback: antes da limpeza, reverter o código para leitura legada e remover apenas colunas novas vazias. Depois de backfill, preservar ambos os formatos até estabilizar. Depois de redigir ou remover plaintext, rollback depende do backup restaurável e das chaves antigas. Rotação não termina até todos os registros serem recriptografados, reconciliados e a chave anterior ser descartada formalmente.
+- botões de edição foram removidos das áreas administrativa e do passageiro;
+- `PUT` e `PATCH /api/users/:id` respondem `403`;
+- a exceção pública de middleware para atualização foi removida;
+- a rota de detalhe que aceitava `reveal=cpf` foi removida;
+- a criação pública devolve somente o ID técnico;
+- o cadastro de familiar usa ID vinculado à sessão do titular, sem transportar o CPF do titular pelo cliente.
 
-## 8. Código e migrations locais
+A exclusão administrativa continua disponível e é uma operação distinta, com confirmação e auditoria.
 
-- `server/utils/cpf-security.ts`: validação, AEAD, HMAC, máscara, rotação e redação.
-- `server/utils/admin-auth.ts`, `server/middleware/api-auth.ts`: Supabase Auth e autorização de APIs.
-- `server/utils/passenger-auth.ts`: sessão transitória sem CPF em URL/cookie.
-- `prisma/backfill-cpf.ts`: backfill em lotes, idempotente e desligado por padrão.
-- `prisma/seed.mjs`: importa CPF já protegido e elimina CPF/celular/e-mail duplicados de logs, lista de espera e assinaturas legadas.
-- `supabase/migrations/20260816175833_secure_grazitur_personal_data_expand.sql`: colunas e constraints de expansão.
-- `supabase/migrations/20260816175838_harden_grazitur_data_api.sql`: revogação, RLS e funções endurecidas.
-- `supabase/migrations/20260816180741_redact_grazitur_legacy_pii.sql`: limpeza destrutiva separada.
-- `docs/security/grazitur-personal-data-contract-proposal.sql`: remoção futura do legado.
-- `docs/security/grazitur-table-prefix-proposal.sql`: renomeação bloqueada por confirmação.
+## Sequência de rollout
 
-Somente a migration expand foi aplicada ao projeto remoto. Backfill, hardening de RLS/grants, limpeza destrutiva, renomeação e contract permanecem sem execução.
+1. Manter RLS/grants fechados e validar o backend Prisma.
+2. Configurar chave exclusiva do perfil pessoal na Vercel Production e modo `dual`.
+3. Publicar o código dual-read/dual-write e validar cadastro, login, contratos, excursões e documentos.
+4. Executar `pnpm db:backfill-cpf` e `pnpm db:backfill-pii` sem flags de aplicação.
+5. Após aprovação explícita, executar os dois backfills em lotes e reconciliar contagens, nulos e decrypt autenticado.
+6. Mudar os dois modos para `required` e observar erros.
+7. Somente após nova aprovação e restore comprovado, limpar/remover plaintext e sanear JSON/logs legados.
+8. Tratar a renomeação `grazitur_` como rollout independente.
 
-## 9. Evidências
+Rollback antes da limpeza: retornar leitores a `dual` e manter ambos os formatos. Depois da remoção do plaintext, o rollback depende do backup restaurável e das versões antigas das chaves.
 
-- Consulta agregada remota: 237 CPFs com checksum válido; 0 inválidos; 0 duplicidades; nenhum valor retornado.
-- Contagens remotas e do restore reconciliadas: `User=237`, `Excursao=6`, `SystemLog=384`, `_UserExcursao=215` e `_UserKinship=141`.
-- Dump lógico local protegido por ACL e EFS: `schema.sql` (10.545 bytes, SHA-256 `4FF2C1AA6C5D384E0489503945A81C93ACFBC6E8705814A17C5741A461EDC24D`) e `data.sql` (187.390 bytes, SHA-256 `BDEB3060B27060F5E561F02E4D682457490E6DCF9F30DDD3DF6067CA0BED1C9E`). Os arquivos estão em diretório ignorado pelo Git.
-- Restore comprovado em PostgreSQL 17 isolado e descartável; o contêiner foi removido após a reconciliação.
-- Migration expand aplicada sobre o restore: 237 linhas preservadas, cinco colunas novas, CPF nullable, duas constraints e dois índices; nenhum ciphertext criado antes do backfill.
-- Pré-condição remota da expand: zero colunas/índices/constraints novos existentes e zero locks pendentes em `User` no momento da consulta.
-- Migration remota `20260816191144 secure_grazitur_personal_data_expand` registrada com sucesso no `form-app`: 237 usuários preservados, 0 CPFs legados nulos, 0 ciphertexts criados, cinco colunas, dois índices e duas constraints confirmados.
-- Security Advisor: cinco erros `rls_disabled_in_public`; dois warnings `function_search_path_mutable`.
-- Inventário inicial de Auth/Storage: 0 usuários Auth, 0 buckets e 0 objetos.
-- Supabase Auth provisionado depois do inventário: um usuário administrativo confirmado, com autorização somente em `app_metadata.role=admin`.
-- Vercel `grazitur`/Production configurada com dez variáveis necessárias, segredos distintos e `GRAZITUR_CPF_PROTECTION_MODE=dual`; nenhum valor secreto foi versionado ou exibido.
-- Dry-run remoto do backfill: 237 registros pendentes; `CPF_BACKFILL_APPLY` permaneceu falso e nenhuma linha foi alterada.
-- Views/materialized views/publications: nenhuma.
-- Migrations remotas: somente a expand registrada; hardening, limpeza, contract e renomeação continuam sem aplicação.
-- `pnpm exec prisma validate`: schema válido.
-- `pnpm test`: 6/6 testes verdes — normalização, validação, máscara, HMAC, encrypt/decrypt, AAD incorreto, adulteração e redação.
-- `pnpm typecheck`: sem erros.
-- `pnpm build`: build Nuxt/Nitro de produção concluído com sucesso.
-- `pnpm audit --prod`: nenhuma vulnerabilidade conhecida após atualizar o Nuxt para 4.5.2 e fixar versões transitivas corrigidas.
-- Migration de RLS/grants, limpeza, renomeação, backfill e teste de RLS com papéis reais: **não executados**, pois estão fora da etapa autorizada. O Security Advisor pós-expand manteve os cinco erros de RLS e dois warnings de `search_path`, sem novo achado.
+## Evidências atuais
 
-## 10. Riscos residuais e aprovações necessárias
+- A expansão do perfil pessoal adicionou 3 colunas, 1 constraint e 1 índice; 237 linhas preservadas e 0 envelopes criados antes do backfill.
+- `public."User"`: RLS ativo; `anon` sem `SELECT`; `authenticated` sem `UPDATE`.
+- Vercel `grazitur`/Production: `GRAZITUR_PII_PROTECTION_MODE=dual` e chave AES exclusiva armazenada como segredo sensível; nenhum valor foi exibido ou versionado.
+- Security Advisor: somente cinco informações `rls_enabled_no_policy`, intencionais, e um aviso de proteção contra senhas vazadas desabilitada no Auth.
+- Endpoints públicos de ping e excursões abertas continuaram respondendo após o fechamento da Data API.
+- Backup lógico anterior foi restaurado e reconciliado em PostgreSQL isolado antes das primeiras expansões.
 
-1. A classificação de `form-app` como produção foi adotada conservadoramente; registrar formalmente essa classificação e os demais consumidores do banco.
-2. `grazitur_` está confirmado como prefixo definitivo; aprovar separadamente a conversão das relações Prisma e a renomeação coordenada.
-3. Manter uma cópia off-site/gerenciada e testar a recuperação fora deste perfil Windows; o dump lógico local com restore já foi evidenciado.
-4. Definir KMS/secret manager, responsáveis, retenção e rotação.
-5. Provisionar Supabase Auth administrativo e decidir autenticação forte de passageiros.
-6. A expand DDL está concluída. Aprovar, separadamente, backfill, RLS/grants, limpeza legada, cutover e remoção de plaintext.
-7. Definir finalidade/retenção e proteção de RG, endereço, nascimento, e-mail e celular.
-8. Criar role Postgres dedicada para o GraziTur, com grants e política RLS exclusivos; deixar de usar `postgres` no runtime. Defaults globais do schema compartilhado não foram alterados.
-9. Reescrever o histórico Git e coordenar force-push para eliminar o seed antigo; o arquivo local foi preservado.
-10. Adicionar rate limit, reautenticação para revelação/export e testes com dois aplicativos/tenants quando o modelo de organizações existir.
+Referências técnicas: [Securing your API](https://supabase.com/docs/guides/api/securing-your-api), [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security), [Secure Data](https://supabase.com/docs/guides/database/secure-data) e [Column Level Security](https://supabase.com/docs/guides/database/postgres/column-level-security).
 
-Segurança não é declarada concluída: a implementação está preparada localmente, mas o banco remoto ainda permanece no estado crítico diagnosticado até as aprovações e o rollout controlado.
+## Riscos residuais
+
+- Plaintext histórico continua no banco até backfill, cutover e contract aprovados.
+- A verificação do passageiro ainda usa dois fatores estáticos (CPF e nascimento); migrar para OTP/Auth.
+- A proteção contra senhas vazadas do Supabase Auth está desabilitada.
+- O runtime Prisma ainda usa uma credencial ampla; criar role dedicada de menor privilégio.
+- Retenção, descarte, resposta a incidente, custódia/rotação das chaves e acesso de outros consumidores precisam de política formal.
+- Reescrever o histórico Git do seed antigo e sanear logs/JSON exige coordenação e aprovação destrutiva.

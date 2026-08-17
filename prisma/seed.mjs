@@ -27,6 +27,8 @@ function validCpf(value) {
 
 const activeKeyVersion = Number(process.env.GRAZITUR_CPF_ACTIVE_KEY_VERSION || 1)
 const protectionMode = String(process.env.GRAZITUR_CPF_PROTECTION_MODE || 'required')
+const piiActiveKeyVersion = Number(process.env.GRAZITUR_PII_ACTIVE_KEY_VERSION || 1)
+const piiProtectionMode = String(process.env.GRAZITUR_PII_PROTECTION_MODE || 'required')
 
 function key(kind) {
   const name = `GRAZITUR_CPF_${kind}_KEY_V${activeKeyVersion}`
@@ -57,6 +59,56 @@ function protectedCpf(cpf, existingContextId) {
   }
 }
 
+function piiKey() {
+  const name = `GRAZITUR_PII_ENCRYPTION_KEY_V${piiActiveKeyVersion}`
+  const value = Buffer.from(String(process.env[name] || ''), 'base64')
+  if (value.length !== 32) throw new Error(`Configuração segura ausente: ${name}`)
+  return value
+}
+
+function protectedPersonal(user, existingContextId) {
+  const contextId = existingContextId || randomUUID()
+  const personal = {
+    nome: String(user.nome || '').trim(),
+    email: user.email ? String(user.email).trim() : null,
+    rg: user.rg ? String(user.rg).trim() : null,
+    orgaoExpeditor: user.orgaoExpeditor ? String(user.orgaoExpeditor).trim() : null,
+    nascimento: user.nascimento ? String(user.nascimento).trim() : null,
+    celular: user.celular ? String(user.celular).trim() : null,
+    cidade: user.cidade ? String(user.cidade).trim() : null,
+    endereco: user.endereco ? String(user.endereco).trim() : null,
+    idade: user.idade === null || user.idade === undefined || user.idade === '' ? null : Number(user.idade)
+  }
+  if (!personal.nome) throw new Error('Seed bloqueado: usuário sem nome para proteção.')
+  if (piiProtectionMode === 'disabled') {
+    return { ...personal, piiCiphertext: null, piiKeyVersion: null, piiContextId: contextId }
+  }
+
+  const iv = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', piiKey(), iv, { authTagLength: 16 })
+  cipher.setAAD(Buffer.from(`app=grazitur|entity=user|context=${contextId}|field=personal_profile|key_version=${piiActiveKeyVersion}`, 'utf8'))
+  const ciphertext = Buffer.concat([cipher.update(JSON.stringify(personal), 'utf8'), cipher.final()])
+  const tag = cipher.getAuthTag()
+  const encrypted = {
+    piiCiphertext: `grazitur-pii.v1.${piiActiveKeyVersion}.${iv.toString('base64url')}.${ciphertext.toString('base64url')}.${tag.toString('base64url')}`,
+    piiKeyVersion: piiActiveKeyVersion,
+    piiContextId: contextId
+  }
+  if (piiProtectionMode === 'dual') return { ...personal, ...encrypted }
+  return {
+    nome: 'Dado protegido',
+    email: null,
+    rg: null,
+    orgaoExpeditor: null,
+    nascimento: null,
+    celular: null,
+    cidade: null,
+    endereco: null,
+    idade: null,
+    ...encrypted
+  }
+}
+
 const lookupKey = (cpf) => blindIndex(onlyDigits(cpf))
 
 function safeJson(value, fallback) {
@@ -78,24 +130,16 @@ function sanitizeSignatures(value) {
   return Object.fromEntries(Object.entries(signatures).map(([entryKey, entryValue]) => {
     if (!entryValue || typeof entryValue !== 'object' || Array.isArray(entryValue)) return [entryKey, entryValue]
     const safe = { ...entryValue }
-    for (const key of ['cpf', 'celular', 'email', 'rg', 'endereco', 'nascimento', 'guiaCpf', 'guiaCelular']) delete safe[key]
+    for (const key of ['cpf', 'celular', 'email', 'rg', 'endereco', 'nascimento', 'guiaCpf', 'guiaCelular', 'guiaNome']) delete safe[key]
     return [entryKey, safe]
   }))
 }
 
-function normalUserPayload(user, existingContextId) {
+function normalUserPayload(user, existingCpfContextId, existingPiiContextId) {
   const cpf = onlyDigits(user.cpf)
   return {
-    nome: String(user.nome || '').trim(),
-    email: user.email ? String(user.email).trim() : null,
-    ...protectedCpf(cpf, existingContextId),
-    rg: user.rg ? String(user.rg).trim() : null,
-    orgaoExpeditor: user.orgaoExpeditor ? String(user.orgaoExpeditor).trim() : null,
-    nascimento: user.nascimento ? String(user.nascimento).trim() : null,
-    celular: user.celular ? String(user.celular).trim() : null,
-    cidade: user.cidade ? String(user.cidade).trim() : null,
-    endereco: user.endereco ? String(user.endereco).trim() : null,
-    idade: user.idade === null || user.idade === undefined || user.idade === '' ? null : Number(user.idade),
+    ...protectedPersonal(user, existingPiiContextId),
+    ...protectedCpf(cpf, existingCpfContextId),
     isGuia: Boolean(user.isGuia)
   }
 }
@@ -134,8 +178,8 @@ async function importUsers(users) {
   console.log(`Importando ${validUsers.length} passageiros...`)
 
   for (const item of validUsers) {
-    const existing = await prisma.user.findFirst({ where: { OR: [{ cpfBlindIndex: lookupKey(item.sourceCpf) }, { cpf: item.sourceCpf }] }, select: { id: true, cpfContextId: true } })
-    const data = normalUserPayload(item.user, existing?.cpfContextId)
+    const existing = await prisma.user.findFirst({ where: { OR: [{ cpfBlindIndex: lookupKey(item.sourceCpf) }, { cpf: item.sourceCpf }] }, select: { id: true, cpfContextId: true, piiContextId: true } })
+    const data = normalUserPayload(item.user, existing?.cpfContextId, existing?.piiContextId)
     if (existing) await prisma.user.update({ where: { id: existing.id }, data })
     else await prisma.user.create({ data })
   }

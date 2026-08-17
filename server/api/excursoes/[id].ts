@@ -28,7 +28,7 @@ function buildAdminSignatures(existing: Record<string, any>, users: any[], grupo
     const key = `admin_${u.id}`
     assinaturas[key] = assinaturas[key] || {
       data: new Date().toISOString(),
-      guiaNome: guia?.nome || 'Grazi Turismo'
+      guiaId: guia?.id || null
     }
   }
   return assinaturas
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
 
   if (method === 'PUT') {
     const body = await readBody<Record<string, unknown>>(event)
-    const atual = await prisma.excursao.findUnique({ where: { id }, include: { usuarios: true, guia: true } })
+    const atual = await prisma.excursao.findUnique({ where: { id }, include: { usuarios: true } })
     if (!atual) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
 
     let assinaturas = parseJson<Record<string, any>>(atual.assinaturasJson, {})
@@ -85,8 +85,7 @@ export default defineEventHandler(async (event) => {
     const guiaId = body.guiaId === undefined ? atual.guiaId : (body.guiaId ? Number(body.guiaId) : null)
     if (ativarContrato && !guiaId) throw createError({ statusCode: 400, statusMessage: 'Para ativar o contrato, selecione um guia responsável.' })
     const grupos = parseJson<Record<string, string[]>>(gruposNovos, {})
-    const guia = guiaId ? await prisma.user.findUnique({ where: { id: guiaId } }) : null
-    if (ativarContrato) assinaturas = buildAdminSignatures(assinaturas, atual.usuarios, grupos, guia)
+    if (ativarContrato) assinaturas = buildAdminSignatures(assinaturas, atual.usuarios, grupos, guiaId ? { id: guiaId } : null)
 
     const finalizada = boolFromBody(body.finalizada, atual.finalizada)
     const finalizadaEm = finalizada ? (atual.finalizadaEm || new Date()) : null
@@ -126,10 +125,8 @@ export default defineEventHandler(async (event) => {
     if (novoLugar !== atual.lugar) { changes.push('destino'); detalhesAlteracoes.push(changeLine('Destino', atual.lugar, novoLugar)) }
     if (novasVagas !== atual.vagas) { changes.push('vagas'); detalhesAlteracoes.push(changeLine('Vagas', atual.vagas, novasVagas)) }
     if (guiaId !== atual.guiaId) {
-      const guiaAntigo = atual.guia?.nome || (atual.guiaId ? `Guia #${atual.guiaId}` : 'sem guia')
-      const guiaNovo = guia?.nome || (guiaId ? `Guia #${guiaId}` : 'sem guia')
       changes.push('guia')
-      detalhesAlteracoes.push(`Guia: ${guiaAntigo} → ${guiaNovo}.`)
+      detalhesAlteracoes.push(`Guia ID: ${atual.guiaId || 'nenhum'} → ${guiaId || 'nenhum'}.`)
     }
     if (detalhesNovos !== (atual.contratoDetalhes || '{}')) { changes.push('detalhes do contrato'); detalhesAlteracoes.push('Detalhes do contrato foram alterados.') }
     if (gruposNovos !== (atual.contratoGrupos || '{}')) { changes.push('grupos familiares'); detalhesAlteracoes.push('Grupos familiares foram alterados.') }
@@ -143,8 +140,7 @@ export default defineEventHandler(async (event) => {
       const ids = [...new Set([...Object.keys(antigos), ...Object.keys(novos)])]
       for (const pid of ids) {
         if (String(antigos[pid] || 'Pendente') !== String(novos[pid] || 'Pendente')) {
-          const user = atual.usuarios.find((u) => String(u.id) === String(pid))
-          pagamentoDetalhes.push(`${user?.nome || `Passageiro #${pid}`}: ${antigos[pid] || 'Pendente'} → ${novos[pid] || 'Pendente'}.`)
+          pagamentoDetalhes.push(`Passageiro ID ${pid}: ${antigos[pid] || 'Pendente'} → ${novos[pid] || 'Pendente'}.`)
         }
       }
     }

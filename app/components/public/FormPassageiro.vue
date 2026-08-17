@@ -69,7 +69,7 @@
 
       <div class="col-12 pt-2">
         <button class="gt-btn gt-btn-primary w-100 py-3" :disabled="carregando" @click="salvar">
-          {{ carregando ? 'Salvando...' : (form.id ? 'Salvar alterações' : 'Realizar cadastro') }}
+          {{ carregando ? 'Salvando...' : 'Realizar cadastro' }}
         </button>
       </div>
       <div v-if="mostrarAtalhoLogin" class="col-12 pt-0">
@@ -100,12 +100,11 @@
 import * as z from 'zod'
 import { mascaraCPF, mascaraData, mascaraCelular, validarCPF } from '~/utils/formatadores'
 
-const props = defineProps<{ cpfFamiliar?: string; usuarioEditando?: any }>()
+const props = defineProps<{ familiarId?: number | null }>()
 const emit = defineEmits(['sucesso', 'acessarViagem'])
 const erro = ref('')
 const carregando = ref(false)
 const form = ref({
-  id: null as number | null,
   nome: '',
   email: '',
   cpf: '',
@@ -116,7 +115,7 @@ const form = ref({
   celular: '',
   cidade: '',
   endereco: '',
-  cpfFamiliar: props.cpfFamiliar || ''
+  familiarId: props.familiarId || null
 })
 
 const opcoesOrgao = ref(['DETRAN', 'DIC', 'IFP', 'SSP', 'Outros'])
@@ -129,7 +128,7 @@ const estadoSelecionado = ref('')
 const cidadeSelecionada = ref('')
 const carregandoEstados = ref(false)
 const carregandoCidades = ref(false)
-const mostrarAtalhoLogin = computed(() => !form.value.id && !props.cpfFamiliar)
+const mostrarAtalhoLogin = computed(() => !props.familiarId)
 
 const schema = z.object({
   nome: z.string().trim().min(2, 'Nome completo é obrigatório.'),
@@ -146,26 +145,9 @@ const schema = z.object({
 
 onMounted(async () => {
   await carregarEstados()
-  if (props.usuarioEditando) {
-    form.value = { ...form.value, ...JSON.parse(JSON.stringify(props.usuarioEditando)), idade: props.usuarioEditando.idade ?? '', celular: mascaraCelular(String(props.usuarioEditando.celular || '')) }
-
-    if (props.usuarioEditando.orgaoExpeditor) {
-      if (!opcoesOrgao.value.includes(props.usuarioEditando.orgaoExpeditor)) {
-        opcoesOrgao.value.splice(opcoesOrgao.value.length - 1, 0, props.usuarioEditando.orgaoExpeditor)
-      }
-      selecaoOrgao.value = props.usuarioEditando.orgaoExpeditor
-    }
-
-    if (props.usuarioEditando.cidade?.includes(', ')) {
-      const [cid, uf] = props.usuarioEditando.cidade.split(', ')
-      estadoSelecionado.value = uf
-      await buscarCidades(false)
-      cidadeSelecionada.value = cid
-    }
-  }
 })
 
-watch(() => props.cpfFamiliar, (cpf) => { form.value.cpfFamiliar = cpf || '' })
+watch(() => props.familiarId, (id) => { form.value.familiarId = id || null })
 
 const carregarEstados = async () => {
   carregandoEstados.value = true
@@ -229,10 +211,8 @@ const salvar = async () => {
 
   carregando.value = true
   try {
-    const method = form.value.id ? 'PUT' : 'POST'
-    const url = form.value.id ? `/api/users/${form.value.id}` : '/api/users'
-    await $fetch(url, { method, body: { ...form.value, idade: Number(form.value.idade), celular: mascaraCelular(form.value.celular), origem: 'area-passageiro' } })
-    emit('sucesso', form.value.cpf.replace(/\D/g, ''), form.value.nome)
+    const response = await $fetch<{ user: { id: number } }>('/api/users', { method: 'POST', body: { ...form.value, idade: Number(form.value.idade), celular: mascaraCelular(form.value.celular), origem: 'area-passageiro' } })
+    emit('sucesso', response.user.id)
   } catch (e: any) {
     erro.value = e.data?.statusMessage || 'Erro ao salvar cadastro.'
   } finally {
