@@ -18,6 +18,9 @@ model User {
   cpfKeyVersion  Int?       @map("cpf_key_version")
   cpfLast4       String?    @map("cpf_last4")
   cpfContextId   String?    @unique(map: "User_cpf_context_id_key") @map("cpf_context_id") @db.Uuid
+  piiCiphertext  String?    @map("pii_ciphertext")
+  piiKeyVersion  Int?       @map("pii_key_version")
+  piiContextId   String?    @unique(map: "User_pii_context_id_key") @map("pii_context_id") @db.Uuid
   rg             String?
   orgaoExpeditor String?
   nascimento     String?

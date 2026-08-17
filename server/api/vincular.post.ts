@@ -2,10 +2,10 @@ import { prisma } from '../utils/prisma'
 import { parseJson } from '../utils/json'
 import { appendLog, adminDetail } from '../utils/logs'
 
-function adminSignature(guia: any) {
+function adminSignature(guiaId: number | null) {
   return {
     data: new Date().toISOString(),
-    guiaNome: guia?.nome || 'Grazi Turismo'
+    guiaId
   }
 }
 
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const excursao = await prisma.excursao.findUnique({
     where: { id: excursaoId },
-    include: { usuarios: true, guia: true, _count: { select: { usuarios: true } } }
+    include: { usuarios: true, _count: { select: { usuarios: true } } }
   })
   if (!excursao) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
   if (excursao.finalizada) throw createError({ statusCode: 400, statusMessage: 'Esta excursão já foi finalizada.' })
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
 
   const assinaturas = parseJson<Record<string, any>>(excursao.assinaturasJson, {})
   if (excursao.ativarContrato && excursao.guiaId && (!liderId || liderId === userId)) {
-    assinaturas[`admin_${userId}`] = assinaturas[`admin_${userId}`] || adminSignature(excursao.guia)
+    assinaturas[`admin_${userId}`] = assinaturas[`admin_${userId}`] || adminSignature(excursao.guiaId)
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } })

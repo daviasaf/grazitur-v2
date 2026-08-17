@@ -24,14 +24,13 @@ export default defineEventHandler(async (event) => {
   })
 
   await prisma.excursao.update({ where: { id }, data: { listaEsperaJson: JSON.stringify(lista) } })
-  const nomes = removidos.map((item) => item.nome || 'Nome não informado').join(', ') || 'registro não identificado'
+  const idsTecnicos = removidos.map((item) => Number(item.userId)).filter(Number.isFinite)
   await appendLog({
     entity: 'excursao',
     action: 'waitlist-delete',
     title: 'Lista de espera atualizada',
     detail: adminDetail('removeu pessoa da lista de espera', [
-      `Admin removeu ${nomes} da lista de espera da excursão ${excursao.nome}.`,
-      `Pessoa removida: ${nomes}.`,
+      idsTecnicos.length ? `IDs técnicos removidos: ${idsTecnicos.join(', ')}.` : 'Registro sem ID técnico removido.',
       `Excursão: ${excursao.nome}.`,
       `Total removido: ${removidos.length}.`,
       `Antes: ${listaOriginal.length} registro(s).`,

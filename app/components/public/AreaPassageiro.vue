@@ -45,7 +45,6 @@
 
         <div class="passenger-dashboard-actions">
           <button class="gt-btn gt-btn-primary" @click="$emit('cadastrarFamiliar', usuario)">Cadastrar familiar</button>
-          <button class="gt-btn gt-btn-outline" @click="$emit('editarDados', usuario)">Editar meus dados</button>
           <button class="gt-btn gt-btn-danger" @click="sair">Sair</button>
         </div>
 
@@ -217,7 +216,7 @@
 import { mascaraCPF, mascaraData } from '~/utils/formatadores'
 import { gerarContratoHtml, gerarContratoAssinadoPDF } from '~/utils/exportacoes'
 
-defineEmits(['editarDados', 'cadastrarFamiliar'])
+defineEmits(['cadastrarFamiliar'])
 const { showToast } = useToasts()
 const cpf = ref('')
 const nascimento = ref('')

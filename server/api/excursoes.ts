@@ -12,7 +12,7 @@ function buildAdminSignatures(existing: Record<string, any>, users: any[], grupo
     const key = `admin_${u.id}`
     assinaturas[key] = assinaturas[key] || {
       data: new Date().toISOString(),
-      guiaNome: guia?.nome || 'Grazi Turismo'
+      guiaId: guia?.id || null
     }
   }
   return assinaturas
@@ -77,12 +77,13 @@ export default defineEventHandler(async (event) => {
         .map((item) => {
           const user = item?.userId ? byId.get(String(item.userId)) : null
           if (!user) return null
+          const normalizedUser = normalizeUser(user)
           return {
             id: item.id,
             userId: user.id,
-            nome: user.nome,
-            cpf: normalizeUser(user).cpfMasked,
-            celular: user.celular || '',
+            nome: normalizedUser.nome,
+            cpf: normalizedUser.cpfMasked,
+            celular: normalizedUser.celular || '',
             createdAt: item.createdAt,
             origem: item.origem
           }
@@ -106,8 +107,7 @@ export default defineEventHandler(async (event) => {
 
     const grupos = parseJson<Record<string, string[]>>(String(body.contratoGrupos || '{}'), {})
     const assinaturasBase = parseJson<Record<string, any>>(String(body.assinaturasJson || '{}'), {})
-    const guia = guiaId ? await prisma.user.findUnique({ where: { id: guiaId } }) : null
-    const assinaturasJson = ativarContrato ? JSON.stringify(buildAdminSignatures(assinaturasBase, [], grupos, guia)) : JSON.stringify(assinaturasBase)
+    const assinaturasJson = ativarContrato ? JSON.stringify(buildAdminSignatures(assinaturasBase, [], grupos, guiaId ? { id: guiaId } : null)) : JSON.stringify(assinaturasBase)
 
     const created = await prisma.excursao.create({
       data: {
@@ -130,7 +130,7 @@ export default defineEventHandler(async (event) => {
         finalizadaEm: null
       }
     })
-    await appendLog({ entity: 'excursao', action: 'create', title: 'Excursão criada', detail: adminDetail('criou uma nova excursão', [`Excursão: ${created.nome}.`, `Destino: ${created.lugar || 'não informado'}.`, `Vagas: ${created.vagas}.`, guia?.nome ? `Guia: ${guia.nome}.` : 'Guia: não selecionado.', `Visível em excursões abertas: ${created.mostrarAberta ? 'sim' : 'não'}.`]) })
+    await appendLog({ entity: 'excursao', action: 'create', title: 'Excursão criada', detail: adminDetail('criou uma nova excursão', [`Excursão: ${created.nome}.`, `Destino: ${created.lugar || 'não informado'}.`, `Vagas: ${created.vagas}.`, guiaId ? `Guia ID: ${guiaId}.` : 'Guia: não selecionado.', `Visível em excursões abertas: ${created.mostrarAberta ? 'sim' : 'não'}.`]) })
     return created
   }
 

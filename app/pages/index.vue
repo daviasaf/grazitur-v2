@@ -64,16 +64,15 @@
         'public-flow-form': step === 'cadastro',
         'public-flow-success': step === 'sucesso'
       }">
-        <PublicAreaPassageiro v-if="step === 'login'" @editarDados="editarDados" @cadastrarFamiliar="cadastrarFamiliar" />
+        <PublicAreaPassageiro v-if="step === 'login'" @cadastrarFamiliar="cadastrarFamiliar" />
 
         <div v-if="step === 'cadastro'" class="public-form-wrap">
           <div class="flow-heading">
-            <h1>{{ usuarioEditando ? 'Editar meus dados' : cpfFamiliar ? 'Cadastrar familiar' : 'Cadastro de passageiro' }}</h1>
-            <p>Preencha os dados para manter seu cadastro atualizado.</p>
+            <h1>{{ familiarId ? 'Cadastrar familiar' : 'Cadastro de passageiro' }}</h1>
+            <p>Preencha os dados com atenção. Depois de concluído, o cadastro não poderá ser editado.</p>
           </div>
           <PublicFormPassageiro
-            :cpfFamiliar="cpfFamiliar"
-            :usuarioEditando="usuarioEditando"
+            :familiarId="familiarId"
             @sucesso="sucesso"
             @acessarViagem="step = 'login'"
           />
@@ -85,7 +84,7 @@
           <p>Os dados foram registrados com sucesso.</p>
           <div class="success-actions">
             <button class="gt-btn gt-btn-primary" @click="voltar">Concluir</button>
-            <button v-if="cpfTitularCadastro" class="gt-btn gt-btn-outline" @click="adicionarParenteDepois">Adicionar parente/amigo</button>
+            <button v-if="titularCadastroId" class="gt-btn gt-btn-outline" @click="adicionarParenteDepois">Adicionar parente/amigo</button>
           </div>
         </div>
       </section>
@@ -105,9 +104,8 @@ onMounted(() => {
 })
 
 const step = ref<'home' | 'cadastro' | 'login' | 'sucesso'>('home')
-const cpfFamiliar = ref('')
-const cpfTitularCadastro = ref('')
-const usuarioEditando = ref<any>(null)
+const familiarId = ref<number | null>(null)
+const titularCadastroId = ref<number | null>(null)
 const lugaresViajados = [
   'Bio Parque',
   'Arraial do Cabo',
@@ -123,9 +121,8 @@ const lugaresViajados = [
   'Aracruz',
   'Rio de Janeiro (Cristo Redentor)'
 ]
-const voltar = () => { step.value = 'home'; cpfFamiliar.value = ''; cpfTitularCadastro.value = ''; usuarioEditando.value = null }
-const sucesso = (cpfSalvo?: string) => { if (!usuarioEditando.value && !cpfFamiliar.value && cpfSalvo) cpfTitularCadastro.value = String(cpfSalvo).replace(/\D/g, ''); step.value = 'sucesso'; cpfFamiliar.value = ''; usuarioEditando.value = null }
-const adicionarParenteDepois = () => { cpfFamiliar.value = cpfTitularCadastro.value; usuarioEditando.value = null; step.value = 'cadastro' }
-const editarDados = (u: any) => { usuarioEditando.value = u; cpfFamiliar.value = ''; step.value = 'cadastro' }
-const cadastrarFamiliar = (u: any) => { usuarioEditando.value = null; cpfFamiliar.value = u.cpf; step.value = 'cadastro' }
+const voltar = () => { step.value = 'home'; familiarId.value = null; titularCadastroId.value = null }
+const sucesso = (userId?: number) => { if (!familiarId.value && userId) titularCadastroId.value = Number(userId); step.value = 'sucesso'; familiarId.value = null }
+const adicionarParenteDepois = () => { familiarId.value = titularCadastroId.value; step.value = 'cadastro' }
+const cadastrarFamiliar = (u: any) => { familiarId.value = Number(u.id); step.value = 'cadastro' }
 </script>

@@ -4,7 +4,7 @@
       <div class="modal-content border-0 shadow-large">
         <div class="modal-header gt-modal-header">
           <div>
-            <h5 class="fw-bold mb-1">{{ form.id ? 'Editar passageiro' : 'Novo passageiro' }}</h5>
+            <h5 class="fw-bold mb-1">Novo passageiro</h5>
             <p class="text-muted small mb-0">Todos os dados são obrigatórios, exceto RG.</p>
           </div>
           <button class="btn-close" @click="$emit('close')"></button>
@@ -166,7 +166,7 @@
 import * as z from 'zod'
 import { mascaraCPF, mascaraData, mascaraCelular, validarCPF } from '~/utils/formatadores'
 
-const props = defineProps<{ usuarioEditando?: any; todosUsuarios: any[] }>()
+const props = defineProps<{ todosUsuarios: any[] }>()
 const emit = defineEmits(['close', 'salvo'])
 const { showToast } = useToasts()
 
@@ -174,7 +174,6 @@ const erro = ref('')
 const carregando = ref(false)
 const buscaParente = ref('')
 const form = ref({
-  id: null as number | null,
   nome: '',
   email: '',
   cpf: '',
@@ -216,29 +215,6 @@ const schema = z.object({
 
 onMounted(async () => {
   await carregarEstados()
-  if (props.usuarioEditando) {
-    form.value = {
-      ...form.value,
-      ...JSON.parse(JSON.stringify(props.usuarioEditando)),
-      idade: props.usuarioEditando.idade ?? '',
-      celular: mascaraCelular(String(props.usuarioEditando.celular || '')),
-      parentesSelecionados: [...(props.usuarioEditando.parentes || [])]
-    }
-
-    if (props.usuarioEditando.orgaoExpeditor) {
-      if (!opcoesOrgao.value.includes(props.usuarioEditando.orgaoExpeditor)) {
-        opcoesOrgao.value.splice(opcoesOrgao.value.length - 1, 0, props.usuarioEditando.orgaoExpeditor)
-      }
-      selecaoOrgao.value = props.usuarioEditando.orgaoExpeditor
-    }
-
-    if (props.usuarioEditando.cidade?.includes(', ')) {
-      const [cid, uf] = props.usuarioEditando.cidade.split(', ')
-      estadoSelecionado.value = uf
-      await buscarCidades(false)
-      cidadeSelecionada.value = cid
-    }
-  }
 })
 
 const carregarEstados = async () => {
@@ -295,7 +271,6 @@ const usuariosParaVincular = computed(() => {
   const termo = buscaParente.value.toLowerCase().trim()
   if (!termo) return []
   const selecionados = new Set(form.value.parentesSelecionados.map((p) => Number(p.id)))
-  if (form.value.id) selecionados.add(Number(form.value.id))
   return props.todosUsuarios.filter((u) => !selecionados.has(Number(u.id)) && (u.nome.toLowerCase().includes(termo) || String(u.cpf || '').includes(termo))).slice(0, 8)
 })
 const adicionarParente = (u: any) => { form.value.parentesSelecionados.push(u); buscaParente.value = '' }
@@ -331,9 +306,7 @@ const salvar = async () => {
       skipValidation: Boolean(form.value.salvarSemValidacao),
       parentesIds: form.value.parentesSelecionados.map((p) => p.id)
     }
-    const method = form.value.id ? 'PUT' : 'POST'
-    const url = form.value.id ? `/api/users/${form.value.id}` : '/api/users'
-    await $fetch(url, { method, body: payload })
+    await $fetch('/api/users', { method: 'POST', body: payload })
     showToast('Passageiro salvo com sucesso.', 'success')
     emit('salvo')
     emit('close')

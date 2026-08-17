@@ -43,7 +43,7 @@ set "listaEsperaJson" = coalesce((
 update public."Excursao" e
 set "assinaturasJson" = coalesce((
   select jsonb_object_agg(key, case
-    when jsonb_typeof(value) = 'object' then value - 'guiaCpf' - 'guiaCelular'
+    when jsonb_typeof(value) = 'object' then value - 'guiaCpf' - 'guiaCelular' - 'guiaNome'
     else value
   end)
   from jsonb_each(coalesce(nullif(e."assinaturasJson", ''), '{}')::jsonb)

@@ -1,5 +1,5 @@
 import { prisma } from '../utils/prisma'
-import { findUserByCpf, normalizeUser, formatNameServer, parentesIdsFromBody, protectedCpfData, validateUserPayload } from '../utils/users'
+import { findUserByCpf, normalizeUser, formatNameServer, parentesIdsFromBody, protectedCpfData, protectedPersonalData, validateUserPayload } from '../utils/users'
 import { appendLog, adminDetail, buildDetail } from '../utils/logs'
 import { getAdminSession } from '../utils/admin-auth'
 import { requirePassengerSession, setPassengerSession } from '../utils/passenger-auth'
@@ -27,9 +27,9 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Este CPF já está cadastrado no sistema.' })
     }
 
-    const cpfFamiliar = String(body.cpfFamiliar || '').replace(/\D/g, '')
-    if (cpfFamiliar) {
-      const familiar = await findUserByCpf(cpfFamiliar)
+    const familiarId = Number(body.familiarId || 0)
+    if (Number.isFinite(familiarId) && familiarId > 0) {
+      const familiar = await prisma.user.findUnique({ where: { id: familiarId } })
       if (!familiar) throw createError({ statusCode: 404, statusMessage: 'Familiar responsável não encontrado.' })
       if (!admin) requirePassengerSession(event, familiar.id)
       parentesIds.push(familiar.id)
@@ -38,16 +38,18 @@ export default defineEventHandler(async (event) => {
     try {
       const user = await prisma.user.create({
         data: {
-          nome: formatNameServer(valid.nome),
-          email: valid.email,
+          ...protectedPersonalData({
+            nome: formatNameServer(valid.nome),
+            email: valid.email,
+            rg: valid.rg ? String(valid.rg) : null,
+            orgaoExpeditor: valid.orgaoExpeditor,
+            nascimento: valid.nascimento,
+            celular: valid.celular,
+            cidade: valid.cidade,
+            endereco: valid.endereco,
+            idade: valid.idade
+          }),
           ...protectedCpfData(valid.cpf),
-          rg: valid.rg ? String(valid.rg) : null,
-          orgaoExpeditor: valid.orgaoExpeditor,
-          nascimento: valid.nascimento,
-          celular: valid.celular,
-          cidade: valid.cidade,
-          endereco: valid.endereco,
-          idade: valid.idade,
           isGuia: Boolean(valid.isGuia),
           parentes: { connect: [...new Set(parentesIds)].map((id) => ({ id })) }
         },
@@ -61,7 +63,7 @@ export default defineEventHandler(async (event) => {
         title: 'Novo passageiro cadastrado',
         detail: admin ? adminDetail('cadastrou um passageiro', logLines) : buildDetail(['Responsável: Passageiro.', 'Ação: enviou cadastro público.', ...logLines])
       })
-      return normalizeUser(user)
+      return { success: true, user: { id: user.id } }
     } catch (err: unknown) {
       const e = err as { code?: string }
       if (e.code === 'P2002') {
