@@ -5,7 +5,7 @@
         <div class="modal-header gt-modal-header">
           <div>
             <h5 class="fw-bold mb-1">Novo passageiro</h5>
-            <p class="text-muted small mb-0">Todos os dados são obrigatórios, exceto RG.</p>
+            <p class="text-muted small mb-0">Todos os dados são obrigatórios.</p>
           </div>
           <button class="btn-close" @click="$emit('close')"></button>
         </div>
@@ -31,8 +31,8 @@
                     <input :value="form.cpf" maxlength="14" class="form-control" placeholder="000.000.000-00" @input="e => form.cpf = mascaraCPF((e.target as HTMLInputElement).value)">
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label small fw-bold">RG</label>
-                    <input v-model="form.rg" class="form-control" placeholder="Opcional">
+                    <label class="form-label small fw-bold">RG *</label>
+                    <input v-model="form.rg" class="form-control" placeholder="Digite o RG">
                   </div>
                   <div class="col-md-6">
                     <label class="form-label small fw-bold">Nascimento *</label>
@@ -204,6 +204,7 @@ const schema = z.object({
   nome: z.string().trim().min(2, 'Nome completo é obrigatório.'),
   email: z.string().trim().email('E-mail inválido.'),
   cpf: z.string().refine((v) => validarCPF(v), 'CPF inválido.'),
+  rg: z.string().trim().min(1, 'RG é obrigatório.'),
   orgaoExpeditor: z.string().trim().min(1, 'Órgão expeditor é obrigatório.'),
   nascimento: z.string().trim().min(10, 'Nascimento é obrigatório.'),
   idade: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ error: 'Idade é obrigatória.' }).min(0, 'Idade inválida.')),
