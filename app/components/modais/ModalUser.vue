@@ -31,6 +31,12 @@
                     <input :value="form.cpf" maxlength="14" class="form-control" placeholder="000.000.000-00" @input="e => form.cpf = mascaraCPF((e.target as HTMLInputElement).value)">
                   </div>
                   <div class="col-md-6">
+                    <div class="form-check form-switch pt-4">
+                      <input id="temRgAdmin" v-model="temRg" class="form-check-input" type="checkbox" role="switch" @change="handleTemRgChange">
+                      <label class="form-check-label fw-bold" for="temRgAdmin">Tem RG?</label>
+                    </div>
+                  </div>
+                  <div v-if="temRg" class="col-md-6">
                     <label class="form-label small fw-bold">RG *</label>
                     <input v-model="form.rg" class="form-control" placeholder="Digite o RG">
                   </div>
@@ -42,7 +48,7 @@
                     <label class="form-label small fw-bold">Idade *</label>
                     <input v-model="form.idade" type="number" min="0" class="form-control" placeholder="Opcional">
                   </div>
-                  <div class="col-12">
+                  <div v-if="temRg" class="col-md-6">
                     <label class="form-label small fw-bold">Órgão expeditor *</label>
                     <select v-model="selecaoOrgao" class="form-select" @change="handleOrgaoChange">
                       <option value="" disabled>Selecione...</option>
@@ -199,24 +205,37 @@ const estadoSelecionado = ref('')
 const cidadeSelecionada = ref('')
 const carregandoEstados = ref(false)
 const carregandoCidades = ref(false)
+const temRg = ref(Boolean(form.value.rg.trim()))
 
 const schema = z.object({
   nome: z.string().trim().min(2, 'Nome completo é obrigatório.'),
   email: z.string().trim().email('E-mail inválido.'),
   cpf: z.string().refine((v) => validarCPF(v), 'CPF inválido.'),
-  rg: z.string().trim().min(1, 'RG é obrigatório.'),
-  orgaoExpeditor: z.string().trim().min(1, 'Órgão expeditor é obrigatório.'),
+  temRg: z.boolean(),
+  rg: z.string().trim(),
+  orgaoExpeditor: z.string().trim(),
   nascimento: z.string().trim().min(10, 'Nascimento é obrigatório.'),
   idade: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ error: 'Idade é obrigatória.' }).min(0, 'Idade inválida.')),
   celular: z.string().trim().min(14, 'Celular é obrigatório.'),
   estado: z.string().trim().min(2, 'Estado é obrigatório.'),
   cidadeSelecionada: z.string().trim().min(1, 'Cidade é obrigatória.'),
   endereco: z.string().trim().min(3, 'Endereço é obrigatório.')
+}).superRefine((data, ctx) => {
+  if (data.temRg && !data.rg) {
+    ctx.addIssue({ code: 'custom', path: ['rg'], message: 'RG é obrigatório.' })
+  }
+  if (data.temRg && !data.orgaoExpeditor) {
+    ctx.addIssue({ code: 'custom', path: ['orgaoExpeditor'], message: 'Órgão expeditor é obrigatório.' })
+  }
 })
 
 onMounted(async () => {
   await carregarEstados()
 })
+
+watch(() => form.value.rg, (rg) => {
+  if (String(rg || '').trim()) temRg.value = true
+}, { immediate: true })
 
 const carregarEstados = async () => {
   carregandoEstados.value = true
@@ -268,6 +287,15 @@ const cancelarOutroOrgao = () => {
   modalOutroOrgao.value = false
 }
 
+const handleTemRgChange = () => {
+  if (temRg.value) return
+  form.value.rg = ''
+  form.value.orgaoExpeditor = ''
+  selecaoOrgao.value = ''
+  outroOrgaoTexto.value = ''
+  modalOutroOrgao.value = false
+}
+
 const usuariosParaVincular = computed(() => {
   const termo = buscaParente.value.toLowerCase().trim()
   if (!termo) return []
@@ -284,6 +312,7 @@ const salvar = async () => {
   if (!form.value.salvarSemValidacao) {
     const result = schema.safeParse({
       ...form.value,
+      temRg: temRg.value,
       estado: estadoSelecionado.value,
       cidadeSelecionada: cidadeSelecionada.value
     })
@@ -302,6 +331,8 @@ const salvar = async () => {
   try {
     const payload = {
       ...form.value,
+      rg: temRg.value ? form.value.rg.trim() : null,
+      orgaoExpeditor: temRg.value ? form.value.orgaoExpeditor.trim() : null,
       celular: mascaraCelular(form.value.celular),
       idade: form.value.idade === '' ? null : Number(form.value.idade),
       skipValidation: Boolean(form.value.salvarSemValidacao),

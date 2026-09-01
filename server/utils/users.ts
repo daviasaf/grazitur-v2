@@ -88,14 +88,18 @@ const userBodySchema = z.object({
   nome: z.string().trim().min(2, 'Nome completo é obrigatório.'),
   email: z.string().trim().email('E-mail inválido.'),
   cpf: z.string().refine((v) => validarCPF(v), 'CPF inválido.'),
-  rg: z.string().trim().min(1, 'RG é obrigatório.'),
-  orgaoExpeditor: z.string().trim().min(1, 'Órgão expeditor é obrigatório.'),
+  rg: z.preprocess((v) => v === null || v === undefined ? '' : String(v), z.string().trim()),
+  orgaoExpeditor: z.preprocess((v) => v === null || v === undefined ? '' : String(v), z.string().trim()),
   nascimento: z.string().trim().min(10, 'Nascimento é obrigatório.'),
   celular: z.string().trim().min(8, 'Celular é obrigatório.'),
   cidade: z.string().trim().min(3, 'Cidade e estado são obrigatórios.'),
   endereco: z.string().trim().min(3, 'Endereço é obrigatório.'),
   idade: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ error: 'Idade é obrigatória.' }).min(0, 'Idade inválida.')),
   isGuia: z.boolean().optional()
+}).superRefine((data, ctx) => {
+  if (data.rg && !data.orgaoExpeditor) {
+    ctx.addIssue({ code: 'custom', path: ['orgaoExpeditor'], message: 'Órgão expeditor é obrigatório para quem possui RG.' })
+  }
 })
 
 export function validateUserPayload(body: Record<string, unknown>) {
@@ -104,6 +108,7 @@ export function validateUserPayload(body: Record<string, unknown>) {
 
   if (skipValidation) {
     const nome = String(body.nome || '').trim()
+    const rg = body.rg ? String(body.rg).trim() : null
     if (nome.length < 2) {
       throw createError({ statusCode: 400, statusMessage: 'Informe pelo menos o nome do passageiro.' })
     }
@@ -116,8 +121,8 @@ export function validateUserPayload(body: Record<string, unknown>) {
       nome,
       email: body.email ? String(body.email).trim() : null,
       cpf: cpfLimpo || null,
-      rg: body.rg ? String(body.rg) : null,
-      orgaoExpeditor: body.orgaoExpeditor ? String(body.orgaoExpeditor) : null,
+      rg,
+      orgaoExpeditor: rg && body.orgaoExpeditor ? String(body.orgaoExpeditor).trim() : null,
       nascimento: body.nascimento ? String(body.nascimento) : null,
       celular: body.celular ? String(body.celular) : null,
       cidade: body.cidade ? String(body.cidade) : null,
@@ -136,5 +141,9 @@ export function validateUserPayload(body: Record<string, unknown>) {
     throw createError({ statusCode: 400, statusMessage: result.error.issues[0]?.message || 'Dados inválidos.' })
   }
 
-  return result.data
+  return {
+    ...result.data,
+    rg: result.data.rg || null,
+    orgaoExpeditor: result.data.rg ? result.data.orgaoExpeditor || null : null
+  }
 }
