@@ -67,12 +67,15 @@ model Excursao {
 }
 
 model SystemLog {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  entity    String   @default("sistema")
-  action    String   @default("manual")
-  title     String
-  detail    String?
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  entity            String   @default("sistema")
+  action            String   @default("manual")
+  title             String
+  detail            String?
+  contentCiphertext String?  @map("content_ciphertext")
+  contentKeyVersion Int?     @map("content_key_version")
+  contentContextId  String?  @unique(map: "SystemLog_content_context_id_key") @map("content_context_id") @db.Uuid
 
   @@index([createdAt])
   @@index([entity])

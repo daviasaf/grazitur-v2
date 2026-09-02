@@ -174,6 +174,8 @@ export function getPlainCpf(record: CpfProtectedRecord) {
 export function redactSensitiveText(value: unknown) {
   return String(value ?? '')
     .replace(/\b\d{3}\.?\d{3}\.?\d{3}[- ]?\d{2}\b/g, '[CPF REDIGIDO]')
+    .replace(/\bRG\s*[:#-]?\s*[A-Z0-9][A-Z0-9.\/-]{3,19}\b/gi, 'RG: [RG REDIGIDO]')
+    .replace(/\(?\d{2}\)?[\s.-]?\d{4,5}[\s.-]?\d{4}\b/g, '[TELEFONE REDIGIDO]')
     .replace(/\b\d{11}\b/g, '[IDENTIFICADOR REDIGIDO]')
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[E-MAIL REDIGIDO]')
 }

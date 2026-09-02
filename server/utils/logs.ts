@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import { redactSensitiveText } from './cpf-security'
+import { buildLogWriteFields, getPlainLogContent } from './log-security'
 
 export type SystemLogEntry = {
   id: string
@@ -11,13 +12,14 @@ export type SystemLogEntry = {
 }
 
 function normalizeLog(log: any): SystemLogEntry {
+  const content = getPlainLogContent(log)
   return {
     id: String(log.id),
     createdAt: log.createdAt instanceof Date ? log.createdAt.toISOString() : String(log.createdAt || new Date().toISOString()),
     entity: String(log.entity || 'sistema'),
     action: String(log.action || 'manual'),
-    title: String(log.title || 'Registro do sistema'),
-    detail: log.detail ? redactSensitiveText(log.detail) : null
+    title: redactSensitiveText(content.title),
+    detail: content.detail ? redactSensitiveText(content.detail) : null
   }
 }
 
@@ -52,8 +54,10 @@ export async function appendLog(entry: Omit<SystemLogEntry, 'id' | 'createdAt'>)
       data: {
         entity: String(entry.entity || 'sistema'),
         action: String(entry.action || 'manual'),
-        title: String(entry.title || 'Registro do sistema'),
-        detail: entry.detail ? redactSensitiveText(entry.detail) : null
+        ...buildLogWriteFields({
+          title: String(entry.title || 'Registro do sistema'),
+          detail: entry.detail ? String(entry.detail) : null
+        })
       }
     })
   } catch (error) {
@@ -71,8 +75,10 @@ export async function writeLogs(entries: SystemLogEntry[]) {
           createdAt: entry.createdAt ? new Date(entry.createdAt) : new Date(),
           entity: String(entry.entity || 'sistema'),
           action: String(entry.action || 'manual'),
-          title: String(entry.title || 'Registro do sistema'),
-          detail: entry.detail ? redactSensitiveText(entry.detail) : null
+          ...buildLogWriteFields({
+            title: String(entry.title || 'Registro do sistema'),
+            detail: entry.detail ? String(entry.detail) : null
+          })
         })),
         skipDuplicates: true
       })

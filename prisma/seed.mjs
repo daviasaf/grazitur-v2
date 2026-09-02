@@ -96,7 +96,7 @@ function protectedPersonal(user, existingContextId) {
   }
   if (piiProtectionMode === 'dual') return { ...personal, ...encrypted }
   return {
-    nome: 'Dado protegido',
+    nome: 'Dado Protegido',
     email: null,
     rg: null,
     orgaoExpeditor: null,

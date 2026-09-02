@@ -49,7 +49,7 @@ function aad(contextId: string, version: number) {
   return Buffer.from(`app=grazitur|entity=user|context=${contextId}|field=personal_profile|key_version=${version}`, 'utf8')
 }
 
-function normalizePayload(payload: Partial<PersonalDataPayload>): PersonalDataPayload {
+export function normalizePersonalData(payload: Partial<PersonalDataPayload>): PersonalDataPayload {
   const rawAge = payload.idade
   const idade = rawAge === null || rawAge === undefined || String(rawAge).trim() === ''
     ? null
@@ -69,7 +69,7 @@ function normalizePayload(payload: Partial<PersonalDataPayload>): PersonalDataPa
 
 export function encryptPersonalData(payload: PersonalDataPayload, contextId: string, version = activeKeyVersion()) {
   if (!contextId) throw securityError(500, 'Contexto criptográfico dos dados pessoais ausente.')
-  const normalized = normalizePayload(payload)
+  const normalized = normalizePersonalData(payload)
   if (normalized.nome.length < 2) throw securityError(400, 'Nome inválido para proteção.')
 
   const iv = randomBytes(IV_BYTES)
@@ -81,7 +81,7 @@ export function encryptPersonalData(payload: PersonalDataPayload, contextId: str
 }
 
 export function decryptPersonalData(record: PiiProtectedRecord): PersonalDataPayload {
-  if (!record.piiCiphertext) return normalizePayload(record)
+  if (!record.piiCiphertext) return normalizePersonalData(record)
   const parts = record.piiCiphertext.split('.')
   if (parts.length !== 6 || parts[0] !== 'grazitur-pii' || parts[1] !== 'v1') {
     throw securityError(500, 'Envelope criptográfico de dados pessoais inválido.')
@@ -101,7 +101,7 @@ export function decryptPersonalData(record: PiiProtectedRecord): PersonalDataPay
     decipher.setAAD(aad(record.piiContextId, version))
     decipher.setAuthTag(tag)
     const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8')
-    const parsed = normalizePayload(JSON.parse(plaintext) as PersonalDataPayload)
+    const parsed = normalizePersonalData(JSON.parse(plaintext) as PersonalDataPayload)
     if (parsed.nome.length < 2) throw new Error('invalid payload')
     return parsed
   } catch {
@@ -110,7 +110,7 @@ export function decryptPersonalData(record: PiiProtectedRecord): PersonalDataPay
 }
 
 export function buildPersonalDataWriteFields(payload: PersonalDataPayload, existingContextId?: string | null) {
-  const normalized = normalizePayload(payload)
+  const normalized = normalizePersonalData(payload)
   const mode = piiProtectionMode()
   const contextId = existingContextId || randomUUID()
   if (mode === 'disabled') return {
@@ -128,7 +128,7 @@ export function buildPersonalDataWriteFields(payload: PersonalDataPayload, exist
   }
   if (mode === 'dual') return { ...normalized, ...protectedFields }
   return {
-    nome: 'Dado protegido',
+    nome: 'Dado Protegido',
     email: null,
     rg: null,
     orgaoExpeditor: null,
