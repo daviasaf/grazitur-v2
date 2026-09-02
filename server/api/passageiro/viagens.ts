@@ -2,6 +2,7 @@ import { prisma } from '../../utils/prisma'
 import { parseJson } from '../../utils/json'
 import { findUserByCpf, normalizeUser } from '../../utils/users'
 import { clearPassengerSession, getPassengerUserId, requirePassengerSession, setPassengerSession } from '../../utils/passenger-auth'
+import { attachExcursionUsers, userFamilyInclude } from '../../utils/relations'
 
 const dateDigits = (value: unknown) => String(value ?? '').replace(/\D/g, '')
 
@@ -13,16 +14,17 @@ function filterRecord(record: Record<string, any>, allowedIds: Set<string>, incl
 }
 
 async function passengerPayload(userId: number) {
-  const user = await prisma.user.findUnique({ where: { id: userId }, include: { parentes: true, parentesDe: true } })
+  const user = await prisma.user.findUnique({ where: { id: userId }, include: userFamilyInclude })
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Sessão inválida.' })
 
   const excursoes = await prisma.excursao.findMany({
-    where: { finalizada: false, usuarios: { some: { id: user.id } } },
-    include: { usuarios: true, guia: true, _count: { select: { usuarios: true } } },
+    where: { finalizada: false, userLinks: { some: { userId: user.id } } },
+    include: { userLinks: { include: { user: true } }, guia: true, _count: { select: { userLinks: true } } },
     orderBy: { createdAt: 'desc' }
   })
 
-  const formatadas = excursoes.map((ex) => {
+  const formatadas = excursoes.map((raw) => {
+    const ex = attachExcursionUsers(raw)
     const grupos = parseJson<Record<string, string[]>>(ex.contratoGrupos, {})
     let leaderId = String(user.id)
     for (const [candidate, dependents] of Object.entries(grupos)) {
@@ -52,7 +54,7 @@ async function passengerPayload(userId: number) {
       detalhes: parseJson(ex.contratoDetalhes, {}),
       grupos: grupoVisivel,
       assinaturas,
-      usuarios: ex.usuarios.filter((item) => allowedIds.has(String(item.id))).map((item) => normalizeUser(item, { revealCpf: true })),
+      usuarios: ex.usuarios.filter((item: any) => allowedIds.has(String(item.id))).map((item: any) => normalizeUser(item, { revealCpf: true })),
       _count: ex._count
     }
   })

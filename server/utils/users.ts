@@ -4,6 +4,7 @@ import { uniqueIds } from './json'
 import { buildCpfWriteFields, cpfBlindIndexes, cpfProtectionMode, getPlainCpf, maskCpf, normalizeCpf } from './cpf-security'
 import { buildPersonalDataWriteFields, getPlainPersonalData, type PersonalDataPayload } from './pii-security'
 import { prisma } from './prisma'
+import { attachUserFamily } from './relations'
 
 export const formatNameServer = formatarNome
 
@@ -40,15 +41,16 @@ function publicUserFields(user: Record<string, any>, revealCpf: boolean): Record
 
 export function normalizeUser(user: Record<string, unknown>, options: { revealCpf?: boolean } = {}): Record<string, any> {
   const revealCpf = Boolean(options.revealCpf)
-  const parentes = Array.isArray(user.parentes) ? user.parentes as Array<Record<string, unknown>> : []
-  const parentesDe = Array.isArray(user.parentesDe) ? user.parentesDe as Array<Record<string, unknown>> : []
+  const hydrated = attachUserFamily(user as Record<string, any>)
+  const parentes = Array.isArray(hydrated.parentes) ? hydrated.parentes as Array<Record<string, unknown>> : []
+  const parentesDe = Array.isArray(hydrated.parentesDe) ? hydrated.parentesDe as Array<Record<string, unknown>> : []
   const mapa = new Map<number, Record<string, unknown>>()
   for (const p of [...parentes, ...parentesDe]) {
     const id = Number(p.id)
     if (Number.isFinite(id) && id !== Number(user.id)) mapa.set(id, p)
   }
   return {
-    ...publicUserFields(user, revealCpf),
+    ...publicUserFields(hydrated, revealCpf),
     parentes: [...mapa.values()].map((relative) => publicUserFields(relative, revealCpf)),
     parentesDe: parentesDe.map((relative) => publicUserFields(relative, revealCpf))
   }

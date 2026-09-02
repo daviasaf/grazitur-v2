@@ -3,6 +3,7 @@ import { parseJson } from '../../utils/json'
 import { readLogs } from '../../utils/logs'
 import { appendLog, adminDetail } from '../../utils/logs'
 import { normalizeUser } from '../../utils/users'
+import { attachExcursionUsers, userFamilyInclude } from '../../utils/relations'
 
 export default defineEventHandler(async (event) => {
   if (process.env.GRAZITUR_ENABLE_SENSITIVE_EXPORT !== 'true') {
@@ -13,17 +14,19 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Cache-Control', 'no-store')
   const logs = await readLogs()
   const usuarios = await prisma.user.findMany({
-    include: { parentes: true, parentesDe: true },
+    include: userFamilyInclude,
     orderBy: { nome: 'asc' }
   })
 
   const excursoesDb = await prisma.excursao.findMany({
-    include: { usuarios: true, guia: true },
+    include: { userLinks: { include: { user: true } }, guia: true },
     orderBy: [{ finalizada: 'asc' }, { createdAt: 'desc' }]
   })
 
   const safeUsers = usuarios.map((user) => normalizeUser(user, { revealCpf: true }))
-  const excursoes = excursoesDb.map((ex) => ({
+  const excursoes = excursoesDb.map((raw) => {
+    const ex = attachExcursionUsers(raw)
+    return {
     ...ex,
     valores: parseJson(ex.valores, []),
     pagamentos: parseJson(ex.pagamentosJson, {}),
@@ -32,11 +35,12 @@ export default defineEventHandler(async (event) => {
     assinaturas: parseJson(ex.assinaturasJson, {}),
     despesas: parseJson(ex.despesasJson, []),
     listaEspera: parseJson(ex.listaEsperaJson, []),
-    usuarios: ex.usuarios.map((user) => normalizeUser(user, { revealCpf: true })),
+    usuarios: ex.usuarios.map((user: any) => normalizeUser(user, { revealCpf: true })),
     guia: ex.guia ? normalizeUser(ex.guia, { revealCpf: true }) : null,
-    usuarioCpfs: ex.usuarios.map((user) => normalizeUser(user, { revealCpf: true }).cpf),
+    usuarioCpfs: ex.usuarios.map((user: any) => normalizeUser(user, { revealCpf: true }).cpf),
     guiaCpf: ex.guia ? normalizeUser(ex.guia, { revealCpf: true }).cpf : null
-  }))
+    }
+  })
 
   await appendLog({ entity: 'privacy', action: 'seed-export', title: 'Export sensível gerado', detail: adminDetail('gerou export sensível', [`Finalidade declarada: ${purpose}.`, `Passageiros incluídos: ${safeUsers.length}.`, `Excursões incluídas: ${excursoes.length}.`]) })
 

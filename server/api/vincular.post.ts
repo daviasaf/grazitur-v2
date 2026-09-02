@@ -1,6 +1,7 @@
 import { prisma } from '../utils/prisma'
 import { parseJson } from '../utils/json'
 import { appendLog, adminDetail } from '../utils/logs'
+import { excursionUsers } from '../utils/relations'
 
 function adminSignature(guiaId: number | null) {
   return {
@@ -20,14 +21,14 @@ export default defineEventHandler(async (event) => {
 
   const excursao = await prisma.excursao.findUnique({
     where: { id: excursaoId },
-    include: { usuarios: true, _count: { select: { usuarios: true } } }
+    include: { userLinks: { include: { user: true } }, _count: { select: { userLinks: true } } }
   })
   if (!excursao) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
   if (excursao.finalizada) throw createError({ statusCode: 400, statusMessage: 'Esta excursão já foi finalizada.' })
-  if (excursao.usuarios.some((u) => u.id === userId)) {
+  if (excursionUsers(excursao).some((u) => u.id === userId)) {
     throw createError({ statusCode: 400, statusMessage: 'Este passageiro já está nesta excursão.' })
   }
-  if (excursao._count.usuarios >= excursao.vagas) {
+  if (excursao._count.userLinks >= excursao.vagas) {
     throw createError({ statusCode: 400, statusMessage: 'Esta excursão já atingiu o limite de vagas. Libere uma vaga ou aumente a capacidade antes de continuar.' })
   }
   if (excursao.guiaId === userId) {
@@ -49,15 +50,18 @@ export default defineEventHandler(async (event) => {
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } })
-  await prisma.excursao.update({
-    where: { id: excursaoId },
-    data: {
-      usuarios: { connect: { id: userId } },
-      pagamentosJson: JSON.stringify(pagamentos),
-      contratoGrupos: JSON.stringify(grupos),
-      assinaturasJson: JSON.stringify(assinaturas)
-    }
-  })
+  if (!user) throw createError({ statusCode: 404, statusMessage: 'Passageiro não encontrado.' })
+  await prisma.$transaction([
+    prisma.turismoExcursionUser.create({ data: { excursionId: excursaoId, userId } }),
+    prisma.excursao.update({
+      where: { id: excursaoId },
+      data: {
+        pagamentosJson: JSON.stringify(pagamentos),
+        contratoGrupos: JSON.stringify(grupos),
+        assinaturasJson: JSON.stringify(assinaturas)
+      }
+    })
+  ])
 
   await appendLog({ entity: 'vinculo', action: 'create', title: 'Passageiro adicionado à excursão', detail: adminDetail('adicionou passageiro à excursão', [`Passageiro ID: ${userId}.`, `Excursão: ${excursao.nome}.`, opcaoPagamento ? `Pagamento definido: ${opcaoPagamento}.` : 'Pagamento definido: pendente / a combinar.', liderId && liderId !== userId ? `Adicionado como dependente do titular #${liderId}.` : 'Adicionado como passageiro titular.']) })
   return { success: true }

@@ -2,6 +2,7 @@ import { prisma } from '../../utils/prisma'
 import { parseJson } from '../../utils/json'
 import { appendLog, adminDetail } from '../../utils/logs'
 import { normalizeUser } from '../../utils/users'
+import { attachExcursionUsers, excursionUsers, excursionUsersInclude } from '../../utils/relations'
 
 const PAGAMENTOS_MENSAIS_KEY = '__pagamentosMensais'
 
@@ -43,13 +44,14 @@ export default defineEventHandler(async (event) => {
   if (method === 'GET') {
     const purpose = String(getQuery(event).purpose || '').trim()
     if (purpose.length < 8) throw createError({ statusCode: 400, statusMessage: 'Informe a finalidade do acesso aos dados completos.' })
-    const excursion = await prisma.excursao.findUnique({ where: { id }, include: { usuarios: true, guia: true, _count: { select: { usuarios: true } } } })
-    if (!excursion) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
+    const rawExcursion = await prisma.excursao.findUnique({ where: { id }, include: { ...excursionUsersInclude, guia: true, _count: { select: { userLinks: true } } } })
+    if (!rawExcursion) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
+    const excursion = attachExcursionUsers(rawExcursion)
     setResponseHeader(event, 'Cache-Control', 'no-store')
     await appendLog({ entity: 'privacy', action: 'sensitive-export', title: 'Dados completos liberados para documento', detail: adminDetail('acessou dados completos para documento', [`Excursão ID: ${id}.`, `Finalidade declarada: ${purpose}.`]) })
     return {
       ...excursion,
-      usuarios: excursion.usuarios.map((user) => normalizeUser(user, { revealCpf: true })),
+      usuarios: excursion.usuarios.map((user: any) => normalizeUser(user, { revealCpf: true })),
       guia: excursion.guia ? normalizeUser(excursion.guia, { revealCpf: true }) : null
     }
   }
@@ -64,7 +66,7 @@ export default defineEventHandler(async (event) => {
 
   if (method === 'PUT') {
     const body = await readBody<Record<string, unknown>>(event)
-    const atual = await prisma.excursao.findUnique({ where: { id }, include: { usuarios: true } })
+    const atual = await prisma.excursao.findUnique({ where: { id }, include: excursionUsersInclude })
     if (!atual) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
 
     let assinaturas = parseJson<Record<string, any>>(atual.assinaturasJson, {})
@@ -85,7 +87,7 @@ export default defineEventHandler(async (event) => {
     const guiaId = body.guiaId === undefined ? atual.guiaId : (body.guiaId ? Number(body.guiaId) : null)
     if (ativarContrato && !guiaId) throw createError({ statusCode: 400, statusMessage: 'Para ativar o contrato, selecione um guia responsável.' })
     const grupos = parseJson<Record<string, string[]>>(gruposNovos, {})
-    if (ativarContrato) assinaturas = buildAdminSignatures(assinaturas, atual.usuarios, grupos, guiaId ? { id: guiaId } : null)
+    if (ativarContrato) assinaturas = buildAdminSignatures(assinaturas, excursionUsers(atual), grupos, guiaId ? { id: guiaId } : null)
 
     const finalizada = boolFromBody(body.finalizada, atual.finalizada)
     const finalizadaEm = finalizada ? (atual.finalizadaEm || new Date()) : null

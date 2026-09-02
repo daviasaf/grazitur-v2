@@ -26,15 +26,17 @@ export default defineEventHandler(async (event) => {
     if (grupos[liderId].length === 0) delete grupos[liderId]
   }
 
-  await prisma.excursao.update({
-    where: { id: excursaoId },
-    data: {
-      usuarios: { disconnect: { id: userId } },
-      pagamentosJson: JSON.stringify(pagamentos),
-      contratoGrupos: JSON.stringify(grupos),
-      assinaturasJson: JSON.stringify(assinaturas)
-    }
-  })
+  await prisma.$transaction([
+    prisma.turismoExcursionUser.deleteMany({ where: { excursionId: excursaoId, userId } }),
+    prisma.excursao.update({
+      where: { id: excursaoId },
+      data: {
+        pagamentosJson: JSON.stringify(pagamentos),
+        contratoGrupos: JSON.stringify(grupos),
+        assinaturasJson: JSON.stringify(assinaturas)
+      }
+    })
+  ])
 
   await appendLog({ entity: 'vinculo', action: 'delete', title: 'Passageiro removido da excursão', detail: adminDetail('removeu passageiro de uma excursão', [`Passageiro ID: ${userId}.`, `Excursão: ${excursao.nome}.`, 'Foram removidos pagamento, assinatura e vínculos de grupo deste passageiro dentro da viagem.']) })
   return { success: true }

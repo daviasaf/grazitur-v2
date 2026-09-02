@@ -186,6 +186,7 @@ async function importUsers(users) {
 
   const allDbUsers = await prisma.user.findMany({ select: { id: true, cpfBlindIndex: true } })
   const byCpf = new Map(allDbUsers.map((u) => [u.cpfBlindIndex, u]))
+  const kinships = new Map()
 
   for (const original of users) {
     const selfCpf = onlyDigits(original.cpf)
@@ -193,11 +194,14 @@ async function importUsers(users) {
     if (!self) continue
     const familyCpfs = collectFamilyReferences(original, originalIdToCpf).filter((cpf) => cpf !== selfCpf)
     const familyIds = familyCpfs.map((cpf) => byCpf.get(lookupKey(cpf))?.id).filter(Boolean)
-    await prisma.user.update({
-      where: { id: self.id },
-      data: { parentes: { set: familyIds.map((id) => ({ id })) } }
-    })
+    for (const relativeId of familyIds) {
+      const userId = Math.min(self.id, relativeId)
+      const relatedId = Math.max(self.id, relativeId)
+      kinships.set(`${userId}:${relatedId}`, { userId, relativeUserId: relatedId })
+    }
   }
+  await prisma.turismoUserKinship.deleteMany()
+  if (kinships.size) await prisma.turismoUserKinship.createMany({ data: [...kinships.values()], skipDuplicates: true })
 }
 
 async function importExcursoes(excursoes) {
@@ -264,7 +268,10 @@ async function importExcursoes(excursoes) {
 
     const created = await prisma.excursao.create({ data: payload })
     if (usuariosIds.length) {
-      await prisma.excursao.update({ where: { id: created.id }, data: { usuarios: { connect: usuariosIds.map((id) => ({ id })) } } })
+      await prisma.turismoExcursionUser.createMany({
+        data: [...new Set(usuariosIds)].map((userId) => ({ excursionId: created.id, userId })),
+        skipDuplicates: true
+      })
     }
   }
 }

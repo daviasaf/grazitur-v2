@@ -2,6 +2,7 @@ import { prisma } from '../../../utils/prisma'
 import { parseJson } from '../../../utils/json'
 import { appendLog, adminDetail } from '../../../utils/logs'
 import { requirePassengerSession } from '../../../utils/passenger-auth'
+import { excursionUsers, relatedUsers, userFamilyInclude } from '../../../utils/relations'
 
 type EntradaEspera = {
   id: string
@@ -16,18 +17,18 @@ export default defineEventHandler(async (event) => {
 
   if (!Number.isFinite(id)) throw createError({ statusCode: 400, statusMessage: 'ID inválido.' })
 
-  const excursao = await prisma.excursao.findUnique({ where: { id }, include: { usuarios: true } })
+  const excursao = await prisma.excursao.findUnique({ where: { id }, include: { userLinks: { include: { user: true } } } })
   if (!excursao) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
   if (excursao.finalizada) throw createError({ statusCode: 400, statusMessage: 'Esta excursão já foi finalizada.' })
 
   const sessionUserId = requirePassengerSession(event)
   const userId = Number(body.userId || sessionUserId)
-  const owner = await prisma.user.findUnique({ where: { id: sessionUserId }, include: { parentes: true, parentesDe: true } })
-  const allowedIds = new Set([sessionUserId, ...(owner?.parentes || []).map((item) => item.id), ...(owner?.parentesDe || []).map((item) => item.id)])
+  const owner = await prisma.user.findUnique({ where: { id: sessionUserId }, include: userFamilyInclude })
+  const allowedIds = new Set([sessionUserId, ...relatedUsers(owner).map((item) => item.id)])
   if (!allowedIds.has(userId)) throw createError({ statusCode: 403, statusMessage: 'Não é permitido incluir outro passageiro.' })
   const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) throw createError({ statusCode: 404, statusMessage: 'Passageiro não encontrado.' })
-  if (excursao.usuarios.some((item) => item.id === userId)) throw createError({ statusCode: 400, statusMessage: 'Este passageiro já está vinculado a esta excursão.' })
+  if (excursionUsers(excursao).some((item) => item.id === userId)) throw createError({ statusCode: 400, statusMessage: 'Este passageiro já está vinculado a esta excursão.' })
 
   const lista = parseJson<EntradaEspera[]>(excursao.listaEsperaJson, [])
   const jaExiste = lista.some((item) => Number(item.userId) === userId)

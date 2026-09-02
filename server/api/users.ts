@@ -3,14 +3,13 @@ import { findUserByCpf, normalizeUser, formatNameServer, parentesIdsFromBody, pr
 import { appendLog, adminDetail, buildDetail } from '../utils/logs'
 import { getAdminSession } from '../utils/admin-auth'
 import { requirePassengerSession, setPassengerSession } from '../utils/passenger-auth'
-
-const includeFamily = { parentes: true, parentesDe: true }
+import { userFamilyInclude } from '../utils/relations'
 
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
 
   if (method === 'GET') {
-    const users = await prisma.user.findMany({ include: includeFamily, orderBy: { createdAt: 'desc' } })
+    const users = await prisma.user.findMany({ include: userFamilyInclude, orderBy: { createdAt: 'desc' } })
     return users.map((u) => normalizeUser(u))
   }
 
@@ -51,9 +50,12 @@ export default defineEventHandler(async (event) => {
           }),
           ...protectedCpfData(valid.cpf),
           isGuia: Boolean(valid.isGuia),
-          parentes: { connect: [...new Set(parentesIds)].map((id) => ({ id })) }
-        },
-        include: includeFamily
+          kinshipsFrom: {
+            create: [...new Set(parentesIds)].map((id) => ({
+              relativeUser: { connect: { id } }
+            }))
+          }
+        }
       })
       if (!admin) setPassengerSession(event, user.id)
       const logLines = [`Passageiro ID: ${user.id}.`, Boolean(body.skipValidation || body.salvarSemValidacao) ? 'Cadastro incompleto autorizado.' : null, Boolean(user.isGuia) ? 'Cadastro marcado como guia.' : 'Cadastro de passageiro comum.', parentesIds.length ? `Vínculos familiares: ${parentesIds.length}.` : 'Sem vínculos familiares no cadastro inicial.']
