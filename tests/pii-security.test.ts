@@ -70,3 +70,12 @@ test('required mode removes legacy plaintext and keeps the profile recoverable',
     process.env.GRAZITUR_PII_PROTECTION_MODE = 'dual'
   }
 })
+
+test('preserves an absent RG and issuing authority as null', () => {
+  const contextId = randomUUID()
+  const profileWithoutRg = { ...TEST_PROFILE, rg: null, orgaoExpeditor: null }
+  const encrypted = encryptPersonalData(profileWithoutRg, contextId)
+  const decrypted = decryptPersonalData({ piiCiphertext: encrypted, piiKeyVersion: 1, piiContextId: contextId })
+  assert.equal(decrypted.rg, null)
+  assert.equal(decrypted.orgaoExpeditor, null)
+})
