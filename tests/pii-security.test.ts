@@ -61,7 +61,7 @@ test('required mode removes legacy plaintext and keeps the profile recoverable',
   process.env.GRAZITUR_PII_PROTECTION_MODE = 'required'
   try {
     const fields = buildPersonalDataWriteFields(TEST_PROFILE)
-    assert.equal(fields.nome, 'Dado protegido')
+    assert.equal(fields.nome, 'Dado Protegido')
     assert.equal(fields.email, null)
     assert.equal(fields.rg, null)
     assert.equal(fields.endereco, null)

@@ -1,125 +1,115 @@
 # Proteção de dados pessoais — GraziTur
 
-Atualizado em 16 de agosto de 2026. Este documento não contém valores pessoais nem segredos.
+Atualizado em 2 de setembro de 2026. Este documento não contém valores pessoais nem segredos.
 
-## Resumo
+## Estado de produção
 
-O Supabase `form-app` (`xgrcwdtkalelegoysxbw`) é tratado como produção porque contém dados reais e atende `grazitur.vercel.app`.
+O projeto Supabase `form-app` (`xgrcwdtkalelegoysxbw`) e o site
+`grazitur.vercel.app` operam com proteção obrigatória dos dados pessoais.
 
-Já está ativo em produção:
+No corte de produção:
 
-- RLS nas cinco tabelas da aplicação;
-- revogação de todos os privilégios da Data API para `anon`, `authenticated` e `service_role`;
-- ausência intencional de policies públicas, resultando em negação total pela Data API;
-- autenticação administrativa no backend;
-- CPF fora de URLs, cookies e respostas comuns;
-- recuperação de senha administrativa pelo Supabase Auth;
-- expansão criptográfica do CPF e do perfil pessoal, sem alterar linhas legadas.
+- 241 cadastros foram migrados e verificados por descriptografia autenticada;
+- 433 registros de auditoria foram migrados e verificados;
+- 6 listas de espera foram analisadas e tiveram duplicações pessoais removidas;
+- nenhum CPF, RG, nome real, e-mail, telefone, nascimento, cidade, endereço ou
+  idade permaneceu nas colunas legadas;
+- um cofre privado recebeu 241 envelopes de usuários, 433 envelopes de logs e
+  6 snapshots de listas de espera antes do contrato final;
+- a rota e o token temporários de migração foram removidos depois da validação.
 
-O backend continua funcionando pelo Prisma e a Data API não é consumida pela aplicação. O Security Advisor não apresenta mais erros de RLS; os avisos `rls_enabled_no_policy` são informativos e representam o contrato de negação total escolhido.
-
-Ainda não está concluído:
-
-- backfill criptográfico das linhas antigas;
-- mudança dos modos `dual` para `required`;
-- limpeza ou remoção dos valores pessoais legados em texto claro;
-- limpeza destrutiva de logs/JSON legados;
-- renomeação com o prefixo `grazitur_`.
-
-Essas etapas exigem aprovação separada, reconciliação e restauração comprovada. Não declarar proteção em repouso concluída enquanto os campos legados permanecerem preenchidos.
-
-## Classificação dos dados
-
-A LGPD considera dado pessoal toda informação relacionada a pessoa identificada ou identificável. A ANPD cita expressamente nome, RG, CPF e endereço residencial como exemplos. A aplicação contém:
-
-| Categoria | Campos/objetos encontrados | Tratamento |
-|---|---|---|
-| Identificação civil | nome, CPF, RG, órgão expedidor, nascimento e idade | Criptografia autenticada; CPF também recebe HMAC para busca exata e últimos quatro dígitos para máscara |
-| Contato e localização | e-mail, celular, cidade e endereço | Criptografia autenticada no perfil pessoal |
-| Relações | vínculos familiares e participação em excursões | IDs técnicos; acesso somente pelo backend |
-| Contratual e financeiro | contratos, assinaturas, parcelas, pagamentos e despesas | Backend/admin; sem Data API; respostas do passageiro limitadas ao próprio grupo |
-| Auditoria | ações administrativas e finalidade de exportação | Redação automática de CPF/e-mail; limpeza legada pendente |
-
-Não foram encontrados campos correspondentes às categorias legais de dados pessoais sensíveis do art. 5º, II — como saúde, biometria, religião, raça/etnia, opinião política, vida sexual ou dados genéticos. Isso não reduz o dever de proteger os dados pessoais comuns. Há cadastros de menores: a auditoria agregada estimou 54 pessoas com menos de 18 anos, sem retornar suas identidades.
-
-Referências oficiais: [FAQ da ANPD](https://www.gov.br/anpd/pt-br/acesso-a-informacao/perguntas-frequentes/perguntas-frequentes) e [LGPD, art. 5º](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm).
-
-## Inventário técnico
-
-| Objeto | Estado de acesso | Conteúdo relevante |
-|---|---|---|
-| `public."User"` | RLS ativo; sem grants/policies para Data API | perfil pessoal, CPF e vínculos |
-| `public."Excursao"` | RLS ativo; sem grants/policies para Data API | passageiros, pagamentos, contratos, assinaturas e lista de espera em JSON |
-| `public."SystemLog"` | RLS ativo; sem grants/policies para Data API | auditoria administrativa |
-| `public."_UserExcursao"` | RLS ativo; sem grants/policies para Data API | relação passageiro–excursão |
-| `public."_UserKinship"` | RLS ativo; sem grants/policies para Data API | relação familiar |
-
-Contagem agregada atual: 237 usuários; 237 CPFs ainda presentes no campo legado; 0 perfis pessoais criptografados antes do backfill. Nenhum valor individual foi retornado durante a validação.
+As contagens registram o instante do corte. Novas linhas usam o mesmo modelo
+criptográfico obrigatório.
 
 ## Modelo criptográfico
 
-O código usa criptografia no backend confiável, com chaves externas ao banco e ao Git:
+Campos que a aplicação precisa recuperar não usam hash irreversível. Eles usam
+AES-256-GCM no backend, porque o sistema ainda precisa mostrar os dados aos
+usuários autorizados e gerar documentos. Cada envelope usa:
 
-- AES-256-GCM, nonce aleatório de 96 bits e tag de 128 bits;
-- AAD com aplicação, entidade, UUID estável do registro, finalidade do envelope e versão da chave;
-- envelope versionado para rotação;
-- perfil pessoal criptografado como JSON autenticado contendo nome, e-mail, RG, órgão, nascimento, celular, cidade, endereço e idade;
-- CPF em envelope separado, com HMAC-SHA-256 de chave independente para igualdade/duplicidade;
-- modos `dual` para migração e `required` para o cutover;
-- falha fechada no modo obrigatório quando a linha ou chave não está protegida.
+- nonce aleatório de 96 bits e tag de autenticação de 128 bits;
+- AAD vinculando aplicação, entidade, contexto estável, finalidade e versão;
+- chave armazenada como segredo da Vercel, fora do banco e do Git;
+- versão explícita para permitir rotação futura;
+- falha fechada se chave, envelope ou metadados estiverem ausentes ou alterados.
 
-Arquivos principais:
+O CPF também recebe HMAC-SHA-256 com chave separada para busca exata e controle
+de duplicidade. Apenas os quatro últimos dígitos ficam separados para máscara.
+HMAC não permite recuperar o CPF e não substitui a cópia criptografada.
 
-- `server/utils/cpf-security.ts` — CPF, HMAC, máscara e rotação;
-- `server/utils/pii-security.ts` — perfil pessoal criptografado;
-- `prisma/backfill-cpf.ts` e `prisma/backfill-pii.ts` — backfills idempotentes, em lotes e somente diagnóstico por padrão;
-- `supabase/migrations/20260816175833_secure_grazitur_personal_data_expand.sql` — expand do CPF;
-- `supabase/migrations/20260816175838_harden_grazitur_data_api.sql` — RLS, grants e funções;
-- `supabase/migrations/20260816235908_secure_grazitur_pii_expand.sql` — expand do perfil pessoal;
-- `docs/security/grazitur-personal-data-contract-proposal.sql` — contract destrutivo ainda não executável.
+O perfil criptografado contém nome, e-mail, RG, órgão expedidor, nascimento,
+celular, cidade, endereço e idade. Título e detalhe de logs são guardados em um
+envelope próprio, com uma chave independente.
 
-## Imutabilidade de cadastros
+## Armazenamento após o corte
 
-Cadastros concluídos não podem mais ser editados:
+Em `public."User"`, as colunas legadas contêm somente o marcador técnico
+`Dado Protegido` no nome e `NULL` nos demais campos pessoais. CPF e perfil
+ficam nos respectivos envelopes criptografados.
 
-- botões de edição foram removidos das áreas administrativa e do passageiro;
-- `PUT` e `PATCH /api/users/:id` respondem `403`;
-- a exceção pública de middleware para atualização foi removida;
-- a rota de detalhe que aceitava `reveal=cpf` foi removida;
-- a criação pública devolve somente o ID técnico;
-- o cadastro de familiar usa ID vinculado à sessão do titular, sem transportar o CPF do titular pelo cliente.
+Em `public."SystemLog"`, o título legado contém `Registro protegido`, o
+detalhe legado fica nulo e o conteúdo completo permanece recuperável no envelope.
+A saída administrativa continua aplicando redação defensiva.
 
-A exclusão administrativa continua disponível e é uma operação distinta, com confirmação e auditoria.
+Em `public."Excursao"`, a lista de espera guarda apenas referências técnicas,
+data e origem. Uma restrição recursiva impede chaves pessoais, inclusive dentro
+de objetos aninhados.
 
-## Sequência de rollout
+Os snapshots de segurança ficam em:
 
-1. Manter RLS/grants fechados e validar o backend Prisma.
-2. Configurar chave exclusiva do perfil pessoal na Vercel Production e modo `dual`.
-3. Publicar o código dual-read/dual-write e validar cadastro, login, contratos, excursões e documentos.
-4. Executar `pnpm db:backfill-cpf` e `pnpm db:backfill-pii` sem flags de aplicação.
-5. Após aprovação explícita, executar os dois backfills em lotes e reconciliar contagens, nulos e decrypt autenticado.
-6. Mudar os dois modos para `required` e observar erros.
-7. Somente após nova aprovação e restore comprovado, limpar/remover plaintext e sanear JSON/logs legados.
-8. Tratar a renomeação `grazitur_` como rollout independente.
+- `private.grazitur_user_encrypted_backup`;
+- `private.grazitur_log_encrypted_backup`;
+- `private.grazitur_waitlist_encrypted_backup`.
 
-Rollback antes da limpeza: retornar leitores a `dual` e manter ambos os formatos. Depois da remoção do plaintext, o rollback depende do backup restaurável e das versões antigas das chaves.
+Esse schema tem RLS ativo e privilégios revogados para `public`, `anon`,
+`authenticated` e `service_role`. O backup contém somente envelopes e
+metadados criptográficos, nunca os valores em texto legível.
 
-## Evidências atuais
+## Controles permanentes
 
-- A expansão do perfil pessoal adicionou 3 colunas, 1 constraint e 1 índice; 237 linhas preservadas e 0 envelopes criados antes do backfill.
-- `public."User"`: RLS ativo; `anon` sem `SELECT`; `authenticated` sem `UPDATE`.
-- Vercel `grazitur`/Production: `GRAZITUR_PII_PROTECTION_MODE=dual` e chave AES exclusiva armazenada como segredo sensível; nenhum valor foi exibido ou versionado.
-- Security Advisor: somente cinco informações `rls_enabled_no_policy`, intencionais, e um aviso de proteção contra senhas vazadas desabilitada no Auth.
-- Endpoints públicos de ping e excursões abertas continuaram respondendo após o fechamento da Data API.
-- Backup lógico anterior foi restaurado e reconciliado em PostgreSQL isolado antes das primeiras expansões.
+As migrations do Supabase:
 
-Referências técnicas: [Securing your API](https://supabase.com/docs/guides/api/securing-your-api), [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security), [Secure Data](https://supabase.com/docs/guides/database/secure-data) e [Column Level Security](https://supabase.com/docs/guides/database/postgres/column-level-security).
+- completam o envelope criptográfico de logs;
+- criam o cofre privado;
+- exigem armazenamento protegido em usuários e logs;
+- rejeitam dados pessoais duplicados na lista de espera;
+- mantêm RLS e a Data API sem acesso às tabelas do GraziTur.
 
-## Riscos residuais
+Os modos de produção são:
 
-- Plaintext histórico continua no banco até backfill, cutover e contract aprovados.
-- A verificação do passageiro ainda usa dois fatores estáticos (CPF e nascimento); migrar para OTP/Auth.
-- A proteção contra senhas vazadas do Supabase Auth está desabilitada.
-- O runtime Prisma ainda usa uma credencial ampla; criar role dedicada de menor privilégio.
-- Retenção, descarte, resposta a incidente, custódia/rotação das chaves e acesso de outros consumidores precisam de política formal.
-- Reescrever o histórico Git do seed antigo e sanear logs/JSON exige coordenação e aprovação destrutiva.
+- `GRAZITUR_CPF_PROTECTION_MODE=required`;
+- `GRAZITUR_PII_PROTECTION_MODE=required`;
+- `GRAZITUR_LOG_PROTECTION_MODE=required`.
+
+Não alterar esses modos para `dual` ou `disabled` em produção. As constraints
+do banco também bloqueiam novas gravações legíveis.
+
+## Validação e operação
+
+A validação pós-migração confirmou:
+
+- 241 de 241 envelopes de CPF e perfil autenticados;
+- 433 de 433 envelopes de log autenticados;
+- zero colunas pessoais legadas preenchidas;
+- zero itens de lista de espera com chaves pessoais;
+- contagens do cofre iguais às tabelas no instante do backup.
+
+RLS permanece ativo nas cinco tabelas da aplicação e sem policies públicas.
+O backend usa Prisma; a Data API não é usada pelo GraziTur.
+
+Para rotação futura, primeiro adicionar uma nova versão de chave, recriptografar
+e verificar todos os envelopes, atualizar a versão ativa e só depois retirar a
+chave antiga. Nunca substituir ou apagar uma chave ainda referenciada.
+
+## Riscos residuais e próximos controles
+
+- criar uma role dedicada de banco com privilégio mínimo para o runtime Prisma;
+- habilitar proteção contra senhas vazadas no Supabase Auth;
+- substituir a verificação estática do passageiro por OTP ou autenticação;
+- definir política formal de retenção, descarte, rotação e resposta a incidente;
+- revisar outros consumidores antes de qualquer alteração nas chaves.
+
+Referências: [Securing your API](https://supabase.com/docs/guides/api/securing-your-api),
+[Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security),
+[Secure Data](https://supabase.com/docs/guides/database/secure-data) e
+[Backups](https://supabase.com/docs/guides/platform/backups).

@@ -62,8 +62,10 @@ test('dual-write gera todos os campos protegidos', () => {
   assert.ok(fields.cpfContextId)
 })
 
-test('redação remove CPF e e-mail de logs', () => {
-  const value = redactSensitiveText(`CPF: ${TEST_CPF}; contato: teste@example.com`)
+test('redação remove CPF, RG, telefone e e-mail de logs', () => {
+  const value = redactSensitiveText(`CPF: ${TEST_CPF}; RG: 12.345.678-9; telefone: (11) 99999-9999; contato: teste@example.com`)
   assert.equal(value.includes(TEST_CPF), false)
+  assert.equal(value.includes('12.345.678-9'), false)
+  assert.equal(value.includes('(11) 99999-9999'), false)
   assert.equal(value.includes('teste@example.com'), false)
 })
