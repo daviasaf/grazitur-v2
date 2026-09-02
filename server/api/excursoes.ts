@@ -3,6 +3,7 @@ import { parseJson } from '../utils/json'
 import { appendLog, adminDetail } from '../utils/logs'
 import { getPassengerUserId } from '../utils/passenger-auth'
 import { normalizeUser } from '../utils/users'
+import { attachExcursionUsers, excursionUsersInclude } from '../utils/relations'
 
 function buildAdminSignatures(existing: Record<string, any>, users: any[], grupos: Record<string, string[]>, guia: any) {
   const assinaturas = { ...(existing || {}) }
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event) => {
           finalizada: true,
           createdAt: true,
           listaEsperaJson: true,
-          _count: { select: { usuarios: true } }
+          _count: { select: { userLinks: true } }
         },
         orderBy: { createdAt: 'desc' }
       })
@@ -57,21 +58,22 @@ export default defineEventHandler(async (event) => {
         mostrarAberta: trip.mostrarAberta,
         finalizada: trip.finalizada,
         createdAt: trip.createdAt,
-        _count: trip._count,
+        _count: { usuarios: trip._count.userLinks },
         onWaitlist: passengerId ? parseJson<any[]>(trip.listaEsperaJson, []).some((item) => Number(item.userId) === passengerId) : false
       }))
     }
 
     const excursoes = await prisma.excursao.findMany({
       where,
-      include: { usuarios: true, guia: true, _count: { select: { usuarios: true } } },
+      include: { ...excursionUsersInclude, guia: true, _count: { select: { userLinks: true } } },
       orderBy: [{ finalizada: 'asc' }, { createdAt: 'desc' }]
     })
 
     const users = await prisma.user.findMany()
     const byId = new Map(users.map((u) => [String(u.id), u]))
 
-    return excursoes.map((ex) => {
+    return excursoes.map((raw) => {
+      const ex = attachExcursionUsers(raw)
       const listaOriginal = parseJson<any[]>(ex.listaEsperaJson, [])
       const listaHidratada = listaOriginal
         .map((item) => {
@@ -92,7 +94,7 @@ export default defineEventHandler(async (event) => {
 
       return {
         ...ex,
-        usuarios: ex.usuarios.map((user) => normalizeUser(user)),
+        usuarios: ex.usuarios.map((user: any) => normalizeUser(user)),
         guia: ex.guia ? normalizeUser(ex.guia) : null,
         listaEsperaJson: JSON.stringify(listaHidratada)
       }

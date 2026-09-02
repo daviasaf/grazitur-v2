@@ -9,18 +9,18 @@ datasource db {
 }
 
 model User {
-  id             Int        @id @default(autoincrement())
+  id             Int                    @id @default(autoincrement())
   nome           String
   email          String?
-  cpf            String?    @unique
-  cpfCiphertext  String?    @map("cpf_ciphertext")
-  cpfBlindIndex  String?    @unique(map: "User_cpf_blind_index_key") @map("cpf_blind_index")
-  cpfKeyVersion  Int?       @map("cpf_key_version")
-  cpfLast4       String?    @map("cpf_last4")
-  cpfContextId   String?    @unique(map: "User_cpf_context_id_key") @map("cpf_context_id") @db.Uuid
-  piiCiphertext  String?    @map("pii_ciphertext")
-  piiKeyVersion  Int?       @map("pii_key_version")
-  piiContextId   String?    @unique(map: "User_pii_context_id_key") @map("pii_context_id") @db.Uuid
+  cpf            String?                @unique(map: "turismo_users_cpf_key")
+  cpfCiphertext  String?                @map("cpf_ciphertext")
+  cpfBlindIndex  String?                @unique(map: "turismo_users_cpf_blind_index_key") @map("cpf_blind_index")
+  cpfKeyVersion  Int?                   @map("cpf_key_version")
+  cpfLast4       String?                @map("cpf_last4")
+  cpfContextId   String?                @unique(map: "turismo_users_cpf_context_id_key") @map("cpf_context_id") @db.Uuid
+  piiCiphertext  String?                @map("pii_ciphertext")
+  piiKeyVersion  Int?                   @map("pii_key_version")
+  piiContextId   String?                @unique(map: "turismo_users_pii_context_id_key") @map("pii_context_id") @db.Uuid
   rg             String?
   orgaoExpeditor String?
   nascimento     String?
@@ -28,23 +28,25 @@ model User {
   cidade         String?
   endereco       String?
   idade          Int?
-  isGuia         Boolean    @default(false)
-  parentes       User[]     @relation("UserKinship")
-  parentesDe     User[]     @relation("UserKinship")
-  excursoes      Excursao[] @relation("UserExcursao")
-  excursoesGuia  Excursao[] @relation("GuiaExcursao")
-  createdAt      DateTime   @default(now())
+  isGuia         Boolean                @default(false)
+  kinshipsFrom   TurismoUserKinship[]   @relation("TurismoKinshipSource")
+  kinshipsTo     TurismoUserKinship[]   @relation("TurismoKinshipTarget")
+  excursionLinks TurismoExcursionUser[]
+  excursoesGuia  Excursao[]             @relation("GuiaExcursao")
+  createdAt      DateTime               @default(now())
+
+  @@map("turismo_users")
 }
 
 model Excursao {
-  id       Int     @id @default(autoincrement())
-  nome     String
-  lugar    String
-  vagas    Int
-  valores  String? @default("[]")
-  usuarios User[]  @relation("UserExcursao")
-  guiaId   Int?
-  guia     User?   @relation("GuiaExcursao", fields: [guiaId], references: [id])
+  id        Int                    @id @default(autoincrement())
+  nome      String
+  lugar     String
+  vagas     Int
+  valores   String?                @default("[]")
+  guiaId    Int?
+  guia      User?                  @relation("GuiaExcursao", fields: [guiaId], references: [id], map: "turismo_excursions_guia_id_fkey")
+  userLinks TurismoExcursionUser[]
 
   ativarContrato  Boolean @default(false)
   aplicarParcelas Boolean @default(true)
@@ -64,6 +66,8 @@ model Excursao {
   finalizadaEm DateTime?
 
   createdAt DateTime @default(now())
+
+  @@map("turismo_excursions")
 }
 
 model SystemLog {
@@ -75,9 +79,32 @@ model SystemLog {
   detail            String?
   contentCiphertext String?  @map("content_ciphertext")
   contentKeyVersion Int?     @map("content_key_version")
-  contentContextId  String?  @unique(map: "SystemLog_content_context_id_key") @map("content_context_id") @db.Uuid
+  contentContextId  String?  @unique(map: "turismo_system_logs_content_context_id_key") @map("content_context_id") @db.Uuid
 
-  @@index([createdAt])
-  @@index([entity])
-  @@index([action])
+  @@index([createdAt], map: "turismo_system_logs_created_at_idx")
+  @@index([entity], map: "turismo_system_logs_entity_idx")
+  @@index([action], map: "turismo_system_logs_action_idx")
+  @@map("turismo_system_logs")
+}
+
+model TurismoExcursionUser {
+  excursionId Int      @map("excursion_id")
+  userId      Int      @map("user_id")
+  excursion   Excursao @relation(fields: [excursionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "turismo_excursion_users_excursion_id_fkey")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "turismo_excursion_users_user_id_fkey")
+
+  @@unique([excursionId, userId], map: "turismo_excursion_users_excursion_id_user_id_key")
+  @@index([userId], map: "turismo_excursion_users_user_id_idx")
+  @@map("turismo_excursion_users")
+}
+
+model TurismoUserKinship {
+  userId         Int  @map("user_id")
+  relativeUserId Int  @map("relative_user_id")
+  user           User @relation("TurismoKinshipSource", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "turismo_user_kinships_user_id_fkey")
+  relativeUser   User @relation("TurismoKinshipTarget", fields: [relativeUserId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "turismo_user_kinships_relative_user_id_fkey")
+
+  @@unique([userId, relativeUserId], map: "turismo_user_kinships_user_id_relative_user_id_key")
+  @@index([relativeUserId], map: "turismo_user_kinships_relative_user_id_idx")
+  @@map("turismo_user_kinships")
 }

@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   if (!userId || !excursaoId) throw createError({ statusCode: 400, statusMessage: 'Dados incompletos.' })
 
   try {
-    const excursao = await prisma.excursao.findUnique({ where: { id: excursaoId }, include: { usuarios: { select: { id: true } } } })
+    const excursao = await prisma.excursao.findUnique({ where: { id: excursaoId }, include: { userLinks: { select: { userId: true } } } })
     if (!excursao) throw createError({ statusCode: 404, statusMessage: 'Excursão não encontrada.' })
     if (excursao.finalizada) throw createError({ statusCode: 400, statusMessage: 'Esta excursão já foi finalizada.' })
     if (!excursao.ativarContrato || !excursao.liberarContratos) {
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
     if (!excursao.guiaId) {
       throw createError({ statusCode: 403, statusMessage: 'A excursão precisa ter guia para liberar assinatura de contrato.' })
     }
-    if (!excursao.usuarios.some((item) => item.id === userId)) {
+    if (!excursao.userLinks.some((item) => item.userId === userId)) {
       throw createError({ statusCode: 403, statusMessage: 'Passageiro não vinculado a esta excursão.' })
     }
 

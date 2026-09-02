@@ -43,27 +43,44 @@ envelope próprio, com uma chave independente.
 
 ## Armazenamento após o corte
 
-Em `public."User"`, as colunas legadas contêm somente o marcador técnico
+Em `public.turismo_users`, as colunas legadas contêm somente o marcador técnico
 `Dado Protegido` no nome e `NULL` nos demais campos pessoais. CPF e perfil
 ficam nos respectivos envelopes criptografados.
 
-Em `public."SystemLog"`, o título legado contém `Registro protegido`, o
+Em `public.turismo_system_logs`, o título legado contém `Registro protegido`, o
 detalhe legado fica nulo e o conteúdo completo permanece recuperável no envelope.
 A saída administrativa continua aplicando redação defensiva.
 
-Em `public."Excursao"`, a lista de espera guarda apenas referências técnicas,
+Em `public.turismo_excursions`, a lista de espera guarda apenas referências técnicas,
 data e origem. Uma restrição recursiva impede chaves pessoais, inclusive dentro
 de objetos aninhados.
 
 Os snapshots de segurança ficam em:
 
-- `private.grazitur_user_encrypted_backup`;
-- `private.grazitur_log_encrypted_backup`;
-- `private.grazitur_waitlist_encrypted_backup`.
+- `private.turismo_user_encrypted_backups`;
+- `private.turismo_log_encrypted_backups`;
+- `private.turismo_waitlist_encrypted_backups`.
 
 Esse schema tem RLS ativo e privilégios revogados para `public`, `anon`,
 `authenticated` e `service_role`. O backup contém somente envelopes e
 metadados criptográficos, nunca os valores em texto legível.
+
+## Padrão de nomenclatura
+
+Todas as tabelas do produto de turismo usam `snake_case` e o prefixo
+`turismo_`, no mesmo padrão de isolamento das tabelas `atletica_`:
+
+- `public.turismo_users`;
+- `public.turismo_excursions`;
+- `public.turismo_system_logs`;
+- `public.turismo_excursion_users`;
+- `public.turismo_user_kinships`;
+- as três tabelas privadas de backup listadas acima.
+
+Sequências, índices, constraints, chaves estrangeiras, trigger de formatação e
+função privada também usam o prefixo `turismo_`. A migração foi feita por
+`ALTER ... RENAME`, preservando os OIDs e todas as linhas, e verificou
+contagens e RLS antes de confirmar a transação.
 
 ## Controles permanentes
 
