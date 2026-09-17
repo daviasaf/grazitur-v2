@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { deleteCookie, getCookie, setCookie } from 'h3'
 import { buildAdminPasswordRecoveryRequest } from './admin-password-recovery'
+import { usesSharedPortalAuth } from './admin-auth-project'
 import { constantTimeTextEqual, requireSessionSecret, signSession, verifySession } from './signed-session'
 
 const ACCESS_COOKIE = 'grazitur_admin_access'
@@ -128,6 +129,9 @@ export async function loginAdmin(event: H3Event, email: string, password: string
 }
 
 export async function requestAdminPasswordRecovery(email: string, redirectTo: string) {
+  if (usesSharedPortalAuth(String(process.env.SUPABASE_URL || ''))) {
+    throw createError({ statusCode: 503, statusMessage: 'Recuperação de senha indisponível enquanto a autenticação não for isolada.' })
+  }
   const request = buildAdminPasswordRecoveryRequest(email, redirectTo)
   const result = await authRequest(request.path, {
     method: 'POST',
@@ -142,6 +146,9 @@ export async function requestAdminPasswordRecovery(email: string, redirectTo: st
 }
 
 export async function updateAdminPasswordWithRecoveryToken(accessToken: string, password: string) {
+  if (usesSharedPortalAuth(String(process.env.SUPABASE_URL || ''))) {
+    throw createError({ statusCode: 503, statusMessage: 'Troca de senha indisponível enquanto a autenticação não for isolada.' })
+  }
   const authorization = { Authorization: `Bearer ${accessToken}` }
   const userResult = await authRequest<SupabaseUser>('/user', { headers: authorization })
   if (!userResult.ok || !isAdmin(userResult.data)) {

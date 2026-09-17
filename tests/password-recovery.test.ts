@@ -5,6 +5,13 @@ import {
   validateAdminPassword
 } from '../server/utils/admin-password.ts'
 import { buildAdminPasswordRecoveryRequest } from '../server/utils/admin-password-recovery.ts'
+import { usesSharedPortalAuth } from '../server/utils/admin-auth-project.ts'
+
+test('blocks password recovery while GraziTur uses the portal Auth project', () => {
+  assert.equal(usesSharedPortalAuth('https://xgrcwdtkalelegoysxbw.supabase.co'), true)
+  assert.equal(usesSharedPortalAuth('https://isolatedauthproject.supabase.co'), false)
+  assert.equal(usesSharedPortalAuth('invalid-url'), true)
+})
 
 test('rejects short administrative passwords', () => {
   assert.match(validateAdminPassword('Aa1!curta') || '', /12 caracteres/)
