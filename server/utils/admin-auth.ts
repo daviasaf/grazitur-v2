@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { deleteCookie, getCookie, setCookie } from 'h3'
 import { buildAdminPasswordRecoveryRequest } from './admin-password-recovery'
+import { assertIsolatedAdminAuthProject } from './admin-auth-project'
 import { constantTimeTextEqual, requireSessionSecret, signSession, verifySession } from './signed-session'
 
 const ACCESS_COOKIE = 'grazitur_admin_access'
@@ -44,7 +45,13 @@ const cookieOptions = (maxAge: number) => ({
 function supabaseConfig() {
   const url = String(process.env.SUPABASE_URL || '').replace(/\/$/, '')
   const key = String(process.env.SUPABASE_PUBLISHABLE_KEY || '')
-  return url && key ? { url, key } : null
+  if (!url || !key) return null
+  try {
+    assertIsolatedAdminAuthProject(url, String(process.env.DATABASE_URL || ''), String(process.env.DIRECT_URL || ''))
+  } catch {
+    throw createError({ statusCode: 503, statusMessage: 'Autenticação administrativa isolada não configurada.' })
+  }
+  return { url, key }
 }
 
 function isAdmin(user: SupabaseUser | null | undefined) {

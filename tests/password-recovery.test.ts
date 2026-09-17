@@ -5,6 +5,40 @@ import {
   validateAdminPassword
 } from '../server/utils/admin-password.ts'
 import { buildAdminPasswordRecoveryRequest } from '../server/utils/admin-password-recovery.ts'
+import { assertIsolatedAdminAuthProject } from '../server/utils/admin-auth-project.ts'
+
+const sharedDatabaseUrl = 'postgresql://postgres.xgrcwdtkalelegoysxbw:example@aws-1-sa-east-1.pooler.supabase.com:6543/postgres'
+
+test('refuses a shared Supabase Auth project even when the administrator email matches', () => {
+  assert.throws(
+    () => assertIsolatedAdminAuthProject('https://xgrcwdtkalelegoysxbw.supabase.co', sharedDatabaseUrl, ''),
+    /projeto Supabase próprio/
+  )
+})
+
+test('accepts an isolated Auth project while keeping the existing database', () => {
+  assert.doesNotThrow(
+    () => assertIsolatedAdminAuthProject('https://isolatedauthproject.supabase.co', sharedDatabaseUrl, '')
+  )
+})
+
+test('fails closed when the database project cannot be identified', () => {
+  assert.throws(
+    () => assertIsolatedAdminAuthProject('https://isolatedauthproject.supabase.co', '', ''),
+    /projeto Supabase próprio/
+  )
+})
+
+test('recognizes direct Supabase database URLs as shared too', () => {
+  assert.throws(
+    () => assertIsolatedAdminAuthProject(
+      'https://xgrcwdtkalelegoysxbw.supabase.co',
+      'postgresql://postgres:example@db.xgrcwdtkalelegoysxbw.supabase.co:5432/postgres',
+      ''
+    ),
+    /projeto Supabase próprio/
+  )
+})
 
 test('rejects short administrative passwords', () => {
   assert.match(validateAdminPassword('Aa1!curta') || '', /12 caracteres/)
