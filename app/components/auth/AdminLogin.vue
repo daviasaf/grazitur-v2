@@ -45,17 +45,7 @@
           </button>
         </div>
 
-        <button
-          type="button"
-          class="password-recovery-link"
-          :disabled="carregando || carregandoRecuperacao"
-          @click="solicitarRecuperacao"
-        >
-          {{ carregandoRecuperacao ? 'Enviando instruções...' : 'Esqueci minha senha' }}
-        </button>
-
         <p v-if="erro" class="text-danger small fw-bold mt-3 mb-0">{{ erro }}</p>
-        <p v-if="mensagemRecuperacao" class="password-recovery-message mt-3 mb-0" aria-live="polite">{{ mensagemRecuperacao }}</p>
         <button class="gt-btn gt-btn-primary w-100 mt-4" @click="fazerLogin" :disabled="carregando">
           {{ carregando ? 'Entrando...' : 'Entrar no painel' }}
         </button>
@@ -70,37 +60,10 @@ const email = ref('')
 const password = ref('')
 const erro = ref('')
 const carregando = ref(false)
-const carregandoRecuperacao = ref(false)
 const mostrarSenha = ref(false)
-const mensagemRecuperacao = ref('')
-
-const emailValido = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())
-
-const solicitarRecuperacao = async () => {
-  erro.value = ''
-  mensagemRecuperacao.value = ''
-  if (!emailValido()) {
-    erro.value = 'Digite seu e-mail administrativo antes de solicitar a recuperação.'
-    return
-  }
-
-  carregandoRecuperacao.value = true
-  try {
-    const response = await $fetch<{ message: string }>('/api/auth', {
-      method: 'POST',
-      body: { action: 'request-password-recovery', email: email.value.trim() }
-    })
-    mensagemRecuperacao.value = response.message
-  } catch (e: any) {
-    erro.value = e.data?.statusMessage || 'Não foi possível enviar as instruções agora.'
-  } finally {
-    carregandoRecuperacao.value = false
-  }
-}
 
 const fazerLogin = async () => {
   erro.value = ''
-  mensagemRecuperacao.value = ''
   carregando.value = true
   try {
     await $fetch('/api/auth', { method: 'POST', body: { email: email.value, password: password.value } })
